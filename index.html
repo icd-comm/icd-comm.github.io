@@ -2710,7 +2710,7 @@ function dashPrint(printMode){
   var ctyMDc=FDP.filter(function(d){return d.ty==='مجلس تنسيقي دولي';}).length;
   var okc=FDP.filter(function(d){return d.st==='مستمرة';}).length;
 
-  html+='<div class="cover-page">'    +'<div class="cover-page-bg"></div>'    +'<div class="cover-page-overlay"></div>'    +'<div class="cover-page-content">'      +'<div class="cover-page-tag">وكالة التعاون الدولي</div>'      +'<div class="cover-page-ministry">المملكة العربية السعودية — وزارة التعليم</div>'      +'<div class="cover-page-title">'+pModeLbl+'</div>'      +'<div class="cover-page-divider"></div>'      +'<div class="cover-page-sub">تقرير شامل للمجالس واللجان والتكليفات المتعلقة بوكالة التعاون الدولي</div>'      +'<div class="cover-page-stats">'        +'<div class="cps"><div class="cps-n">'+FDP.length+'</div><div class="cps-l">إجمالي اللجان</div></div>'        +'<div class="cps"><div class="cps-n">'+okc+'</div><div class="cps-l">لجنة مستمرة</div></div>'        +'<div class="cps"><div class="cps-n">'+ctyLc+'</div><div class="cps-l">لجنة</div></div>'        +'<div class="cps"><div class="cps-n">'+ctyMc+'</div><div class="cps-l">مجلس</div></div>'        +'<div class="cps"><div class="cps-n">'+(ctyDIc+ctyMDc)+'</div><div class="cps-l">دولية</div></div>'      +'</div>'    +'</div>'    +'<div class="cover-page-footer">'      +'📅 '+today+' &nbsp;|&nbsp; وكالة التعاون الدولي — وزارة التعليم — المملكة العربية السعودية'    +'</div>'  +'</div>';
+  html+='<div class="cover-page">'    +'<div class="cover-page-bg"></div>'    +'<div class="cover-page-overlay"></div>'    +'<div style="position:absolute;top:28px;right:32px;z-index:10;background:rgba(255,255,255,.15);border-radius:12px;padding:6px 10px;backdrop-filter:blur(4px)"><img src="'+LOGO2_SRC+'" style="width:52px;height:52px;object-fit:contain;display:block"></div>'    +'<div class="cover-page-content">'      +'<div class="cover-page-tag">وكالة التعاون الدولي</div>'      +'<div class="cover-page-ministry">المملكة العربية السعودية — وزارة التعليم</div>'      +'<div class="cover-page-title">'+pModeLbl+'</div>'      +'<div class="cover-page-divider"></div>'          +'</div>'    +'<div class="cover-page-footer">'      +'📅 '+today+' &nbsp;|&nbsp; وكالة التعاون الدولي — وزارة التعليم — المملكة العربية السعودية'    +'</div>'  +'</div>';
 
   /* ════════════════════════════════════════
      صفحة الملخص التنفيذي — صفحة 2
@@ -2733,7 +2733,7 @@ function dashPrint(printMode){
         +'<div class="esp-bullet"><b>الملاحق والتفاصيل</b>بيانات تفصيلية لكل لجنة تشمل الممثل والدور والحالة</div>'      +'</div>'    +'</div>'    +'<div class="esp-note">'      +'هذا التقرير صادر من نظام إدارة المجالس واللجان — وكالة التعاون الدولي — وزارة التعليم. يشمل البيانات الخاصة بـ '+FDP.length+' لجنة ومجلس حتى تاريخ '+today+'.'    +'</div>'  +'</div>';
 
   /* ════ الغلاف القديم يُضاف بعد الصفحتين الجديدتين كرأس للمحتوى ════ */
-  html+='<div class="cover-hdr">'    +'<img src="'+LOGO2_SRC+'" class="cover-logo" alt="شعار">'    +'<div class="cover-text">'    +'<div style="font-size:11pt;color:rgba(255,255,255,.65)">المملكة العربية السعودية — وزارة التعليم — وكالة التعاون الدولي</div>'    +'<div class="cover-title">'+pModeLbl+'</div>'    +'<div class="cover-sub">📅 '+today+'</div>'    +'</div>'    +'<div class="cover-badge">'    +'<div class="cover-badge-num">'+FDP.length+'</div>'    +'<div class="cover-badge-lbl">لجنة في التقرير</div>'    +'</div>'    +'</div>';
+  
 
   /* ══════════════════════════════════
      PAGE 1 — COMMITTEES OVERVIEW
@@ -2886,6 +2886,86 @@ function dashPrint(printMode){
         +'<div class="chart-box"><div class="chart-title">📊 عدد التكليفات لكل جهة مسؤولة</div><div class="chart-sub">يُساعد في تخصيص الموارد وتحديد الجهات الأكثر ضغطاً تشغيلياً</div><canvas id="cResp" width="980" height="260"></canvas></div>'
         +'<div class="insight" style="margin-top:14px">💡 التوزيع غير المتوازن للتكليفات يكشف عن نمط الضغط التشغيلي داخل الوكالة. الجهات ذات الأعباء العالية تحتاج دعماً إضافياً أو إعادة توزيع.</div>'
         +'</div></div>';
+    }
+  }
+
+  /* ══════════════════════════════════════
+     جدول تفصيلي بجميع التكليفات من S3
+  ══════════════════════════════════════ */
+  if(pMode==='tasks'||pMode==='all'){
+    var allTasks=[];
+    FDP.forEach(function(d){
+      var di=D.indexOf(d);
+      GM(di).forEach(function(m,mi){
+        m.tasks.forEach(function(t){
+          allTasks.push({
+            committee:d.n,
+            meeting:m.date||('اجتماع '+(mi+1)),
+            task:t.text||t.title||t.t||'—',
+            assignee:t.assignee||t.as||'—',
+            due:t.due||t.d||'—',
+            status:t.status||t.st||'—'
+          });
+        });
+      });
+    });
+
+    if(allTasks.length>0){
+      var lateT=allTasks.filter(function(t){return t.status==='متأخر';});
+      var wipT=allTasks.filter(function(t){return t.status==='جارٍ';});
+      var doneT=allTasks.filter(function(t){return t.status==='منجز';});
+      var waitT=allTasks.filter(function(t){return t.status==='قيد الانتظار';});
+
+      html+='<div class="sec" style="margin-top:18px">';
+      html+='<div class="sec-hdr"><span class="sec-icon">📋</span><div>';
+      html+='<div class="sec-title">جدول التكليفات التفصيلي</div>';
+      html+='<div class="sec-sub">جميع التكليفات المسجّلة في قسم تحضير الاجتماعات — '+allTasks.length+' تكليف</div>';
+      html+='</div></div><div class="sec-body">';
+
+      html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+      html+='<div style="background:#27ae6015;border-right:3px solid #27ae60;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#27ae60">'+doneT.length+'</div><div style="font-size:9pt;color:#555">منجز</div></div>';
+      html+='<div style="background:#2980b915;border-right:3px solid #2980b9;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#2980b9">'+wipT.length+'</div><div style="font-size:9pt;color:#555">جارٍ</div></div>';
+      html+='<div style="background:#f39c1215;border-right:3px solid #f39c12;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#f39c12">'+waitT.length+'</div><div style="font-size:9pt;color:#555">قيد الانتظار</div></div>';
+      html+='<div style="background:#e74c3c15;border-right:3px solid #e74c3c;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#e74c3c">'+lateT.length+'</div><div style="font-size:9pt;color:#555">متأخر</div></div>';
+      html+='</div>';
+
+      html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:9.5pt">';
+      html+='<thead><tr style="background:#0d2137;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact">';
+      html+='<th style="padding:8px 10px;text-align:right">#</th>';
+      html+='<th style="padding:8px 10px;text-align:right">اللجنة / المجلس</th>';
+      html+='<th style="padding:8px 10px;text-align:right">الاجتماع</th>';
+      html+='<th style="padding:8px 10px;text-align:right">التكليف</th>';
+      html+='<th style="padding:8px 10px;text-align:right">المكلّف</th>';
+      html+='<th style="padding:8px 10px;text-align:right">الموعد</th>';
+      html+='<th style="padding:8px 10px;text-align:right">الحالة</th>';
+      html+='</tr></thead><tbody>';
+
+      var sColors={'منجز':'#27ae60','جارٍ':'#2980b9','قيد الانتظار':'#f39c12','متأخر':'#e74c3c'};
+      var sBg={'منجز':'#27ae6015','جارٍ':'#2980b915','قيد الانتظار':'#f39c1215','متأخر':'#e74c3c15'};
+      allTasks.forEach(function(t,i){
+        var sc=sColors[t.status]||'#888';
+        var sb=sBg[t.status]||'#f5f5f5';
+        html+='<tr style="background:'+(i%2===0?'#fff':'#f8fafb');'">';
+        html+='<td style="padding:6px 10px;color:#888;font-size:9pt">'+(i+1)+'</td>';
+        html+='<td style="padding:6px 10px;font-size:9pt;color:#1a2033">'+t.committee.substring(0,45)+(t.committee.length>45?'…':'')+'</td>';
+        html+='<td style="padding:6px 10px;font-size:9pt;color:#555">'+t.meeting+'</td>';
+        html+='<td style="padding:6px 10px;font-size:9pt;color:#1a2033">'+t.task.substring(0,55)+(t.task.length>55?'…':'')+'</td>';
+        html+='<td style="padding:6px 10px;font-size:9pt;color:#555">'+t.assignee+'</td>';
+        html+='<td style="padding:6px 10px;font-size:9pt;color:#555">'+t.due+'</td>';
+        html+='<td style="padding:6px 10px"><span style="background:'+sb+';color:'+sc+';border-radius:6px;padding:2px 8px;font-size:8.5pt;font-weight:700">'+t.status+'</span></td>';
+        html+='</tr>';
+      });
+      html+='</tbody></table></div>';
+
+      if(lateT.length>0){
+        html+='<div style="margin-top:16px;background:#fdf5f5;border-radius:8px;padding:14px 16px;border-right:4px solid #e74c3c;-webkit-print-color-adjust:exact;print-color-adjust:exact">';
+        html+='<div style="font-size:11pt;font-weight:700;color:#c0392b;margin-bottom:10px">⚠️ التكليفات المتأخرة ('+lateT.length+')</div>';
+        lateT.forEach(function(t){
+          html+='<div style="padding:6px 0;border-bottom:1px solid #fcc;font-size:9.5pt"><span style="font-weight:700;color:#c0392b">'+t.committee.substring(0,35)+'</span> — '+t.task.substring(0,50)+(t.task.length>50?'…':'')+' <span style="color:#888">('+t.due+')</span></div>';
+        });
+        html+='</div>';
+      }
+      html+='</div></div>';
     }
   }
 
