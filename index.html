@@ -15,6 +15,7 @@
 <link rel="apple-touch-icon" id="apple-touch-icon" href="">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Tahoma,Arial,sans-serif;background:#0a0e1a;color:#1a1a2e;direction:rtl;font-size:13px;overflow-x:hidden}
@@ -604,6 +605,8 @@ html,body{max-width:100vw;overflow-x:hidden}
           <button onclick="dashPrint('committees')" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border:none;border-radius:8px;padding:3px 12px;font-size:10px;cursor:pointer;font-family:inherit">🖨️ طباعة اللجان</button>
           <button onclick="dashPrint('tasks')" style="background:linear-gradient(135deg,#4a2080,#8e44ad);color:#fff;border:none;border-radius:8px;padding:3px 12px;font-size:10px;cursor:pointer;font-family:inherit">🖨️ طباعة التكليفات</button>
           <button onclick="dashPrint('all')" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:8px;padding:3px 12px;font-size:10px;cursor:pointer;font-family:inherit">🖨️ طباعة الكل</button>
+          <button onclick="exportPPTX('committees')" style="background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:11px;cursor:pointer;font-family:Tahoma;font-weight:700" title="تصدير تقرير اللجان كعرض تقديمي PowerPoint">📊 PPTX لجان</button>
+          <button onclick="exportPPTX('tasks')" style="background:linear-gradient(135deg,#7d3c98,#9b59b6);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:11px;cursor:pointer;font-family:Tahoma;font-weight:700" title="تصدير تقرير التكليفات كعرض تقديمي PowerPoint">📊 PPTX تكليفات</button>
         </div>
       </div>
       <div class="cgrid" id="cgrid"></div>
@@ -2450,6 +2453,288 @@ if((f==='tasks'||f==='all')&&aT.length){
   mkChart('ch_rp','hbar',rpK,rpV,rpK.map(function(_,i){return CPAL[i%CPAL.length];}));
 }
 }
+/* ══════════════════════════════════════════════════════
+   تصدير PowerPoint — محتوى قابل للتعديل (PptxGenJS)
+   ══════════════════════════════════════════════════════ */
+async function exportPPTX(pMode){
+  if(typeof PptxGenJS==='undefined'){
+    showToast('❌ مكتبة PPTX لم تُحمَّل بعد، انتظر ثانية وحاول مجدداً',true);return;
+  }
+  if(currentUser&&currentUser.role==='viewer'){showToast('🚫 ليس لديك صلاحية التصدير',true);return;}
+
+  showToast('⏳ جاري إنشاء ملف PowerPoint...');
+
+  var pptx=new PptxGenJS();
+  pptx.layout='LAYOUT_16x9';
+  pptx.rtl=true;
+
+  /* ── الألوان والثوابت ── */
+  var C={
+    dark:'1A2033', navy:'0D3B66', green:'1D8A4E', lightGreen:'E8F5EE',
+    blue:'1A5276', lightBlue:'E8F0FB', purple:'6C3483', lightPurple:'F3E8FD',
+    red:'C0392B', lightRed:'FDECEA', amber:'F39C12', lightAmber:'FEF9E7',
+    white:'FFFFFF', offWhite:'F5F8FC', gray:'888888', lightGray:'E8EEF5',
+    textDark:'1A2033', textMid:'555555', textLight:'888888'
+  };
+
+  /* ── الخط الافتراضي ── */
+  var FONT='Arial';
+
+  /* بيانات مفلترة */
+  var FDP=getData();
+  var today=new Date().toLocaleDateString('ar-SA');
+
+  /* إحصاءات */
+  var ok=FDP.filter(function(d){return d.st==='مستمرة';}).length;
+  var ended=FDP.filter(function(d){return d.st==='منتهية';}).length;
+  var notStart=FDP.filter(function(d){return d.st==='لم تبدأ';}).length;
+  var ctyL=FDP.filter(function(d){return d.ty==='لجنة';}).length;
+  var ctyM=FDP.filter(function(d){return d.ty==='مجلس';}).length;
+  var ctyDI=FDP.filter(function(d){return d.ty==='لجنة دولية مشتركة';}).length;
+  var ctyMD=FDP.filter(function(d){return d.ty==='مجلس تنسيقي دولي';}).length;
+  var ctyF=FDP.filter(function(d){return d.ty==='فرق عمل';}).length;
+  var internal=FDP.filter(function(d){return d.sc==='داخلية';}).length;
+  var intl=FDP.filter(function(d){return d.sc==='خارجية دولية';}).length;
+  var pctOk=FDP.length?Math.round(ok/FDP.length*100):0;
+
+  /* تكليفات */
+  var allTasks=[];
+  FDP.forEach(function(d){
+    var di=D.indexOf(d);
+    GM(di).forEach(function(m,mi){
+      m.tasks.forEach(function(t){
+        allTasks.push({committee:d.n,task:t.task||t.text||t.title||'—',assignee:t.responsible||t.assignee||'—',status:t.status||'—'});
+      });
+    });
+  });
+  var tDone=allTasks.filter(function(t){return t.status==='منجز';}).length;
+  var tWip=allTasks.filter(function(t){return t.status==='جارٍ';}).length;
+  var tLate=allTasks.filter(function(t){return t.status==='متأخر';}).length;
+  var tWait=allTasks.filter(function(t){return t.status==='قيد الانتظار';}).length;
+  var pctDone=allTasks.length?Math.round(tDone/allTasks.length*100):0;
+
+  /* ════════════════════════════════════════
+     الشريحة 1 — الغلاف
+  ════════════════════════════════════════ */
+  var slide1=pptx.addSlide();
+  /* خلفية داكنة */
+  slide1.background={color:C.dark};
+  /* مستطيل جانبي أخضر */
+  slide1.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.15,h:7.5,fill:{color:C.green}});
+  /* شريط علوي */
+  slide1.addShape(pptx.ShapeType.rect,{x:0,y:0,w:10,h:1.2,fill:{color:C.navy}});
+  /* عنوان الوزارة */
+  slide1.addText('المملكة العربية السعودية — وزارة التعليم — وكالة التعاون الدولي',{
+    x:0.3,y:0.15,w:9.5,h:0.5,fontSize:12,color:C.white,fontFace:FONT,
+    align:'right',bold:false,transparency:20
+  });
+  /* العنوان الرئيسي */
+  var titleText=pMode==='tasks'?'تقرير التكليفات':'تقرير المجالس واللجان';
+  slide1.addText(titleText,{
+    x:0.3,y:1.8,w:9.5,h:1.4,fontSize:40,color:C.white,fontFace:FONT,
+    align:'center',bold:true
+  });
+  /* خط فاصل */
+  slide1.addShape(pptx.ShapeType.rect,{x:3.5,y:3.4,w:3,h:0.06,fill:{color:C.green}});
+  /* التاريخ */
+  slide1.addText('📅  '+today,{
+    x:0.3,y:3.6,w:9.5,h:0.5,fontSize:14,color:'AAAAAA',fontFace:FONT,align:'center'
+  });
+  /* إحصاءات الغلاف */
+  var coverStats=pMode==='tasks'?
+    [{n:allTasks.length,l:'إجمالي التكليفات'},{n:tDone,l:'منجز'},{n:tLate,l:'متأخر'},{n:tWip,l:'جارٍ'}]:
+    [{n:FDP.length,l:'إجمالي اللجان'},{n:ok,l:'مستمرة'},{n:ctyL,l:'لجنة'},{n:ctyM,l:'مجلس'}];
+  coverStats.forEach(function(s,i){
+    var x=1.2+i*2.0;
+    slide1.addShape(pptx.ShapeType.rect,{x:x,y:4.5,w:1.6,h:1.4,fill:{color:'1E2D45'},line:{color:'2A4A70',width:1},rectRadius:0.1});
+    slide1.addText(String(s.n),{x:x,y:4.6,w:1.6,h:0.7,fontSize:28,color:C.white,fontFace:FONT,align:'center',bold:true});
+    slide1.addText(s.l,{x:x,y:5.3,w:1.6,h:0.5,fontSize:10,color:'AAAAAA',fontFace:FONT,align:'center'});
+  });
+  slide1.addText('وحدة المجالس واللجان — وكالة التعاون الدولي',{
+    x:0.3,y:6.9,w:9.5,h:0.4,fontSize:10,color:'666666',fontFace:FONT,align:'center'
+  });
+
+  /* ════════════════════════════════════════
+     شريحة اللجان
+  ════════════════════════════════════════ */
+  if(pMode!=='tasks'){
+    /* ── الشريحة 2: ملخص إحصائي ── */
+    var slide2=pptx.addSlide();
+    slide2.background={color:C.offWhite};
+    /* رأس الشريحة */
+    slide2.addShape(pptx.ShapeType.rect,{x:0,y:0,w:10,h:1.1,fill:{color:C.navy}});
+    slide2.addText('ملخص الإحصائيات',{x:0.3,y:0.15,w:9,h:0.8,fontSize:22,color:C.white,fontFace:FONT,align:'right',bold:true});
+    slide2.addText(today,{x:0.3,y:0.15,w:9,h:0.8,fontSize:12,color:'AAAAAA',fontFace:FONT,align:'left'});
+
+    /* بطاقات KPI */
+    var kpis=[
+      {n:FDP.length,l:'إجمالي اللجان والمجالس',c:C.navy,bg:'EAF2FB'},
+      {n:ok+' ('+pctOk+'%)',l:'لجنة مستمرة',c:C.green,bg:C.lightGreen},
+      {n:ended,l:'لجنة منتهية',c:C.amber,bg:C.lightAmber},
+      {n:notStart,l:'لم تبدأ',c:C.red,bg:C.lightRed}
+    ];
+    kpis.forEach(function(k,i){
+      var x=0.3+i*2.4;
+      slide2.addShape(pptx.ShapeType.rect,{x:x,y:1.3,w:2.2,h:1.5,fill:{color:k.bg},line:{color:k.c,width:1.5},rectRadius:0.1});
+      slide2.addText(String(k.n),{x:x,y:1.4,w:2.2,h:0.8,fontSize:26,color:k.c,fontFace:FONT,align:'center',bold:true});
+      slide2.addText(k.l,{x:x,y:2.2,w:2.2,h:0.5,fontSize:11,color:C.textMid,fontFace:FONT,align:'center'});
+    });
+
+    /* جدول التوزيع حسب النوع */
+    slide2.addText('التوزيع حسب النوع',{x:0.3,y:3.1,w:9,h:0.4,fontSize:14,color:C.navy,fontFace:FONT,align:'right',bold:true,
+      border:[{type:'none'},{type:'none'},{type:'solid',pt:2,color:C.green},{type:'none'}]
+    });
+    var typeData=[
+      ['النوع','العدد','النسبة'],
+      ['لجنة',ctyL,(FDP.length?Math.round(ctyL/FDP.length*100):0)+'%'],
+      ['مجلس',ctyM,(FDP.length?Math.round(ctyM/FDP.length*100):0)+'%'],
+      ['مجلس تنسيقي دولي',ctyMD,(FDP.length?Math.round(ctyMD/FDP.length*100):0)+'%'],
+      ['لجنة دولية مشتركة',ctyDI,(FDP.length?Math.round(ctyDI/FDP.length*100):0)+'%'],
+      ['فرق عمل',ctyF,(FDP.length?Math.round(ctyF/FDP.length*100):0)+'%'],
+    ];
+    slide2.addTable(typeData,{
+      x:0.3,y:3.5,w:4.5,colW:[2.5,1,1],
+      border:{type:'solid',pt:0.5,color:C.lightGray},
+      fill:{color:C.white},
+      fontSize:11,fontFace:FONT,align:'right',
+      rowH:0.35,
+      firstRowCellFill:{color:C.navy},
+      firstRowCellFontColor:C.white,
+      firstRowFontBold:true
+    });
+
+    /* جدول النطاق */
+    var scopeData=[
+      ['النطاق','العدد'],
+      ['داخلية',internal],
+      ['خارجية دولية',intl],
+      ['خارج نطاق الوزارة',FDP.length-internal-intl]
+    ];
+    slide2.addTable(scopeData,{
+      x:5.2,y:3.5,w:4.5,colW:[3,1.5],
+      border:{type:'solid',pt:0.5,color:C.lightGray},
+      fill:{color:C.white},
+      fontSize:11,fontFace:FONT,align:'right',
+      rowH:0.35,
+      firstRowCellFill:{color:C.navy},
+      firstRowCellFontColor:C.white,
+      firstRowFontBold:true
+    });
+
+    /* ── الشريحة 3: بيانات اللجان (أول 20) ── */
+    var slide3=pptx.addSlide();
+    slide3.background={color:C.offWhite};
+    slide3.addShape(pptx.ShapeType.rect,{x:0,y:0,w:10,h:1.1,fill:{color:C.navy}});
+    slide3.addText('قائمة المجالس واللجان',{x:0.3,y:0.15,w:9,h:0.8,fontSize:22,color:C.white,fontFace:FONT,align:'right',bold:true});
+    slide3.addText('أول 20 لجنة من أصل '+FDP.length,{x:0.3,y:0.55,w:9,h:0.4,fontSize:10,color:'AAAAAA',fontFace:FONT,align:'right'});
+
+    var commRows=[['اسم اللجنة / المجلس','الممثل','الدور','النوع','الحالة']];
+    FDP.slice(0,20).forEach(function(d){
+      commRows.push([d.n.substring(0,40),d.r||'—',d.ro||'—',d.ty||'—',d.st||'—']);
+    });
+    slide3.addTable(commRows,{
+      x:0.2,y:1.2,w:9.6,colW:[3.5,2,1.3,1.5,1.3],
+      border:{type:'solid',pt:0.5,color:C.lightGray},
+      fill:{color:C.white},
+      fontSize:9,fontFace:FONT,align:'right',
+      rowH:0.28,
+      firstRowCellFill:{color:C.navy},
+      firstRowCellFontColor:C.white,
+      firstRowFontBold:true,
+      altFill:[{color:'F5F8FC'}]
+    });
+  }
+
+  /* ════════════════════════════════════════
+     شرائح التكليفات
+  ════════════════════════════════════════ */
+  if(pMode==='tasks'||pMode==='all'){
+    /* ── شريحة إحصاءات التكليفات ── */
+    var slideT=pptx.addSlide();
+    slideT.background={color:C.offWhite};
+    slideT.addShape(pptx.ShapeType.rect,{x:0,y:0,w:10,h:1.1,fill:{color:'4A2080'}});
+    slideT.addText('إحصاءات التكليفات',{x:0.3,y:0.15,w:9,h:0.8,fontSize:22,color:C.white,fontFace:FONT,align:'right',bold:true});
+
+    var tkpis=[
+      {n:allTasks.length,l:'إجمالي التكليفات',c:'4A2080',bg:'F3E8FD'},
+      {n:tDone+' ('+pctDone+'%)',l:'منجز',c:C.green,bg:C.lightGreen},
+      {n:tWip,l:'جارٍ',c:C.blue,bg:C.lightBlue},
+      {n:tLate,l:'متأخر',c:C.red,bg:C.lightRed}
+    ];
+    tkpis.forEach(function(k,i){
+      var x=0.3+i*2.4;
+      slideT.addShape(pptx.ShapeType.rect,{x:x,y:1.3,w:2.2,h:1.5,fill:{color:k.bg},line:{color:k.c,width:1.5},rectRadius:0.1});
+      slideT.addText(String(k.n),{x:x,y:1.4,w:2.2,h:0.8,fontSize:24,color:k.c,fontFace:FONT,align:'center',bold:true});
+      slideT.addText(k.l,{x:x,y:2.2,w:2.2,h:0.5,fontSize:11,color:C.textMid,fontFace:FONT,align:'center'});
+    });
+
+    /* جدول التكليفات (أول 25) */
+    slideT.addText('قائمة التكليفات',{x:0.3,y:3.1,w:9,h:0.4,fontSize:14,color:'4A2080',fontFace:FONT,align:'right',bold:true});
+    var taskRows=[['اللجنة / المجلس','التكليف','المسؤول','الحالة']];
+    allTasks.slice(0,25).forEach(function(t){
+      taskRows.push([
+        t.committee.substring(0,35),
+        t.task.substring(0,45),
+        t.assignee||'—',
+        t.status||'—'
+      ]);
+    });
+    slideT.addTable(taskRows,{
+      x:0.2,y:3.5,w:9.6,colW:[2.8,3.8,1.7,1.3],
+      border:{type:'solid',pt:0.5,color:C.lightGray},
+      fill:{color:C.white},
+      fontSize:9,fontFace:FONT,align:'right',
+      rowH:0.28,
+      firstRowCellFill:{color:'4A2080'},
+      firstRowCellFontColor:C.white,
+      firstRowFontBold:true,
+      altFill:[{color:'F5F8FC'}]
+    });
+
+    /* شريحة التكليفات المتأخرة */
+    if(tLate>0){
+      var lateItems=allTasks.filter(function(t){return t.status==='متأخر';});
+      var slideLate=pptx.addSlide();
+      slideLate.background={color:C.offWhite};
+      slideLate.addShape(pptx.ShapeType.rect,{x:0,y:0,w:10,h:1.1,fill:{color:C.red}});
+      slideLate.addText('⚠ التكليفات المتأخرة ('+lateItems.length+')',{
+        x:0.3,y:0.15,w:9,h:0.8,fontSize:22,color:C.white,fontFace:FONT,align:'right',bold:true
+      });
+      var lateRows=[['اللجنة / المجلس','التكليف','المسؤول']];
+      lateItems.slice(0,30).forEach(function(t){
+        lateRows.push([t.committee.substring(0,35),t.task.substring(0,50),t.assignee||'—']);
+      });
+      slideLate.addTable(lateRows,{
+        x:0.2,y:1.2,w:9.6,colW:[3,5,1.6],
+        border:{type:'solid',pt:0.5,color:C.lightGray},
+        fill:{color:C.white},
+        fontSize:9,fontFace:FONT,align:'right',
+        rowH:0.28,
+        firstRowCellFill:{color:C.red},
+        firstRowCellFontColor:C.white,
+        firstRowFontBold:true
+      });
+    }
+  }
+
+  /* ── الشريحة الختامية ── */
+  var slideLast=pptx.addSlide();
+  slideLast.background={color:C.dark};
+  slideLast.addShape(pptx.ShapeType.rect,{x:0,y:0,w:10,h:0.1,fill:{color:C.green}});
+  slideLast.addShape(pptx.ShapeType.rect,{x:0,y:7.4,w:10,h:0.1,fill:{color:C.green}});
+  slideLast.addText('شكراً',{x:0,y:2.5,w:10,h:1.2,fontSize:44,color:C.white,fontFace:FONT,align:'center',bold:true});
+  slideLast.addText('وحدة المجالس واللجان — وكالة التعاون الدولي — وزارة التعليم',{
+    x:0,y:4,w:10,h:0.5,fontSize:13,color:'AAAAAA',fontFace:FONT,align:'center'
+  });
+  slideLast.addText(today,{x:0,y:4.6,w:10,h:0.4,fontSize:11,color:'666666',fontFace:FONT,align:'center'});
+
+  /* ── تصدير الملف ── */
+  var filename=(pMode==='tasks'?'تقرير-التكليفات':'تقرير-المجالس-واللجان')+'-'+today.replace(/\//g,'-')+'.pptx';
+  pptx.writeFile({fileName:filename})
+    .then(function(){showToast('✅ تم تصدير ملف PowerPoint بنجاح');})
+    .catch(function(e){showToast('❌ خطأ في التصدير: '+e.message,true);});
+}
+
 function dashPrint(printMode){
   if(currentUser&&currentUser.role==='viewer'){showToast('🚫 ليس لديك صلاحية الطباعة',true);return;}
   var pMode=printMode||'all';
@@ -3844,7 +4129,13 @@ async function loadAuthUsers(){
   try{
     var rows=await sbFetch('lajan_users?select=email,role,name,last_login,permissions&order=email.asc');
     AUTH_USERS=rows||[];
-  }catch(e){AUTH_USERS=[];}
+  }catch(e){
+    /* إذا فشل (مثلاً عمود permissions غير موجود) — جرب بدونه */
+    try{
+      var rows2=await sbFetch('lajan_users?select=email,role,name,last_login&order=email.asc');
+      AUTH_USERS=(rows2||[]).map(function(u){u.permissions=u.permissions||{};return u;});
+    }catch(e2){AUTH_USERS=[];}
+  }
 }
 
 function saveAuthUsers(){/* يتم الحفظ مباشرة في Supabase عند كل تغيير */}
@@ -4299,6 +4590,14 @@ function openAdminPanel(){
   loadAuthUsers().then(function(){renderUsersList();}).catch(function(){renderUsersList();});
 }
 
+function fmtLastLogin(ts){
+  if(!ts)return'لم يدخل بعد';
+  var d=new Date(ts),now=new Date(),diff=Math.floor((now-d)/60000);
+  if(diff<1)return'الآن';
+  if(diff<60)return'منذ '+diff+' دقيقة';
+  if(diff<1440)return'منذ '+Math.floor(diff/60)+' ساعة';
+  return d.toLocaleDateString('ar-SA')+' '+d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+}
 function renderUsersList(){
   var el=document.getElementById('usersList');
   if(!el)return;
