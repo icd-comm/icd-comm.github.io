@@ -4132,16 +4132,23 @@ async function hashPassword(pass){
 
 /* ── تحميل المستخدمين من Supabase ── */
 async function loadAuthUsers(){
-  try{
-    var rows=await sbFetch('lajan_users?select=email,role,name,last_login,permissions&order=email.asc');
-    AUTH_USERS=rows||[];
-  }catch(e){
-    /* إذا فشل (مثلاً عمود permissions غير موجود) — جرب بدونه */
+  /* نجرب الأعمدة تدريجياً من الأشمل للأبسط */
+  var queries=[
+    'lajan_users?select=email,role,permissions&order=email.asc',
+    'lajan_users?select=email,role&order=email.asc'
+  ];
+  for(var qi=0;qi<queries.length;qi++){
     try{
-      var rows2=await sbFetch('lajan_users?select=email,role,name,last_login&order=email.asc');
-      AUTH_USERS=(rows2||[]).map(function(u){u.permissions=u.permissions||{};return u;});
-    }catch(e2){AUTH_USERS=[];}
+      var rows=await sbFetch(queries[qi]);
+      if(rows&&rows.length>=0){
+        AUTH_USERS=rows.map(function(u){
+          return {email:u.email,role:u.role,permissions:u.permissions||{},last_login:u.last_login||null,name:u.name||''};
+        });
+        return;
+      }
+    }catch(e){}
   }
+  AUTH_USERS=[];
 }
 
 function saveAuthUsers(){/* يتم الحفظ مباشرة في Supabase عند كل تغيير */}
