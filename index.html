@@ -2457,14 +2457,15 @@ if((f==='tasks'||f==='all')&&aT.length){
    تصدير PowerPoint — محتوى قابل للتعديل (PptxGenJS)
    ══════════════════════════════════════════════════════ */
 async function exportPPTX(pMode){
-  if(typeof PptxGenJS==='undefined'){
+  var _PptxCls=typeof PptxGenJS!=='undefined'?PptxGenJS:(typeof pptxgen!=='undefined'?pptxgen:null);
+  if(!_PptxCls){
     showToast('❌ مكتبة PPTX لم تُحمَّل بعد، انتظر ثانية وحاول مجدداً',true);return;
   }
   if(currentUser&&currentUser.role==='viewer'){showToast('🚫 ليس لديك صلاحية التصدير',true);return;}
 
   showToast('⏳ جاري إنشاء ملف PowerPoint...');
 
-  var pptx=new PptxGenJS();
+  var pptx=new _PptxCls();
   pptx.layout='LAYOUT_16x9';
   pptx.rtl=true;
 
@@ -2481,7 +2482,7 @@ async function exportPPTX(pMode){
   var FONT='Arial';
 
   /* بيانات مفلترة */
-  var FDP=getData();
+  var FDP=getDashFiltered();
   var today=new Date().toLocaleDateString('ar-SA');
 
   /* إحصاءات */
@@ -2729,10 +2730,14 @@ async function exportPPTX(pMode){
   slideLast.addText(today,{x:0,y:4.6,w:10,h:0.4,fontSize:11,color:'666666',fontFace:FONT,align:'center'});
 
   /* ── تصدير الملف ── */
-  var filename=(pMode==='tasks'?'تقرير-التكليفات':'تقرير-المجالس-واللجان')+'-'+today.replace(/\//g,'-')+'.pptx';
+  var dateStr=new Date().toISOString().slice(0,10);
+  var filename=(pMode==='tasks'?'Tasks-Report':'Committees-Report')+'-'+dateStr+'.pptx';
   pptx.writeFile({fileName:filename})
-    .then(function(){showToast('✅ تم تصدير ملف PowerPoint بنجاح');})
-    .catch(function(e){showToast('❌ خطأ في التصدير: '+e.message,true);});
+    .then(function(){showToast('✅ تم تصدير ملف PowerPoint — تحقق من مجلد التنزيلات');})
+    .catch(function(err){
+      console.error('PPTX Error:',err);
+      showToast('❌ خطأ: '+( err&&err.message?err.message:String(err)),true);
+    });
 }
 
 function dashPrint(printMode){
@@ -2902,7 +2907,7 @@ function dashPrint(printMode){
     +'.cover-badge-num{font-size:48pt;font-weight:700;color:#fff;line-height:1}'
     +'.cover-badge-lbl{font-size:11pt;color:rgba(255,255,255,.65);margin-top:4px}'
     /* ── section card ── */
-    +'.sec{background:#fff;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;break-inside:avoid;page-break-inside:avoid}'
+    +'.sec{background:#fff;border-radius:12px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;break-inside:avoid;page-break-inside:avoid}'    +'.sec-hdr{break-after:avoid;page-break-after:avoid}'    +'.sec-body{break-before:avoid;page-break-before:avoid}'
     +'.sec-hdr{display:flex;align-items:center;gap:12px;padding:14px 20px;background:linear-gradient(90deg,#1a3a5c,#2c5282);}'
     +'.sec-icon{font-size:20pt}'
     +'.sec-title{font-size:15pt;font-weight:700;color:#fff}'
@@ -2951,8 +2956,9 @@ function dashPrint(printMode){
     +'body{background:#fff;font-size:11pt}'
     +'.report-wrap{max-width:100%;margin:0;padding:0}'
     +'.cover-hdr{border-radius:0}'
-    +'.sec{box-shadow:none;border:1px solid #d0d8e8;break-inside:avoid}'
-    +'.sec-hdr{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.sec{box-shadow:none;border:1px solid #d0d8e8;break-inside:avoid;page-break-inside:avoid}'
+    +'.sec-hdr{-webkit-print-color-adjust:exact;print-color-adjust:exact;break-after:avoid;page-break-after:avoid}'
+    +'.sec-body{break-before:avoid;page-break-before:avoid}'
     +'.kpi-card{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     +'.type-card{-webkit-print-color-adjust:exact;print-color-adjust:exact;break-inside:avoid;page-break-inside:avoid}'
     +'.cover-page{page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact;min-height:100vh}'
@@ -2967,10 +2973,10 @@ function dashPrint(printMode){
     +'.exec{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     +'.insight{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     +'.chart-grid-3{grid-template-columns:repeat(3,1fr)}'
-    +'.type-grid{grid-template-columns:repeat(3,1fr)}'
+    +'.type-grid{grid-template-columns:repeat(2,1fr)}'
     +'.kpi-grid{grid-template-columns:repeat(4,1fr)}'
     +'.pg-break{page-break-before:always}'
-    +'canvas{max-width:100%!important}'
+    +'canvas{max-width:100%!important}'    +'.kpi-grid{break-inside:avoid;page-break-inside:avoid}'    +'.type-grid{break-inside:avoid;page-break-inside:avoid}'    +'.chart-grid-2{break-inside:avoid;page-break-inside:avoid}'    +'.chart-grid-3{break-inside:avoid;page-break-inside:avoid}'    +'.chart-box{break-inside:avoid;page-break-inside:avoid}'    +'.insight{break-before:avoid;page-break-before:avoid}'
     +'@page{margin:10mm;size:A4 landscape}'
     +'}'
     +'</style>'
@@ -3186,9 +3192,9 @@ function dashPrint(printMode){
           allTasks.push({
             committee:d.n,
             meeting:m.date||('اجتماع '+(mi+1)),
-            task:t.text||t.title||t.t||'—',
-            assignee:t.assignee||t.as||'—',
-            due:t.due||t.d||'—',
+            task:t.task||t.text||t.title||'—',
+            assignee:t.responsible||t.assignee||'—',
+            due:t.dateTo||t.due||t.d||'—',
             status:t.status||t.st||'—'
           });
         });
