@@ -649,7 +649,7 @@ html,body{max-width:100vw;overflow-x:hidden}
 <div class="cfi"><div class="cflbl">ممثل بديل</div><input id="cf_ar" class="cfinp" type="text"></div>
 <div class="cfi"><div class="cflbl">الدور</div><select id="cf_ro" class="cfsel"><option>عضو</option><option>رئيس</option><option>مشارك</option><option>مشارك - وليس عضو</option><option>غير معروف</option></select></div>
 <div class="cfi"><div class="cflbl">الحالة</div><select id="cf_st" class="cfsel"><option>مستمرة</option><option>منتهية</option><option>لم تبدأ</option><option>متعثرة</option><option>غير معروف</option></select></div>
-<div class="cfi"><div class="cflbl">النوع</div><select id="cf_ty" class="cfsel"><option>لجنة</option><option>فرق عمل</option><option>مجلس</option><option>مجلس تنسيقي دولي</option></select></div>
+<div class="cfi"><div class="cflbl">النوع</div><select id="cf_ty" class="cfsel"><option>لجنة</option><option>فرق عمل</option><option>مجلس</option><option>مجلس تنسيقي دولي</option><option>لجنة دولية مشتركة</option></select></div>
 <div class="cfi"><div class="cflbl">المدة</div><select id="cf_du" class="cfsel"><option>دائمة</option><option>مؤقته</option></select></div>
 <div class="cfi"><div class="cflbl">النطاق</div><select id="cf_sc" class="cfsel"><option>داخلية</option><option>خارجية دولية</option><option>خارج نطاق الوزارة</option></select></div>
 <div class="cfi"><div class="cflbl">الرئاسة</div><input id="cf_ch" class="cfinp" type="text"></div>
@@ -2344,7 +2344,7 @@ function cntFD(arr,key){
 var stColors={'مستمرة':'#27ae60','منتهية':'#636e72','لم تبدأ':'#f39c12','متعثرة':'#e74c3c','غير معروف':'#95a5a6'};
 var scColors={'داخلية':'#27ae60','خارجية دولية':'#2980b9','خارج نطاق الوزارة':'#8e44ad','خارجية':'#38b6e8','غير معروف':'#bdc3c7'};
 var roColors={'عضو':'#2980b9','رئيس':'#9b59b6','مشارك - وليس عضو':'#1d6a3b','مشارك':'#16a085','غير معروف':'#95a5a6'};
-var tyColors={'لجنة':'#1d8a4e','مجلس تنسيقي دولي':'#2c1654','فرق عمل':'#8e44ad','مجلس':'#1a5276','غير معروف':'#95a5a6'};
+var tyColors={'لجنة':'#1d8a4e','مجلس تنسيقي دولي':'#2c1654','فرق عمل':'#8e44ad','مجلس':'#1a5276','لجنة دولية مشتركة':'#c0392b','غير معروف':'#95a5a6'};
 var duColors={'دائمة':'#1a5276','مؤقته':'#e67e22','غير معروف':'#95a5a6'};
 var origColors={'أساسية':'#1d6a3b','منبثقة':'#f39c12','غير معروف':'#95a5a6'};
 function colsFor(keys,map){return keys.map(function(k){return map[k]||'#aaa';});}
@@ -2477,6 +2477,7 @@ function dashPrint(printMode){
   var ctyF=FDP.filter(function(d){return d.ty==='فرق عمل';}).length;
   var ctyM=FDP.filter(function(d){return d.ty==='مجلس';}).length;
   var ctyMD=FDP.filter(function(d){return d.ty==='مجلس تنسيقي دولي';}).length;
+  var ctyDI=FDP.filter(function(d){return d.ty==='لجنة دولية مشتركة';}).length;
   var durP=FDP.filter(function(d){return d.du==='دائمة';}).length;
   var durT=FDP.filter(function(d){return d.du==='مؤقته';}).length;
   var origA=FDP.filter(function(d){return d.orig==='أساسية';}).length;
@@ -2541,6 +2542,7 @@ function dashPrint(printMode){
     {ty:'لجنة',          icon:'📋',col:'#1d8a4e', total:ctyL},
     {ty:'مجلس',          icon:'🏛️',col:'#1a5276', total:ctyM},
     {ty:'مجلس تنسيقي دولي',icon:'🌐',col:'#2c1654',total:ctyMD},
+    {ty:'لجنة دولية مشتركة',icon:'🤝',col:'#c0392b',total:ctyDI},
     {ty:'فرق عمل',       icon:'👥',col:'#8e44ad', total:ctyF}
   ];
 
@@ -2549,7 +2551,7 @@ function dashPrint(printMode){
     ok:ok,dn2:dn2,bl:bl,ns:ns,unk:unk,
     inn:inn,outt_intl:outt_intl_merged,outt_ext:outt_ext,sc_unk:sc_unk,
     hd:hd,mem:mem,part:part,partNM:partNonMember,
-    ctyL:ctyL,ctyF:ctyF,ctyM:ctyM,ctyMD:ctyMD,
+    ctyL:ctyL,ctyF:ctyF,ctyM:ctyM,ctyMD:ctyMD,ctyDI:ctyDI,
     durP:durP,durT:durT,dur_unk:dur_unk,
     origA:origA,origB:origB,orig_unk:orig_unk,
     tm:tm,tt:tt,tDone:tDone,tWip:tWip,tWait:tWait,tLate:tLate,
@@ -2752,7 +2754,7 @@ function dashPrint(printMode){
       +'<div class="sec-body"><div class="chart-grid-3">'
       +'<div class="chart-box"><div class="chart-title">🔵 توزيع حسب الحالة</div><div class="chart-sub">مستمرة / منتهية / متعثرة / لم تبدأ</div><canvas id="cStatus" width="290" height="220"></canvas></div>'
       +'<div class="chart-box"><div class="chart-title">🌍 النطاق الجغرافي</div><div class="chart-sub">داخلية / خارجية دولية / خارج نطاق الوزارة</div><canvas id="cScope" width="290" height="220"></canvas></div>'
-      +'<div class="chart-box"><div class="chart-title">📂 النوع والتصنيف</div><div class="chart-sub">لجنة / مجلس / مجلس تنسيقي / فرق عمل</div><canvas id="cType" width="290" height="220"></canvas></div>'
+      +'<div class="chart-box"><div class="chart-title">📂 النوع والتصنيف</div><div class="chart-sub">لجنة / مجلس / تنسيقي / دولية / فرق عمل</div><canvas id="cType" width="290" height="220"></canvas></div>'
       +'<div class="chart-box"><div class="chart-title">📅 المدة الزمنية</div><div class="chart-sub">دائمة مقابل مؤقتة</div><canvas id="cDur" width="290" height="200"></canvas></div>'
       +'<div class="chart-box"><div class="chart-title">🌱 أصل اللجنة</div><div class="chart-sub">أساسية مقابل منبثقة</div><canvas id="cOrig" width="290" height="200"></canvas></div>'
       +'<div class="chart-box"><div class="chart-title">👑 توزيع الأدوار</div><div class="chart-sub">رئيس / عضو / مشارك</div><canvas id="cRole" width="290" height="200"></canvas></div>'
@@ -2939,7 +2941,7 @@ if(_D.pMode==='committees'||_D.pMode==='all'){
   if(_D.sc_unk>0){scL.push('غير معروف');scV2.push(_D.sc_unk);}
   donut('cScope',scL,scV2,scL.map(function(l){return({'داخلية':'#27ae60','خارجية دولية':'#2980b9','خارج نطاق الوزارة':'#8e44ad','غير معروف':'#95a5a6'})[l]||'#aaa';}),null);
   /* النوع: لا يوجد غير معروف في البيانات الحالية */
-  bar('cType',['لجنة','مجلس','م.تنسيقي','فرق عمل'],[_D.ctyL,_D.ctyM,_D.ctyMD,_D.ctyF],['#1d8a4e','#1a5276','#2c1654','#8e44ad']);
+  bar('cType',['لجنة','مجلس','م.تنسيقي','ل.دولية مشتركة','فرق عمل'],[_D.ctyL,_D.ctyM,_D.ctyMD,_D.ctyDI,_D.ctyF],['#1d8a4e','#1a5276','#2c1654','#c0392b','#8e44ad']);
   /* المدة: + غير معروف إن وجد */
   var duL=['دائمة','مؤقتة'],duV=[_D.durP,_D.durT];
   if(_D.dur_unk>0){duL.push('غير معروف');duV.push(_D.dur_unk);}
@@ -3145,7 +3147,7 @@ function fH(v){
     +field('cfi','ممثل بديل',inp('far',v.ar))
     +field('cfi','الدور',sel('fro',['عضو','رئيس','مشارك','مشارك - وليس عضو','غير معروف'],v.ro))
     +field('cfi','الحالة',sel('fst',['مستمرة','منتهية','لم تبدأ','متعثرة','غير معروف'],v.st))
-    +field('cfi','النوع',sel('fty',['لجنة','فرق عمل','مجلس','مجلس تنسيقي دولي'],v.ty))
+    +field('cfi','النوع',sel('fty',['لجنة','فرق عمل','مجلس','مجلس تنسيقي دولي','لجنة دولية مشتركة'],v.ty))
     +field('cfi','المدة',sel('fdu',['دائمة','مؤقته'],v.du))
     +field('cfi','النطاق',sel('fsc',['داخلية','خارجية دولية','خارج نطاق الوزارة'],v.sc))
     +field('cfi','الرئاسة',inp('fch',v.ch))
@@ -4648,7 +4650,7 @@ function buildS1Filters(){
     ]},
     {id:'fTy',label:'النوع',options:[
       {v:'لجنة',l:'📋 لجنة'},{v:'مجلس',l:'🏛️ مجلس'},
-      {v:'مجلس تنسيقي دولي',l:'🌐 م.تنسيقي دولي'},{v:'فرق عمل',l:'👥 فرق عمل'}
+      {v:'مجلس تنسيقي دولي',l:'🌐 م.تنسيقي دولي'},{v:'لجنة دولية مشتركة',l:'🤝 ل.دولية مشتركة'},{v:'فرق عمل',l:'👥 فرق عمل'}
     ]},
     {id:'fDu',label:'المدة',options:[{v:'دائمة',l:'🔵 دائمة'},{v:'مؤقته',l:'🟡 مؤقتة'}]},
     {id:'fRo',label:'الدور',options:[
@@ -4674,7 +4676,7 @@ function buildS2Filters(){
     ]},
     {id:'df_ty',label:'النوع',options:[
       {v:'لجنة',l:'📋 لجنة'},{v:'مجلس',l:'🏛️ مجلس'},
-      {v:'مجلس تنسيقي دولي',l:'🌐 م.تنسيقي دولي'},{v:'فرق عمل',l:'👥 فرق عمل'}
+      {v:'مجلس تنسيقي دولي',l:'🌐 م.تنسيقي دولي'},{v:'لجنة دولية مشتركة',l:'🤝 ل.دولية مشتركة'},{v:'فرق عمل',l:'👥 فرق عمل'}
     ]},
     {id:'df_du',label:'المدة',options:[{v:'دائمة',l:'🔵 دائمة'},{v:'مؤقته',l:'🟡 مؤقتة'}]},
     {id:'df_ro',label:'الدور',options:[
