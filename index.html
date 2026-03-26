@@ -4211,7 +4211,7 @@ async function openTrashModal(){
         var exp=new Date(r.expires_at).toLocaleDateString('ar-SA');
         var typeLabel=r.item_type==='committee'?'لجنة':r.item_type==='meeting'?'اجتماع':'عنصر';
         return '<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #f0e0e0;border-radius:10px;margin-bottom:8px;background:#fff9f9">'
-          +'<div style="flex:1">'      +'<div style="font-size:9.5px;color:#888;margin-bottom:3px;font-family:Tahoma">'      +'🕐 آخر دخول: <b style="color:#1a5276">'+fmtLastLogin(u.last_login)+'</b></div>'
+          +'<div style="flex:1">'          +'<div style="font-size:9.5px;color:#888;margin-bottom:3px;font-family:Tahoma">🕐 تاريخ الحذف: <b style="color:#922b21">'+dt+'</b></div>'
           +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
           +'<span style="background:#f8d7da;color:#721c24;border-radius:5px;padding:1px 7px;font-size:9.5px;font-family:Tahoma;font-weight:700">'+typeLabel+'</span>'
           +'<span style="font-size:12.5px;font-weight:700;color:#1a2744;font-family:Tahoma">'+e(r.item_label||'عنصر')+'</span>'
