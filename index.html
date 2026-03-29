@@ -685,6 +685,7 @@ html,body{max-width:100vw;overflow-x:hidden}
       <input type="file" id="cf_sq_file" accept=".pdf,application/pdf" style="display:none">
     </label>
     <span id="cf_sq_file_name" style="font-size:11px;color:#555;font-family:Tahoma">لم يُختر ملف</span>
+    <button type="button" id="cf_sq_clear" onclick="clearPDFField('cf_sq','cf_sq_file','cf_sq_file_name','cf_sq_clear')" style="display:none;background:#e74c3c;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:Tahoma">✕ حذف</button>
     <input type="hidden" id="cf_sq" value="">
   </div>
 </div>
@@ -3719,7 +3720,7 @@ function tH(){autoUpdateOverdueTasks();if(!wt.length)return'<div id="tarea" styl
 function rfT(){var old=document.getElementById('tarea');var tmp=document.createElement('div');tmp.innerHTML=tH();old.parentNode.replaceChild(tmp.firstChild,old);wireT();}
 function attachRespAC(inp){inp.setAttribute('autocomplete','off');var drop=document.createElement('div');drop.style.cssText='position:absolute;z-index:9999;background:#fff;border:1.5px solid #c0a8e8;border-radius:9px;box-shadow:0 4px 18px rgba(44,22,84,.18);max-height:180px;overflow-y:auto;min-width:220px;display:none;font-size:11px;font-family:Tahoma,Arial;direction:rtl';document.body.appendChild(drop);function show(q2){var filtered=RESP_LIST.filter(function(r){return r.includes(q2);});if(!filtered.length||!q2){drop.style.display='none';return;}drop.innerHTML=filtered.map(function(r){return'<div class="ac-item" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid #f0ecff;color:#2c1654;font-weight:600">'+r+'</div>';}).join('');drop.querySelectorAll('.ac-item').forEach(function(item){item.onmousedown=function(ev2){ev2.preventDefault();inp.value=item.textContent;var ti2=parseInt(inp.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=item.textContent;drop.style.display='none';};item.onmouseover=function(){this.style.background='#ede8ff';};item.onmouseout=function(){this.style.background='';};});var rect=inp.getBoundingClientRect();drop.style.top=(rect.bottom+window.scrollY+2)+'px';drop.style.right=(window.innerWidth-rect.right)+'px';drop.style.display='block';}inp.addEventListener('input',function(){show(this.value);var ti2=parseInt(this.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=this.value;});inp.addEventListener('focus',function(){show(this.value||'');});inp.addEventListener('blur',function(){setTimeout(function(){drop.style.display='none';},150);});inp._acDrop=drop;}
 function wireT(){document.querySelectorAll('.ti').forEach(function(el){if(el.getAttribute('data-f')==='responsible'){attachRespAC(el);}else{el.oninput=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value;};}});document.querySelectorAll('.ts').forEach(function(el){el.onchange=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i].status=el.value;};});document.querySelectorAll('.tdl').forEach(function(el){el.onclick=function(){wt.splice(parseInt(el.getAttribute('data-ti')),1);rfT();};});}
-document.getElementById('smBody').innerHTML='<div style="background:linear-gradient(135deg,#ede8ff,#ddf0fb);border-radius:9px;padding:8px 12px;margin-bottom:11px;border-right:4px solid var(--s3-mid)"><div style="font-size:11px;font-weight:700">'+e(D[di].n)+'</div><div style="font-size:9.5px;color:var(--s3-accent);margin-top:1px">'+e(D[di].r)+' • '+D[di].ty+'</div></div><div class="mg2"><div class="mi"><div class="flbl">رقم الاجتماع</div><input id="smnum" class="finp" type="number" min="1" value="'+(m.meetNum||'')+'"></div><div class="mi"><div class="flbl">تاريخ الاجتماع</div><input id="smd" class="finp" type="date" style="direction:ltr;text-align:left" value="'+e(m.date||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl">مكان الاجتماع</div><input id="sml" class="finp" value="'+e(m.loc||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl" style="display:flex;align-items:center;justify-content:space-between">جدول الأعمال <button id="btnAA" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border:none;border-radius:6px;padding:2px 9px;font-size:10px;cursor:pointer;font-family:inherit">➕ إضافة بند</button></div><div id="agendaList" style="margin-top:4px"></div></div><div class="mi" style="grid-column:1/-1"><div class="flbl">ملاحظات</div><textarea id="smn" class="finp" rows="2" style="resize:vertical">'+e(m.notes||'')+'</textarea></div>'    +'<div class="mi" style="grid-column:1/-1">'      +'<div class="flbl">📄 محضر الاجتماع (PDF)</div>'      +'<div style="display:flex;align-items:center;gap:10px;margin-top:4px">'        +'<label style="display:inline-flex;align-items:center;gap:7px;background:#f0f8ff;border:1.5px dashed #1a5276;border-radius:10px;padding:9px 16px;cursor:pointer;font-size:12px;color:#1a5276;font-family:Tahoma;white-space:nowrap;flex-shrink:0">'          +'📎 اختر ملف PDF <input type="file" id="smm_file" accept=".pdf,application/pdf" style="display:none">'        +'</label>'        +'<span id="smm_file_name" style="font-size:11px;color:#555;font-family:Tahoma">لم يُختر ملف</span>'        +'<button type="button" id="smm_view_btn" style="display:none;background:#27ae60;color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:Tahoma">👁 عرض</button>'      +'</div>'      +'<input type="hidden" id="smm" value="'+e(m.minutes_pdf||'')+'">'    +'</div>'  +'</div><div class="s3stitle"><span>📌 التكليفات</span><button id="btnAT" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">➕ إضافة تكليف</button></div>'+tH()+'<div style="display:flex;gap:7px;margin-top:12px"><button id="btnSaveSM" style="flex:1;background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;border:none;border-radius:9px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit">💾 '+(isNew?'إضافة':'حفظ')+'</button><button id="btnCancelSM" style="background:#e9ecef;color:#555;border:none;border-radius:9px;padding:8px 13px;font-size:12px;cursor:pointer;font-family:inherit">إلغاء</button></div>';
+document.getElementById('smBody').innerHTML='<div style="background:linear-gradient(135deg,#ede8ff,#ddf0fb);border-radius:9px;padding:8px 12px;margin-bottom:11px;border-right:4px solid var(--s3-mid)"><div style="font-size:11px;font-weight:700">'+e(D[di].n)+'</div><div style="font-size:9.5px;color:var(--s3-accent);margin-top:1px">'+e(D[di].r)+' • '+D[di].ty+'</div></div><div class="mg2"><div class="mi"><div class="flbl">رقم الاجتماع</div><input id="smnum" class="finp" type="number" min="1" value="'+(m.meetNum||'')+'"></div><div class="mi"><div class="flbl">تاريخ الاجتماع</div><input id="smd" class="finp" type="date" style="direction:ltr;text-align:left" value="'+e(m.date||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl">مكان الاجتماع</div><input id="sml" class="finp" value="'+e(m.loc||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl" style="display:flex;align-items:center;justify-content:space-between">جدول الأعمال <button id="btnAA" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border:none;border-radius:6px;padding:2px 9px;font-size:10px;cursor:pointer;font-family:inherit">➕ إضافة بند</button></div><div id="agendaList" style="margin-top:4px"></div></div><div class="mi" style="grid-column:1/-1"><div class="flbl">ملاحظات</div><textarea id="smn" class="finp" rows="2" style="resize:vertical">'+e(m.notes||'')+'</textarea></div>'    +'<div class="mi" style="grid-column:1/-1">'      +'<div class="flbl">📄 محضر الاجتماع (PDF)</div>'      +'<div style="display:flex;align-items:center;gap:10px;margin-top:4px">'        +'<label style="display:inline-flex;align-items:center;gap:7px;background:#f0f8ff;border:1.5px dashed #1a5276;border-radius:10px;padding:9px 16px;cursor:pointer;font-size:12px;color:#1a5276;font-family:Tahoma;white-space:nowrap;flex-shrink:0">'          +'📎 اختر ملف PDF <input type="file" id="smm_file" accept=".pdf,application/pdf" style="display:none">'        +'</label>'        +'<span id="smm_file_name" style="font-size:11px;color:#555;font-family:Tahoma">لم يُختر ملف</span>'        +'<button type="button" id="smm_view_btn" style="display:none;background:#27ae60;color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:Tahoma">👁 عرض</button>'        +'<button type="button" id="smm_clear" onclick="clearMeetingMinutes()" style="display:none;background:#e74c3c;color:#fff;border:none;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:Tahoma">✕ حذف</button>'      +'</div>'      +'<input type="hidden" id="smm" value="'+e(m.minutes_pdf||'')+'">'    +'</div>'  +'</div><div class="s3stitle"><span>📌 التكليفات</span><button id="btnAT" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">➕ إضافة تكليف</button></div>'+tH()+'<div style="display:flex;gap:7px;margin-top:12px"><button id="btnSaveSM" style="flex:1;background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;border:none;border-radius:9px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit">💾 '+(isNew?'إضافة':'حفظ')+'</button><button id="btnCancelSM" style="background:#e9ecef;color:#555;border:none;border-radius:9px;padding:8px 13px;font-size:12px;cursor:pointer;font-family:inherit">إلغاء</button></div>';
 setTimeout(function(){aH();var ba=document.getElementById('btnAA');if(ba)ba.onclick=function(){wA.push({text:''});aH();setTimeout(function(){var ii=document.querySelectorAll('.ai-inp');if(ii.length)ii[ii.length-1].focus();},40);};},30);
 document.getElementById('btnAT').onclick=function(){wt.push({task:'',responsible:'',status:'قيد الانتظار',dateFrom:'',dateTo:''});rfT();};
 document.getElementById('btnSaveSM').onclick=function(){document.querySelectorAll('.ti').forEach(function(el){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value.trim();});document.querySelectorAll('.ts').forEach(function(el){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i].status=el.value;});document.querySelectorAll('.ai-inp').forEach(function(el){var i=parseInt(el.getAttribute('data-ai'));if(wA[i])wA[i].text=el.value.trim();});var obj=isNew?NM():GM(di)[mi];obj.meetNum=parseInt(document.getElementById('smnum').value)||0;var _smd=document.getElementById('smd');obj.date=_smd?_smd.value.trim():'';var _sml=document.getElementById('sml');obj.loc=_sml?_sml.value.trim():'';obj.agendaItems=wA.filter(function(a){return a.text;});obj.agenda=obj.agendaItems.map(function(a,i){return(i+1)+'. '+a.text;}).join('\n');var _smn=document.getElementById('smn');obj.notes=_smn?_smn.value.trim():'';
@@ -3763,7 +3764,7 @@ function fH(v){
     +field('cfi','أصل اللجنة',sel('forig',['أساسية','منبثقة'],v.orig||'أساسية'))
     +field('cfi','أمين اللجنة/المجلس',inp('fsec',v.sec||''))
     +field('cfi full','ملاحظات',inp('fno',v.no))
-    +field('cfi full','📄 صورة القرار',    '<div style="display:flex;align-items:center;gap:10px">'    +'<label style="display:inline-flex;align-items:center;gap:7px;background:#f8f0ff;border:1.5px dashed #9b59b6;border-radius:10px;padding:9px 16px;cursor:pointer;font-size:12px;color:#6c3483;font-family:Tahoma;white-space:nowrap;flex-shrink:0">'    +'📎 اختر ملف PDF'    +'<input type="file" id="fsq_file" accept=".pdf,application/pdf" style="display:none">'    +'</label>'    +'<span id="fsq_file_name" style="font-size:11px;color:#555;font-family:Tahoma">لم يُختر ملف</span>'    +'<input type="hidden" id="fsq" value="">'    +'</div>')
+    +field('cfi full','📄 صورة القرار',    '<div style="display:flex;align-items:center;gap:10px">'    +'<label style="display:inline-flex;align-items:center;gap:7px;background:#f8f0ff;border:1.5px dashed #9b59b6;border-radius:10px;padding:9px 16px;cursor:pointer;font-size:12px;color:#6c3483;font-family:Tahoma;white-space:nowrap;flex-shrink:0">'    +'📎 اختر ملف PDF'    +'<input type="file" id="fsq_file" accept=".pdf,application/pdf" style="display:none">'    +'</label>'    +'<span id="fsq_file_name" style="font-size:11px;color:#555;font-family:Tahoma">لم يُختر ملف</span>'    +'<button type="button" id="fsq_clear" onclick="clearPDFField(\'fsq\',\'fsq_file\',\'fsq_file_name\',\'fsq_clear\')" style="display:none;background:#e74c3c;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:Tahoma">✕ حذف</button>'    +'<input type="hidden" id="fsq" value="">'    +'</div>')
     +'</div>';
 }
 function gv(id){var el=document.getElementById(id);return el?el.value.trim():'';}
@@ -4802,7 +4803,17 @@ document.addEventListener('change',function(e){
       var inp=document.getElementById(cfg.hidden);
       if(inp)inp.value=dataUrl;
       var nm=document.getElementById(cfg.label);
-      if(nm)nm.textContent='✅ '+file.name+' ('+Math.round(file.size/1024)+' كيلوبايت)';
+      if(nm){nm.textContent='✅ '+file.name+' ('+Math.round(file.size/1024)+' كيلوبايت)';nm.style.color='#27ae60';}
+      /* إظهار زر الحذف */
+      var clearBtn=document.getElementById(cfg.hidden+'_clear');
+      if(clearBtn)clearBtn.style.display='inline-block';
+      /* إظهار زر عرض المحضر */
+      if(e.target.id==='smm_file'){
+        var vbtn=document.getElementById('smm_view_btn');
+        var cbtn=document.getElementById('smm_clear');
+        if(vbtn){vbtn.style.display='inline-block';vbtn.onclick=function(){openMinutesPDF(null);};}
+        if(cbtn)cbtn.style.display='inline-block';
+      }
     },
     function(err){showToast('❌ '+err,true);}
   );
@@ -4838,22 +4849,48 @@ function openMinutesPDF(btn){
 }
 
 /* عند فتح نموذج التعديل — إظهار حالة الملف */
+/* حذف ملف PDF من حقل معيّن */
+function clearPDFField(hiddenId, fileId, labelId, clearBtnId){
+  var hidden=document.getElementById(hiddenId);
+  var fileInp=document.getElementById(fileId);
+  var label=document.getElementById(labelId);
+  var clearBtn=document.getElementById(clearBtnId);
+  if(hidden)hidden.value='';
+  if(fileInp)fileInp.value='';
+  if(label){label.textContent='لم يُختر ملف';label.style.color='#555';}
+  if(clearBtn)clearBtn.style.display='none';
+}
+
+/* حذف محضر الاجتماع */
+function clearMeetingMinutes(){
+  var smm=document.getElementById('smm');
+  var nm=document.getElementById('smm_file_name');
+  var vbtn=document.getElementById('smm_view_btn');
+  var cbtn=document.getElementById('smm_clear');
+  var finp=document.getElementById('smm_file');
+  if(smm)smm.value='';
+  if(finp)finp.value='';
+  if(nm){nm.textContent='لم يُختر ملف';nm.style.color='#555';}
+  if(vbtn)vbtn.style.display='none';
+  if(cbtn)cbtn.style.display='none';
+}
+
 function showSqFileStatus(sq){
   var nm=document.getElementById('cf_sq_file_name');
-  if(!nm)return;
-  nm.textContent=sq?'✅ ملف محمّل':'لم يُختر ملف';
+  if(nm){nm.textContent=sq?'✅ ملف محمّل':'لم يُختر ملف';nm.style.color=sq?'#27ae60':'#555';}
+  var cb=document.getElementById('cf_sq_clear');
+  if(cb)cb.style.display=sq?'inline-block':'none';
 }
 
 function showMeetMinutesStatus(minutes_pdf){
   var nm=document.getElementById('smm_file_name');
-  if(nm)nm.textContent=minutes_pdf?'✅ محضر محمّل':'لم يُختر ملف';
+  if(nm){nm.textContent=minutes_pdf?'✅ محضر محمّل':'لم يُختر ملف';nm.style.color=minutes_pdf?'#27ae60':'#555';}
   var smm=document.getElementById('smm');
   if(smm)smm.value=minutes_pdf||'';
   var vbtn=document.getElementById('smm_view_btn');
-  if(vbtn){
-    vbtn.style.display=minutes_pdf?'inline-block':'none';
-    vbtn.onclick=function(){openMinutesPDF(null);};
-  }
+  if(vbtn){vbtn.style.display=minutes_pdf?'inline-block':'none';vbtn.onclick=function(){openMinutesPDF(null);};}
+  var cbtn=document.getElementById('smm_clear');
+  if(cbtn)cbtn.style.display=minutes_pdf?'inline-block':'none';
 }
 
 function openAdminPanel(){
