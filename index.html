@@ -2102,7 +2102,7 @@ function goTo(sec){
   document.getElementById('panel-'+sec).classList.add('active');
   if(sec==='s1'){refRep();buildS1Filters();applyF();if(currentUser)applyRoleUI();}
   if(sec==='s2'){buildS2Filters();renDash();}
-  if(sec==='s3'){selectedS3=-1;renS3Sidebar();renS3Main();}
+  if(sec==='s3'){selectedS3=-1;autoUpdateOverdueTasks();renS3Sidebar();renS3Main();}
   upTop();
 }
 
@@ -3446,7 +3446,21 @@ function s3SideFiltered(){var q=(document.getElementById('s3q').value||'').toLow
 
 function renS3Sidebar(){
   var items=s3SideFiltered();
-  items.sort(function(a,b){var ma=GM(a.di).length,mb=GM(b.di).length;if(ma&&!mb)return-1;if(!ma&&mb)return 1;return 0;});
+  /* ترتيب اللجان: الأحدث اجتماعاً أولاً */
+  items.sort(function(a,b){
+    var ma=GM(a.di),mb_=GM(b.di);
+    /* اللجان بلا اجتماعات تأتي أخيراً */
+    if(!ma.length&&!mb_.length)return 0;
+    if(!ma.length)return 1;
+    if(!mb_.length)return-1;
+    /* آخر اجتماع أُضيف (آخر عنصر في المصفوفة) */
+    var lastA=ma[ma.length-1],lastB=mb_[mb_.length-1];
+    var da=parseArabicDate(lastA.date),db=parseArabicDate(lastB.date);
+    if(!da&&!db)return 0;
+    if(!da)return 1;
+    if(!db)return-1;
+    return db-da; /* الأحدث أولاً */
+  });
   var list=document.getElementById('s3SideList');
   list.innerHTML=items.map(function(x){
     var d=x.d,di=x.di,mc=GM(di).length;
@@ -3459,10 +3473,7 @@ function renS3Sidebar(){
         +'<div style="width:28px;height:28px;border-radius:8px;background:'+(mc?'linear-gradient(135deg,#2c1654,#4a2080)':'#d0c8e8')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">'+(mc||'—')+'</div>'
         +'<div style="flex:1;min-width:0">'
           +'<div class="s3-sidebar-item-name">'+e(d.n)+(_nm?'<span class="sidebar-meet-dot sidebar-dot-'+_nm.type+'"></span>':'')+'</div>'
-          +'<div class="s3-sidebar-item-meta">'
-            +'<span class="badge '+SC(d.st)+'" style="font-size:8px;padding:1px 5px">'+d.st+'</span>'
-            +'<span style="font-size:9px;color:#777">'+e(d.r).substring(0,20)+'</span>'
-            +(tc?'<span class="s3-sidebar-item-count">📌'+tc+'</span>':'')
+          +'<div class="s3-sidebar-item-meta">'            +'<span class="badge '+SC(d.st)+'" style="font-size:8px;padding:1px 5px">'+d.st+'</span>'            +(mc?'<span style="font-size:9px;color:#7c3aed;font-weight:600">📅 '+(GM(di)[GM(di).length-1].date||'—')+'</span>':'')            +(tc?'<span class="s3-sidebar-item-count">📌'+tc+'</span>':'')
           +'</div>'
         +'</div>'
       +'</div>'
@@ -3534,7 +3545,30 @@ function taskTimeStatus(task){
   return null;
 }
 
+
+/* ══════════════════════════════════════════════════════
+   تحديث تلقائي لحالة التكليف إلى "متأخر"
+   ══════════════════════════════════════════════════════ */
+function autoUpdateOverdueTasks(){
+  var changed=false;
+  Object.keys(M).forEach(function(di){
+    M[di].forEach(function(m){
+      m.tasks.forEach(function(t){
+        if(t.status!=='منجز'&&t.status!=='متأخر'){
+          var diff=daysDiff(t.dateTo);
+          if(diff!==null&&diff<0){
+            t.status='متأخر';
+            changed=true;
+          }
+        }
+      });
+    });
+  });
+  return changed;
+}
+
 function renS3Main(){
+  autoUpdateOverdueTasks(); /* تحديث تلقائي للتكليفات المتأخرة */
   renS3KPIs();
   var content=document.getElementById('s3Content');
   if(selectedS3===-1){
@@ -3561,12 +3595,15 @@ function renS3Main(){
     if(!da&&!db)return 0;
     if(!da)return 1;
     if(!db)return-1;
-    return da-db;
+    return db-da; /* الأحدث أولاً */
   });
   msSorted.forEach(function(m,si){
+      /* الـ index الحقيقي في ms للحفاظ على data-mi الصحيح */
+      var realSi=ms.indexOf(m);
+      if(realSi===-1)realSi=si;
       var tasks=taskFilter==='all'?m.tasks:m.tasks.filter(function(t){return t.status===taskFilter;});
       var items=m.agendaItems&&m.agendaItems.length?m.agendaItems:(m.agenda?[{text:m.agenda}]:[]);
-      var label=m.meetNum?'اجتماع رقم '+m.meetNum:'اجتماع '+(si+1);
+      var label=m.meetNum?'اجتماع رقم '+m.meetNum:'اجتماع '+(realSi+1);
       var mdone=m.tasks.filter(function(t){return t.status==='منجز';}).length;
       /* حالة الاجتماع الزمنية */
       var mts=meetingTimeStatus(m.date);
@@ -3575,7 +3612,7 @@ function renS3Main(){
         var _tts=taskTimeStatus(t);
         var _rowStyle=_tts?(_tts.type==='overdue'?'background:rgba(239,68,68,.06);border-right:3px solid #ef4444':_tts.type==='dueSoon'?'background:rgba(245,158,11,.06);border-right:3px solid #f59e0b':''):'';
         var _taskAlert=_tts?(_tts.type==='overdue'?'<span class="task-alert-badge task-overdue-badge">⚠️ '+_tts.label+'</span>':_tts.type==='dueSoon'?'<span class="task-alert-badge task-duesoon-badge">⏰ '+_tts.label+'</span>':''):'';
-        return'<tr style="'+_rowStyle+'"><td style="text-align:center;width:24px;color:#b0a8c8;font-size:9px">'+(ti+1)+'</td><td><div style="font-weight:600;line-height:1.5">'+e(t.task||'—')+_taskAlert+'</div>'+(t.notes?'<div class="task-note">💬 '+e(t.notes)+'</div>':'')+'<div style="margin-top:4px"><textarea class="task-update-inp" data-di="'+di+'" data-mi="'+si+'" data-ti="'+globalTi+'" rows="2" placeholder="📝 أضف تحديثاً..." style="width:100%;border:1.5px solid #e0d5f5;border-radius:6px;padding:4px 8px;font-size:10.5px;font-family:inherit;resize:vertical;background:#faf8ff;color:#2c1654;direction:rtl;outline:none">'+e(t.update||'')+'</textarea></div></td><td style="font-size:10.5px;font-weight:700;white-space:nowrap;width:120px">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="font-size:9.5px;color:#5a4a8a;width:110px;white-space:nowrap">'+(t.dateFrom?'<span>📅 '+e(t.dateFrom)+'</span><br>':'')+(t.dateTo?'<span style="color:#888">حتى: '+e(t.dateTo)+'</span>':'')+'</td>':'<td style="color:#ccc">—</td>')+'<td style="text-align:center;width:85px"><span class="sp '+spCls(t.status)+'"><span class="sp-dot"></span>'+t.status+'</span></td></tr>';
+        return'<tr style="'+_rowStyle+'"><td style="text-align:center;width:24px;color:#b0a8c8;font-size:9px">'+(ti+1)+'</td><td><div style="font-weight:600;line-height:1.5">'+e(t.task||'—')+_taskAlert+'</div>'+(t.notes?'<div class="task-note">💬 '+e(t.notes)+'</div>':'')+'<div style="margin-top:4px"><textarea class="task-update-inp" data-di="'+di+'" data-mi="'+realSi+'" data-ti="'+globalTi+'" rows="2" placeholder="📝 أضف تحديثاً..." style="width:100%;border:1.5px solid #e0d5f5;border-radius:6px;padding:4px 8px;font-size:10.5px;font-family:inherit;resize:vertical;background:#faf8ff;color:#2c1654;direction:rtl;outline:none">'+e(t.update||'')+'</textarea></div></td><td style="font-size:10.5px;font-weight:700;white-space:nowrap;width:120px">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="font-size:9.5px;color:#5a4a8a;width:110px;white-space:nowrap">'+(t.dateFrom?'<span>📅 '+e(t.dateFrom)+'</span><br>':'')+(t.dateTo?'<span style="color:#888">حتى: '+e(t.dateTo)+'</span>':'')+'</td>':'<td style="color:#ccc">—</td>')+'<td style="text-align:center;width:85px"><span class="sp '+spCls(t.status)+'"><span class="sp-dot"></span>'+t.status+'</span></td></tr>';
       }).join('');
       /* تحديد class التنبيه وشارة الوقت */
       var _cardClass='s3-meet-card';
@@ -3585,7 +3622,7 @@ function renS3Main(){
         else if(mts.type==='tomorrow'){_cardClass+=' meet-alert-soon';_timeBadge='<span class="meet-time-alert meet-soon-badge">🟠 غداً</span>';}
         else if(mts.type==='soon'){_cardClass+=' meet-alert-soon';_timeBadge='<span class="meet-time-alert meet-soon-badge">🟡 '+mts.label+'</span>';}
       }
-      html+='<div class="'+_cardClass+'"><div class="s3-meet-hdr"><span class="meet-num-badge">'+label+'</span>'+_timeBadge+(m.date?'<span class="meet-date-badge">📅 '+e(m.date)+'</span>':'')+(items.length&&items[0].text?'<span class="meet-ref-badge" title="'+e(items[0].text||'')+'">📎 '+e((items[0].text||'').substring(0,50))+'</span>':'')+(m.tasks.length?'<span style="font-size:9.5px;color:#7c3aed;background:#ede8ff;border-radius:7px;padding:2px 8px;font-weight:700">'+mdone+'/'+m.tasks.length+' ✅</span>':'')+'<div class="meet-block-actions"><button class="mab mab-e" data-ma="e" data-di="'+di+'" data-mi="'+si+'">✏️ تعديل</button><button class="mab mab-p" data-ma="p" data-di="'+di+'" data-mi="'+si+'">🖨️ طباعة</button><button class="mab" data-ma="exec" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit;font-weight:700" data-di="'+di+'" data-mi="'+si+'">📄 ملخص</button><button class="mab" data-ma="xl" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit;font-weight:700" data-di="'+di+'" data-mi="'+si+'">📊 Excel</button><button class="mab mab-d" data-ma="d" data-di="'+di+'" data-mi="'+si+'">🗑 حذف</button></div></div><div class="s3-meet-body">'+(items.length?'<div class="agenda-box"><div class="agenda-box-title">📋 مرجع / جدول الأعمال</div>'+items.map(function(a,ai){return'<div class="agenda-item"><span class="agenda-dot">'+(ai+1)+'</span><span>'+e(a.text||a)+'</span></div>';}).join('')+'</div>':'')+'<div class="tasks-section"><div class="tasks-header"><span class="tasks-title">📌 التكليفات <span class="tasks-count">'+tasks.length+'</span></span></div>'+(tasks.length?'<table class="tasks-table"><thead><tr><th style="width:24px">#</th><th>التكليف</th><th>المسؤول</th><th>الفترة</th><th style="width:90px;text-align:center">الحالة</th></tr></thead><tbody>'+taskRows+'</tbody></table>':'<div class="no-tasks">لا توجد تكليفات</div>')+'</div></div></div>';
+      html+='<div class="'+_cardClass+'"><div class="s3-meet-hdr"><span class="meet-num-badge">'+label+'</span>'+_timeBadge+(m.date?'<span class="meet-date-badge">📅 '+e(m.date)+'</span>':'')+(items.length&&items[0].text?'<span class="meet-ref-badge" title="'+e(items[0].text||'')+'">📎 '+e((items[0].text||'').substring(0,50))+'</span>':'')+(m.tasks.length?'<span style="font-size:9.5px;color:#7c3aed;background:#ede8ff;border-radius:7px;padding:2px 8px;font-weight:700">'+mdone+'/'+m.tasks.length+' ✅</span>':'')+'<div class="meet-block-actions"><button class="mab mab-e" data-ma="e" data-di="'+di+'" data-mi="'+realSi+'">✏️ تعديل</button><button class="mab mab-p" data-ma="p" data-di="'+di+'" data-mi="'+realSi+'">🖨️ طباعة</button><button class="mab" data-ma="exec" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit;font-weight:700" data-di="'+di+'" data-mi="'+realSi+'">📄 ملخص</button><button class="mab" data-ma="xl" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit;font-weight:700" data-di="'+di+'" data-mi="'+realSi+'">📊 Excel</button><button class="mab mab-d" data-ma="d" data-di="'+di+'" data-mi="'+realSi+'">🗑 حذف</button></div></div><div class="s3-meet-body">'+(items.length?'<div class="agenda-box"><div class="agenda-box-title">📋 مرجع / جدول الأعمال</div>'+items.map(function(a,ai){return'<div class="agenda-item"><span class="agenda-dot">'+(ai+1)+'</span><span>'+e(a.text||a)+'</span></div>';}).join('')+'</div>':'')+'<div class="tasks-section"><div class="tasks-header"><span class="tasks-title">📌 التكليفات <span class="tasks-count">'+tasks.length+'</span></span></div>'+(tasks.length?'<table class="tasks-table"><thead><tr><th style="width:24px">#</th><th>التكليف</th><th>المسؤول</th><th>الفترة</th><th style="width:90px;text-align:center">الحالة</th></tr></thead><tbody>'+taskRows+'</tbody></table>':'<div class="no-tasks">لا توجد تكليفات</div>')+'</div></div></div>';
     });
   }
   content.innerHTML=html;
@@ -3644,7 +3681,7 @@ function openPickModal(){
 /* MEETING MODAL */
 function openSM(di,mi){
   if(currentUser&&currentUser.role==='viewer'){showToast('🚫 ليس لديك صلاحية التعديل',true);return;}var m=mi===-1?NM():GM(di)[mi];var isNew=mi===-1;var wt=m.tasks.map(function(t){return Object.assign({},t);});var wA=m.agendaItems&&m.agendaItems.length?m.agendaItems.map(function(x){return{text:x.text||x||''};}):(m.agenda?[{text:m.agenda}]:[]);document.getElementById('smTitle').textContent=(isNew?'🗓️ اجتماع جديد — ':'✏️ تعديل — ')+D[di].n.substring(0,38);function aH(){var el=document.getElementById('agendaList');if(!el)return;if(!wA.length){el.innerHTML='<div style="text-align:center;padding:7px;color:#b0a8c8;font-size:10px">لا توجد بنود</div>';return;}el.innerHTML=wA.map(function(a,ai){return'<div style="display:flex;gap:5px;margin-bottom:4px"><span style="background:linear-gradient(135deg,#2c1654,#38b6e8);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+(ai+1)+'</span><input class="finp ai-inp" style="flex:1;padding:5px 8px;font-size:11px" data-ai="'+ai+'" value="'+e(a.text||'')+'"><button class="ab abr ai-del" data-ai="'+ai+'" style="padding:2px 6px;font-size:9px;flex-shrink:0">🗑</button></div>';}).join('');el.querySelectorAll('.ai-inp').forEach(function(inp){inp.oninput=function(){wA[parseInt(this.getAttribute('data-ai'))].text=this.value;};});el.querySelectorAll('.ai-del').forEach(function(btn){btn.onclick=function(){wA.splice(parseInt(this.getAttribute('data-ai')),1);aH();};});}
-function tH(){if(!wt.length)return'<div id="tarea" style="text-align:center;padding:9px;color:#b0a8c8;font-size:10px">لا توجد تكليفات</div>';return'<table id="tarea" class="s3m-at"><thead><tr><th>#</th><th>التكليف</th><th style="width:110px">المسؤول</th><th style="width:78px">من</th><th style="width:78px">إلى</th><th style="width:78px">الحالة</th><th style="width:30px">🗑</th></tr></thead><tbody>'+wt.map(function(t,ti){return'<tr><td style="text-align:center;color:#bbb;font-size:9px">'+(ti+1)+'</td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%" data-ti="'+ti+'" data-f="task" value="'+e(t.task||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%" data-ti="'+ti+'" data-f="responsible" value="'+e(t.responsible||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateFrom" value="'+e(t.dateFrom||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateTo" value="'+e(t.dateTo||'')+'"></td><td><select class="fsel ts" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%" data-ti="'+ti+'">'+['قيد الانتظار','جارٍ','منجز','متأخر'].map(function(s){return'<option'+(s===t.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></td><td><button class="ab abr tdl" data-ti="'+ti+'" style="padding:1px 4px;font-size:9px">🗑</button></td></tr>';}).join('')+'</tbody></table>';}
+function tH(){autoUpdateOverdueTasks();if(!wt.length)return'<div id="tarea" style="text-align:center;padding:9px;color:#b0a8c8;font-size:10px">لا توجد تكليفات</div>';return'<table id="tarea" class="s3m-at"><thead><tr><th>#</th><th>التكليف</th><th style="width:110px">المسؤول</th><th style="width:78px">من</th><th style="width:78px">إلى</th><th style="width:78px">الحالة</th><th style="width:30px">🗑</th></tr></thead><tbody>'+wt.map(function(t,ti){return'<tr><td style="text-align:center;color:#bbb;font-size:9px">'+(ti+1)+'</td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%" data-ti="'+ti+'" data-f="task" value="'+e(t.task||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%" data-ti="'+ti+'" data-f="responsible" value="'+e(t.responsible||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateFrom" value="'+e(t.dateFrom||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateTo" value="'+e(t.dateTo||'')+'"></td><td><select class="fsel ts" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%" data-ti="'+ti+'">'+['قيد الانتظار','جارٍ','منجز','متأخر'].map(function(s){return'<option'+(s===t.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></td><td><button class="ab abr tdl" data-ti="'+ti+'" style="padding:1px 4px;font-size:9px">🗑</button></td></tr>';}).join('')+'</tbody></table>';}
 function rfT(){var old=document.getElementById('tarea');var tmp=document.createElement('div');tmp.innerHTML=tH();old.parentNode.replaceChild(tmp.firstChild,old);wireT();}
 function attachRespAC(inp){inp.setAttribute('autocomplete','off');var drop=document.createElement('div');drop.style.cssText='position:absolute;z-index:9999;background:#fff;border:1.5px solid #c0a8e8;border-radius:9px;box-shadow:0 4px 18px rgba(44,22,84,.18);max-height:180px;overflow-y:auto;min-width:220px;display:none;font-size:11px;font-family:Tahoma,Arial;direction:rtl';document.body.appendChild(drop);function show(q2){var filtered=RESP_LIST.filter(function(r){return r.includes(q2);});if(!filtered.length||!q2){drop.style.display='none';return;}drop.innerHTML=filtered.map(function(r){return'<div class="ac-item" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid #f0ecff;color:#2c1654;font-weight:600">'+r+'</div>';}).join('');drop.querySelectorAll('.ac-item').forEach(function(item){item.onmousedown=function(ev2){ev2.preventDefault();inp.value=item.textContent;var ti2=parseInt(inp.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=item.textContent;drop.style.display='none';};item.onmouseover=function(){this.style.background='#ede8ff';};item.onmouseout=function(){this.style.background='';};});var rect=inp.getBoundingClientRect();drop.style.top=(rect.bottom+window.scrollY+2)+'px';drop.style.right=(window.innerWidth-rect.right)+'px';drop.style.display='block';}inp.addEventListener('input',function(){show(this.value);var ti2=parseInt(this.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=this.value;});inp.addEventListener('focus',function(){show(this.value||'');});inp.addEventListener('blur',function(){setTimeout(function(){drop.style.display='none';},150);});inp._acDrop=drop;}
 function wireT(){document.querySelectorAll('.ti').forEach(function(el){if(el.getAttribute('data-f')==='responsible'){attachRespAC(el);}else{el.oninput=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value;};}});document.querySelectorAll('.ts').forEach(function(el){el.onchange=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i].status=el.value;};});document.querySelectorAll('.tdl').forEach(function(el){el.onclick=function(){wt.splice(parseInt(el.getAttribute('data-ti')),1);rfT();};});}
