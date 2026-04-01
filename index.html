@@ -332,33 +332,36 @@ html,body{max-width:100vw;overflow-x:hidden}
 .task-chip.tc-late.on{background:#f8d7da;border-color:#e74c3c;color:#721c24}
 .chip-sep{width:1px;height:20px;background:#e0d0f8;margin:0 2px}
 .s3-kpi-row{display:flex;gap:8px;flex-wrap:wrap}
-.s3-cal-wrap{background:#fff;border-radius:12px;border:1px solid #e8e0f5;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 8px rgba(74,32,128,.06)}
-.s3-cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(135deg,#2c1654,#4a2080);color:#fff}
-.s3-cal-title{font-size:13px;font-weight:700;font-family:Tahoma,Arial}
+.s3-cal-row{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start;direction:rtl}
+.s3-cal-upcoming-col{flex:1;min-width:0}
+.s3-cal-wrap{background:#fff;border-radius:12px;border:1px solid #e8e0f5;overflow:hidden;box-shadow:0 2px 8px rgba(74,32,128,.06)}
+.s3-cal-wrap.s3-cal-small{flex-shrink:0;width:260px}
+.s3-cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:linear-gradient(135deg,#2c1654,#4a2080);color:#fff}
+.s3-cal-title{font-size:12px;font-weight:700;font-family:Tahoma,Arial}
 .s3-cal-nav{display:flex;gap:4px}
-.s3-cal-nav button{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:12px;font-family:Tahoma}
+.s3-cal-nav button{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:5px;padding:2px 7px;cursor:pointer;font-size:11px;font-family:Tahoma}
 .s3-cal-nav button:hover{background:rgba(255,255,255,.3)}
-.s3-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:8px}
-.s3-cal-dow{text-align:center;font-size:10px;font-weight:700;color:#7a5fc0;padding:3px 0;font-family:Tahoma}
-.s3-cal-day{min-height:34px;border-radius:7px;padding:2px 3px;cursor:pointer;transition:background .15s;position:relative;text-align:center}
+.s3-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;padding:6px}
+.s3-cal-dow{text-align:center;font-size:9px;font-weight:700;color:#7a5fc0;padding:2px 0;font-family:Tahoma}
+.s3-cal-day{min-height:26px;border-radius:5px;padding:1px 2px;cursor:pointer;transition:background .15s;position:relative;text-align:center}
 .s3-cal-day:hover{background:#f0e8ff}
 .s3-cal-day.other-month{opacity:.3}
 .s3-cal-day.today{background:#ede8ff;font-weight:700}
 .s3-cal-day.has-meet{background:#e8f5ff;border:1px solid #3b82f6}
 .s3-cal-day.has-meet:hover{background:#d0e8ff}
 .s3-cal-day.today.has-meet{background:#ddd0ff;border:1px solid #7c3aed}
-.s3-cal-day-num{font-size:11px;font-family:Tahoma;color:#333;display:block}
+.s3-cal-day-num{font-size:10px;font-family:Tahoma;color:#333;display:block}
 .s3-cal-day.today .s3-cal-day-num{color:#4a2080}
-.s3-cal-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;margin-top:1px}
-.s3-cal-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.s3-cal-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:1px;margin-top:1px}
+.s3-cal-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .s3-cal-dot.soon{background:#f59e0b}
 .s3-cal-dot.today-dot{background:#7c3aed}
 .s3-cal-dot.future{background:#3b82f6}
 .s3-cal-dot.past{background:#d1d5db}
-.s3-cal-legend{display:flex;gap:12px;padding:6px 12px 8px;border-top:1px solid #f0e8ff;flex-wrap:wrap}
-.s3-cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#666;font-family:Tahoma}
+.s3-cal-legend{display:flex;gap:8px;padding:4px 8px 6px;border-top:1px solid #f0e8ff;flex-wrap:wrap}
+.s3-cal-leg-item{display:flex;align-items:center;gap:3px;font-size:9px;color:#666;font-family:Tahoma}
 .s3-cal-tooltip{position:fixed;background:#1a1a2e;color:#fff;border-radius:8px;padding:8px 12px;font-size:11px;font-family:Tahoma;z-index:9999;pointer-events:none;max-width:220px;display:none;line-height:1.6}
-.s3-cal-upcoming{background:#fff;border-radius:10px;border:1px solid #e8e0f5;padding:8px 12px;margin-bottom:12px}
+.s3-cal-upcoming{background:#fff;border-radius:10px;border:1px solid #e8e0f5;padding:8px 12px;height:100%}
 .s3-cal-upcoming-title{font-size:11px;font-weight:700;color:#4a2080;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-family:Tahoma}
 .s3-cal-up-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f0ff;font-family:Tahoma}
 .s3-cal-up-item:last-child{border-bottom:none}
@@ -673,24 +676,28 @@ html,body{max-width:100vw;overflow-x:hidden}
       <div class="s3-main">
         <!-- ════ تقويم الاجتماعات ════ -->
         <div id="s3CalWrap">
-          <div class="s3-cal-wrap">
-            <div class="s3-cal-hdr">
-              <div class="s3-cal-title" id="s3CalTitle">—</div>
-              <div class="s3-cal-nav">
-                <button onclick="s3CalNav(-1)">&#8250; السابق</button>
-                <button onclick="s3CalNav(0)" style="background:rgba(255,255,255,.25)">اليوم</button>
-                <button onclick="s3CalNav(1)">التالي &#8249;</button>
+          <div class="s3-cal-row">
+            <!-- الاجتماعات القادمة - يمين -->
+            <div id="s3UpcomingWrap" class="s3-cal-upcoming-col"></div>
+            <!-- التقويم - يسار -->
+            <div class="s3-cal-wrap s3-cal-small">
+              <div class="s3-cal-hdr">
+                <div class="s3-cal-title" id="s3CalTitle">—</div>
+                <div class="s3-cal-nav">
+                  <button onclick="s3CalNav(-1)">&#8250;</button>
+                  <button onclick="s3CalNav(0)" style="background:rgba(255,255,255,.25)">اليوم</button>
+                  <button onclick="s3CalNav(1)">&#8249;</button>
+                </div>
+              </div>
+              <div class="s3-cal-grid" id="s3CalGrid"></div>
+              <div class="s3-cal-legend">
+                <div class="s3-cal-leg-item"><span class="s3-cal-dot today-dot"></span> اليوم</div>
+                <div class="s3-cal-leg-item"><span class="s3-cal-dot soon"></span> 7 أيام</div>
+                <div class="s3-cal-leg-item"><span class="s3-cal-dot future"></span> قادم</div>
+                <div class="s3-cal-leg-item"><span class="s3-cal-dot past"></span> منتهي</div>
               </div>
             </div>
-            <div class="s3-cal-grid" id="s3CalGrid"></div>
-            <div class="s3-cal-legend">
-              <div class="s3-cal-leg-item"><span class="s3-cal-dot today-dot"></span> اليوم</div>
-              <div class="s3-cal-leg-item"><span class="s3-cal-dot soon"></span> خلال 7 أيام</div>
-              <div class="s3-cal-leg-item"><span class="s3-cal-dot future"></span> قادم</div>
-              <div class="s3-cal-leg-item"><span class="s3-cal-dot past"></span> منتهي</div>
-            </div>
           </div>
-          <div id="s3UpcomingWrap"></div>
         </div>
         <div id="s3CalTooltip" class="s3-cal-tooltip"></div>
         <!-- ════════════════════════════ -->
