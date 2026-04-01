@@ -332,6 +332,39 @@ html,body{max-width:100vw;overflow-x:hidden}
 .task-chip.tc-late.on{background:#f8d7da;border-color:#e74c3c;color:#721c24}
 .chip-sep{width:1px;height:20px;background:#e0d0f8;margin:0 2px}
 .s3-kpi-row{display:flex;gap:8px;flex-wrap:wrap}
+.s3-cal-wrap{background:#fff;border-radius:12px;border:1px solid #e8e0f5;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 8px rgba(74,32,128,.06)}
+.s3-cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:linear-gradient(135deg,#2c1654,#4a2080);color:#fff}
+.s3-cal-title{font-size:13px;font-weight:700;font-family:Tahoma,Arial}
+.s3-cal-nav{display:flex;gap:4px}
+.s3-cal-nav button{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:12px;font-family:Tahoma}
+.s3-cal-nav button:hover{background:rgba(255,255,255,.3)}
+.s3-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:8px}
+.s3-cal-dow{text-align:center;font-size:10px;font-weight:700;color:#7a5fc0;padding:3px 0;font-family:Tahoma}
+.s3-cal-day{min-height:34px;border-radius:7px;padding:2px 3px;cursor:pointer;transition:background .15s;position:relative;text-align:center}
+.s3-cal-day:hover{background:#f0e8ff}
+.s3-cal-day.other-month{opacity:.3}
+.s3-cal-day.today{background:#ede8ff;font-weight:700}
+.s3-cal-day.has-meet{background:#e8f5ff;border:1px solid #3b82f6}
+.s3-cal-day.has-meet:hover{background:#d0e8ff}
+.s3-cal-day.today.has-meet{background:#ddd0ff;border:1px solid #7c3aed}
+.s3-cal-day-num{font-size:11px;font-family:Tahoma;color:#333;display:block}
+.s3-cal-day.today .s3-cal-day-num{color:#4a2080}
+.s3-cal-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;margin-top:1px}
+.s3-cal-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.s3-cal-dot.soon{background:#f59e0b}
+.s3-cal-dot.today-dot{background:#7c3aed}
+.s3-cal-dot.future{background:#3b82f6}
+.s3-cal-dot.past{background:#d1d5db}
+.s3-cal-legend{display:flex;gap:12px;padding:6px 12px 8px;border-top:1px solid #f0e8ff;flex-wrap:wrap}
+.s3-cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#666;font-family:Tahoma}
+.s3-cal-tooltip{position:fixed;background:#1a1a2e;color:#fff;border-radius:8px;padding:8px 12px;font-size:11px;font-family:Tahoma;z-index:9999;pointer-events:none;max-width:220px;display:none;line-height:1.6}
+.s3-cal-upcoming{background:#fff;border-radius:10px;border:1px solid #e8e0f5;padding:8px 12px;margin-bottom:12px}
+.s3-cal-upcoming-title{font-size:11px;font-weight:700;color:#4a2080;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-family:Tahoma}
+.s3-cal-up-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f0ff;font-family:Tahoma}
+.s3-cal-up-item:last-child{border-bottom:none}
+.s3-cal-up-badge{min-width:36px;text-align:center;padding:2px 6px;border-radius:6px;font-size:10px;font-weight:700;flex-shrink:0}
+.s3-cal-up-name{font-size:11px;color:#333;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s3-cal-up-date{font-size:10px;color:#888;white-space:nowrap}
 .s3-kpi{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:6px 11px;display:flex;align-items:center;gap:6px}
 .s3-kpi.clickable:hover{background:rgba(255,255,255,.2);cursor:pointer}
 .s3-kpi.active-kpi{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5)}
@@ -638,6 +671,29 @@ html,body{max-width:100vw;overflow-x:hidden}
         <div class="s3-sidebar-list" id="s3SideList"></div>
       </div>
       <div class="s3-main">
+        <!-- ════ تقويم الاجتماعات ════ -->
+        <div id="s3CalWrap">
+          <div class="s3-cal-wrap">
+            <div class="s3-cal-hdr">
+              <div class="s3-cal-title" id="s3CalTitle">—</div>
+              <div class="s3-cal-nav">
+                <button onclick="s3CalNav(-1)">&#8250; السابق</button>
+                <button onclick="s3CalNav(0)" style="background:rgba(255,255,255,.25)">اليوم</button>
+                <button onclick="s3CalNav(1)">التالي &#8249;</button>
+              </div>
+            </div>
+            <div class="s3-cal-grid" id="s3CalGrid"></div>
+            <div class="s3-cal-legend">
+              <div class="s3-cal-leg-item"><span class="s3-cal-dot today-dot"></span> اليوم</div>
+              <div class="s3-cal-leg-item"><span class="s3-cal-dot soon"></span> خلال 7 أيام</div>
+              <div class="s3-cal-leg-item"><span class="s3-cal-dot future"></span> قادم</div>
+              <div class="s3-cal-leg-item"><span class="s3-cal-dot past"></span> منتهي</div>
+            </div>
+          </div>
+          <div id="s3UpcomingWrap"></div>
+        </div>
+        <div id="s3CalTooltip" class="s3-cal-tooltip"></div>
+        <!-- ════════════════════════════ -->
         <div class="s3-main-toolbar">
           <div class="task-chips">
             <span style="font-size:10px;font-weight:700;color:#4a2080;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> التكليفات:</span>
@@ -2113,7 +2169,7 @@ function goTo(sec){
   document.getElementById('panel-'+sec).classList.add('active');
   if(sec==='s1'){refRep();buildS1Filters();applyF();if(currentUser)applyRoleUI();}
   if(sec==='s2'){buildS2Filters();renDash();}
-  if(sec==='s3'){selectedS3=-1;autoUpdateOverdueTasks();renS3Sidebar();renS3Main();}
+  if(sec==='s3'){selectedS3=-1;autoUpdateOverdueTasks();renS3Sidebar();renS3Main();renderS3Cal();}
   upTop();
 }
 
@@ -3287,7 +3343,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
         var rowBg=i%2===0?'#fff':'#f8fafb';
         html+='<tr style="background:'+rowBg+';vertical-align:top">';
         html+='<td style="padding:8px 12px;font-size:9.5pt;color:#1a2033;word-wrap:break-word;line-height:1.5">'+t.committee+'</td>';
-        html+='<td style="padding:8px 12px;font-size:9.5pt;color:#1a2033;word-wrap:break-word;line-height:1.5">'+e(t.task||'')+(t.update?'<div style="font-size:8.5pt;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(t.update)+'</div>':'')+'</td>';
+        html+='<td style="padding:8px 12px;font-size:9.5pt;color:#1a2033;word-wrap:break-word;line-height:1.5">'+e(t.task||'')+(t.update?'<div style="font-size:8.5pt;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(cleanUpdateField(t.update||''))+'</div>':'')+'</td>';
         html+='<td style="padding:8px 12px;font-size:9.5pt;color:#555;word-wrap:break-word">'+t.assignee+'</td>';
         html+='<td style="padding:8px 12px;text-align:center"><span style="background:'+sb+';color:'+sc+';border-radius:6px;padding:3px 10px;font-size:9pt;font-weight:700;display:inline-block">'+t.status+'</span></td>';
         html+='</tr>';
@@ -3300,7 +3356,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
         lateT.forEach(function(t){
           html+='<div style="padding:8px 0;border-bottom:1px solid #fcc">';
         html+='<div style="font-size:9.5pt"><span style="font-weight:700;color:#c0392b">'+t.committee.substring(0,40)+'</span> — '+e(t.task||'')+(t.status?' <span style="color:#888;font-size:8.5pt">('+t.due+')</span>':'')+'</div>';
-        if(t.update)html+='<div style="font-size:8.5pt;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(t.update)+'</div>';
+        if(t.update)html+='<div style="font-size:8.5pt;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(cleanUpdateField(t.update||''))+'</div>';
         html+='</div>';
         });
         html+='</div>';
@@ -3645,7 +3701,7 @@ function renS3Main(){
         var _tts=taskTimeStatus(t);
         var _rowStyle=_tts?(_tts.type==='overdue'?'background:rgba(239,68,68,.06);border-right:3px solid #ef4444':_tts.type==='dueSoon'?'background:rgba(245,158,11,.06);border-right:3px solid #f59e0b':''):'';
         var _taskAlert=_tts?(_tts.type==='overdue'?'<span class="task-alert-badge task-overdue-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> '+_tts.label+'</span>':_tts.type==='dueSoon'?'<span class="task-alert-badge task-duesoon-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><line x1="7" y1="3" x2="4.5" y2="5.5"/><line x1="17" y1="3" x2="19.5" y2="5.5"/></svg> '+_tts.label+'</span>':''):'';
-        return'<tr style="'+_rowStyle+'"><td style="text-align:center;width:24px;color:#b0a8c8;font-size:9px">'+(ti+1)+'</td><td><div style="font-weight:600;line-height:1.5">'+e(t.task||'—')+_taskAlert+'</div>'+(t.notes?'<div class="task-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+e(t.notes)+'</div>':'')+'<div style="margin-top:4px"><textarea class="task-update-inp" data-di="'+di+'" data-mi="'+realSi+'" data-ti="'+globalTi+'" rows="2" placeholder="<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> أضف تحديثاً..." style="width:100%;border:1.5px solid #e0d5f5;border-radius:6px;padding:4px 8px;font-size:10.5px;font-family:inherit;resize:vertical;background:#faf8ff;color:#2c1654;direction:rtl;outline:none">'+e(t.update||'')+'</textarea></div></td><td style="font-size:10.5px;font-weight:700;white-space:nowrap;width:120px">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="font-size:9.5px;color:#5a4a8a;width:110px;white-space:nowrap">'+(t.dateFrom?'<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+e(t.dateFrom)+'</span><br>':'')+(t.dateTo?'<span style="color:#888">حتى: '+e(t.dateTo)+'</span>':'')+'</td>':'<td style="color:#ccc">—</td>')+'<td style="text-align:center;width:85px"><span class="sp '+spCls(t.status)+'"><span class="sp-dot"></span>'+t.status+'</span></td></tr>';
+        return'<tr style="'+_rowStyle+'"><td style="text-align:center;width:24px;color:#b0a8c8;font-size:9px">'+(ti+1)+'</td><td><div style="font-weight:600;line-height:1.5">'+e(t.task||'—')+_taskAlert+'</div>'+(t.notes?'<div class="task-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+e(t.notes)+'</div>':'')+'<div style="margin-top:4px"><textarea class="task-update-inp" data-di="'+di+'" data-mi="'+realSi+'" data-ti="'+globalTi+'" rows="2" placeholder="أضف تحديثاً..." style="width:100%;border:1.5px solid #e0d5f5;border-radius:6px;padding:4px 8px;font-size:10.5px;font-family:inherit;resize:vertical;background:#faf8ff;color:#2c1654;direction:rtl;outline:none">'+e(cleanUpdateField(t.update||''))+'</textarea></div></td><td style="font-size:10.5px;font-weight:700;white-space:nowrap;width:120px">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="font-size:9.5px;color:#5a4a8a;width:110px;white-space:nowrap">'+(t.dateFrom?'<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+e(t.dateFrom)+'</span><br>':'')+(t.dateTo?'<span style="color:#888">حتى: '+e(t.dateTo)+'</span>':'')+'</td>':'<td style="color:#ccc">—</td>')+'<td style="text-align:center;width:85px"><span class="sp '+spCls(t.status)+'"><span class="sp-dot"></span>'+t.status+'</span></td></tr>';
       }).join('');
       /* تحديد class التنبيه وشارة الوقت */
       var _cardClass='s3-meet-card';
@@ -3670,7 +3726,7 @@ function renS3Main(){
   if(currentUser&&currentUser.role==='viewer'){
     content.querySelectorAll('[data-ma="e"],[data-ma="d"]').forEach(function(b){b.style.display='none';});
   }
-  content.querySelectorAll('[data-ma]').forEach(function(btn){btn.addEventListener('click',function(ev){ev.stopPropagation();var a=btn.getAttribute('data-ma'),bdi=parseInt(btn.getAttribute('data-di')),bmi=parseInt(btn.getAttribute('data-mi'));if(a==='e')openSM(bdi,bmi);else if(a==='p')printSingle(bdi,bmi);else if(a==='exec')openExecSum(bdi,bmi);else if(a==='xl')exportMeetingExcel(bdi,bmi);else if(a==='d'){confirmDel('هذا الاجتماع',function(ok2){if(!ok2)return;GM(bdi).splice(bmi,1);renS3Sidebar();renS3Main();upTop();scheduleSave();});}});});
+  content.querySelectorAll('[data-ma]').forEach(function(btn){btn.addEventListener('click',function(ev){ev.stopPropagation();var a=btn.getAttribute('data-ma'),bdi=parseInt(btn.getAttribute('data-di')),bmi=parseInt(btn.getAttribute('data-mi'));if(a==='e')openSM(bdi,bmi);else if(a==='p')printSingle(bdi,bmi);else if(a==='exec')openExecSum(bdi,bmi);else if(a==='xl')exportMeetingExcel(bdi,bmi);else if(a==='d'){confirmDel('هذا الاجتماع',function(ok2){if(!ok2)return;GM(bdi).splice(bmi,1);renS3Sidebar();renS3Main();renderS3Cal();upTop();scheduleSave();});}});});
 }
 
 document.querySelectorAll('.task-chip').forEach(function(c){c.addEventListener('click',function(){taskFilter=c.getAttribute('data-ts');syncChipToFilter();renS3KPIs();renS3Sidebar();renS3Main();});});
@@ -3704,7 +3760,7 @@ function openPickModal(){
     });
   }
   document.getElementById('pickBody').innerHTML=
-    '<input id="pickSearch" class="finp" placeholder="<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> ابحث عن لجنة..." style="width:100%;margin-bottom:10px;font-size:12px">'
+    '<input id="pickSearch" class="finp" placeholder="ابحث عن لجنة...." style="width:100%;margin-bottom:10px;font-size:12px">'
     +'<div id="pickList" style="max-height:380px;overflow-y:auto"></div>';
   renderPick('');
   document.getElementById('pickSearch').oninput=function(){renderPick(this.value);};
@@ -3726,7 +3782,7 @@ document.getElementById('btnSaveSM').onclick=function(){document.querySelectorAl
     var _smrv=document.getElementById('smrv');obj.remarks=_smrv?_smrv.value.trim():'';
     var _smm=document.getElementById('smm');
     obj.minutes_pdf=_smm?_smm.value:'';
-    obj.tasks=wt;if(isNew){GM(di).unshift(obj);auditLog('إضافة اجتماع',D[di].n,'اجتماع رقم '+obj.meetNum);}else{auditLog('تعديل اجتماع',D[di].n,'اجتماع رقم '+obj.meetNum);}clM('smModal');renS3Sidebar();renS3Main();upTop();
+    obj.tasks=wt;if(isNew){GM(di).unshift(obj);auditLog('إضافة اجتماع',D[di].n,'اجتماع رقم '+obj.meetNum);}else{auditLog('تعديل اجتماع',D[di].n,'اجتماع رقم '+obj.meetNum);}clM('smModal');renS3Sidebar();renS3Main();renderS3Cal();upTop();
   /* حفظ فوري عند إضافة/تعديل اجتماع — لا انتظار */
   if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
   doSave().then(function(){_pendingSave=false;});
@@ -3874,7 +3930,7 @@ function mSec(d,m,si){var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#
 var meetMeta='';
 if(m.date)meetMeta+='<span style="background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:2px 9px;font-size:11px;margin-right:8px;font-family:Sakkal Majalla,Tahoma"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+e(m.date)+'</span>';
 if(m.loc)meetMeta+='<span style="background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:2px 9px;font-size:11px;font-family:Sakkal Majalla,Tahoma"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> '+e(m.loc)+'</span>';
-var items=m.agendaItems&&m.agendaItems.length?m.agendaItems:(m.agenda?[{text:m.agenda}]:[]);var rows=m.tasks.map(function(t,i){return'<tr><td style="text-align:center;color:#999;font-size:9px;padding:6px 7px;width:25px;border:1px solid #e8e0ff">'+(i+1)+'</td><td style="padding:6px 9px;font-size:11px;border:1px solid #e8e0ff">'+e(t.task||'—')+(t.notes?'<div style="font-size:9.5px;color:#888;margin-top:3px;background:#f9f6ff;border-right:2px solid #c0a8e8;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+e(t.notes)+'</div>':'')+(t.update?'<div style="font-size:9.5px;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(t.update)+'</div>':'')+'</td><td style="padding:6px 9px;font-weight:700;font-size:11px;width:130px;border:1px solid #e8e0ff">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="padding:6px 7px;font-size:9.5px;width:110px;border:1px solid #e8e0ff">'+(t.dateFrom?'من: '+e(t.dateFrom)+'<br>':'')+(t.dateTo?'إلى: '+e(t.dateTo):'')+'</td>':'<td style="color:#ccc;padding:6px 7px;border:1px solid #e8e0ff">—</td>')+'<td style="text-align:center;padding:6px 7px;width:85px;border:1px solid #e8e0ff"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700">'+t.status+'</span></td>'+'</tr>';}).join('');return'<div style="border:2px solid #4a2080;border-radius:10px;margin-bottom:20px;overflow:hidden"><div style="background:linear-gradient(135deg,#2c1654,#4a2080,#38b6e8);padding:10px 14px"><div style="color:#fff;font-size:14px;font-weight:700;font-family:Sakkal Majalla,Tahoma">'+label+'</div><div style="margin-top:5px">'+meetMeta+'</div></div><div style="padding:13px 14px">'+(items.length?'<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:700;color:#2c1654;background:linear-gradient(135deg,#ede8ff,#e0f0ff);padding:6px 11px;border-right:4px solid #4a2080;border-radius:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg> جدول الأعمال</div><div style="padding:8px 11px">'+items.map(function(a){return'<div style="font-size:11px;margin-bottom:3px">'+e(a.text||a)+'</div>';}).join('')+'</div></div>':'')+(m.notes?'<div style="margin-bottom:10px;background:#eaf4fb;border-radius:8px;overflow:hidden">'+'<div style="font-size:10px;font-weight:700;color:#1a5276;background:linear-gradient(135deg,#d6eaf8,#a9cce3);padding:5px 10px;border-right:3px solid #2980b9"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> ملاحظات الاجتماع</div>'+'<div style="padding:7px 10px;font-size:10px;color:#2c3e50;line-height:1.7">'+e(m.notes)+'</div></div>':'')+(m.remarks?'<div style="margin-bottom:10px;background:#fffbe7;border-radius:8px;overflow:hidden">'+'<div style="font-size:10px;font-weight:700;color:#7d5700;background:linear-gradient(135deg,#fff3cd,#ffe082);padding:5px 10px;border-right:3px solid #f39c12"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg> المرئيات على عرض الاجتماع</div>'+'<div style="padding:7px 10px;font-size:10px;color:#4a3000;line-height:1.7">'+e(m.remarks)+'</div></div>':'')+(rows?'<table style="width:100%;border-collapse:collapse"><thead><tr>'+['#','التكليف','المسؤول','الفترة','الحالة'].map(function(c){return'<th style="background:#ede8ff;color:#2c1654;padding:6px 8px;text-align:right;border:1px solid #d0c0f0">'+c+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>':'')+'</div></div>';}
+var items=m.agendaItems&&m.agendaItems.length?m.agendaItems:(m.agenda?[{text:m.agenda}]:[]);var rows=m.tasks.map(function(t,i){return'<tr><td style="text-align:center;color:#999;font-size:9px;padding:6px 7px;width:25px;border:1px solid #e8e0ff">'+(i+1)+'</td><td style="padding:6px 9px;font-size:11px;border:1px solid #e8e0ff">'+e(t.task||'—')+(t.notes?'<div style="font-size:9.5px;color:#888;margin-top:3px;background:#f9f6ff;border-right:2px solid #c0a8e8;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+e(t.notes)+'</div>':'')+(t.update?'<div style="font-size:9.5px;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(cleanUpdateField(t.update||''))+'</div>':'')+'</td><td style="padding:6px 9px;font-weight:700;font-size:11px;width:130px;border:1px solid #e8e0ff">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="padding:6px 7px;font-size:9.5px;width:110px;border:1px solid #e8e0ff">'+(t.dateFrom?'من: '+e(t.dateFrom)+'<br>':'')+(t.dateTo?'إلى: '+e(t.dateTo):'')+'</td>':'<td style="color:#ccc;padding:6px 7px;border:1px solid #e8e0ff">—</td>')+'<td style="text-align:center;padding:6px 7px;width:85px;border:1px solid #e8e0ff"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700">'+t.status+'</span></td>'+'</tr>';}).join('');return'<div style="border:2px solid #4a2080;border-radius:10px;margin-bottom:20px;overflow:hidden"><div style="background:linear-gradient(135deg,#2c1654,#4a2080,#38b6e8);padding:10px 14px"><div style="color:#fff;font-size:14px;font-weight:700;font-family:Sakkal Majalla,Tahoma">'+label+'</div><div style="margin-top:5px">'+meetMeta+'</div></div><div style="padding:13px 14px">'+(items.length?'<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:700;color:#2c1654;background:linear-gradient(135deg,#ede8ff,#e0f0ff);padding:6px 11px;border-right:4px solid #4a2080;border-radius:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg> جدول الأعمال</div><div style="padding:8px 11px">'+items.map(function(a){return'<div style="font-size:11px;margin-bottom:3px">'+e(a.text||a)+'</div>';}).join('')+'</div></div>':'')+(m.notes?'<div style="margin-bottom:10px;background:#eaf4fb;border-radius:8px;overflow:hidden">'+'<div style="font-size:10px;font-weight:700;color:#1a5276;background:linear-gradient(135deg,#d6eaf8,#a9cce3);padding:5px 10px;border-right:3px solid #2980b9"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> ملاحظات الاجتماع</div>'+'<div style="padding:7px 10px;font-size:10px;color:#2c3e50;line-height:1.7">'+e(m.notes)+'</div></div>':'')+(m.remarks?'<div style="margin-bottom:10px;background:#fffbe7;border-radius:8px;overflow:hidden">'+'<div style="font-size:10px;font-weight:700;color:#7d5700;background:linear-gradient(135deg,#fff3cd,#ffe082);padding:5px 10px;border-right:3px solid #f39c12"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg> المرئيات على عرض الاجتماع</div>'+'<div style="padding:7px 10px;font-size:10px;color:#4a3000;line-height:1.7">'+e(m.remarks)+'</div></div>':'')+(rows?'<table style="width:100%;border-collapse:collapse"><thead><tr>'+['#','التكليف','المسؤول','الفترة','الحالة'].map(function(c){return'<th style="background:#ede8ff;color:#2c1654;padding:6px 8px;text-align:right;border:1px solid #d0c0f0">'+c+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>':'')+'</div></div>';}
 function printSingle(di,mi){
   if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}
   var d=D[di],m=GM(di)[mi];
@@ -3886,7 +3942,7 @@ function printSingle(di,mi){
     var pRows=pending.map(function(t,i){
       return'<tr>'
         +'<td style="text-align:center;color:#999;font-size:12px;padding:6px;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">'+(i+1)+'</td>'
-        +'<td style="padding:6px 9px;font-size:16px;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">'+e(t.task||'—')+(t.update?'<div style="font-size:12px;color:#1a5276;margin-top:4px;background:#e8f4fd;border-right:3px solid #2980b9;padding:3px 7px;border-radius:4px;font-family:Sakkal Majalla,Tahoma"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(t.update)+'</div>':'')+'</td>'
+        +'<td style="padding:6px 9px;font-size:16px;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">'+e(t.task||'—')+(t.update?'<div style="font-size:12px;color:#1a5276;margin-top:4px;background:#e8f4fd;border-right:3px solid #2980b9;padding:3px 7px;border-radius:4px;font-family:Sakkal Majalla,Tahoma"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(cleanUpdateField(t.update||''))+'</div>':'')+'</td>'
         +'<td style="padding:6px 9px;font-size:16px;font-weight:700;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">'+e(t.responsible||'—')+'</td>'
         +'<td style="padding:6px 7px;font-size:14px;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">م'+t.fromMeet+'</td>'
         +'<td style="text-align:center;padding:6px;border:1px solid #e8e0ff">'
@@ -4907,6 +4963,217 @@ function showMeetMinutesStatus(minutes_pdf){
   if(vbtn){vbtn.style.display=minutes_pdf?'inline-block':'none';vbtn.onclick=function(){openMinutesPDF(null);};}
   var cbtn=document.getElementById('smm_clear');
   if(cbtn)cbtn.style.display=minutes_pdf?'inline-block':'none';
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   تقويم الاجتماعات — S3
+   ══════════════════════════════════════════════════════════ */
+var s3CalYear  = new Date().getFullYear();
+var s3CalMonth = new Date().getMonth(); /* 0-based */
+
+var S3_MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو',
+                    'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+var S3_DAYS_AR   = ['أح','إث','ث','أر','خ','ج','س']; /* Sunday first */
+
+function s3GetAllMeetings(){
+  /* يجمع كل الاجتماعات من جميع اللجان */
+  var list=[];
+  D.forEach(function(d,di){
+    var ms=GM(di);
+    ms.forEach(function(m,mi){
+      if(!m.date)return;
+      list.push({
+        date:m.date,          /* YYYY-MM-DD */
+        committee:d.n,
+        meetNum:m.meetNum||mi+1,
+        loc:m.loc||'',
+        di:di,mi:mi
+      });
+    });
+  });
+  return list;
+}
+
+function s3CalNav(dir){
+  if(dir===0){
+    s3CalYear=new Date().getFullYear();
+    s3CalMonth=new Date().getMonth();
+  } else {
+    s3CalMonth+=dir;
+    if(s3CalMonth>11){s3CalMonth=0;s3CalYear++;}
+    if(s3CalMonth<0){s3CalMonth=11;s3CalYear--;}
+  }
+  renderS3Cal();
+}
+
+function renderS3Cal(){
+  var grid=document.getElementById('s3CalGrid');
+  var titleEl=document.getElementById('s3CalTitle');
+  if(!grid||!titleEl)return;
+
+  titleEl.textContent=S3_MONTHS_AR[s3CalMonth]+' '+s3CalYear;
+
+  var allMeets=s3GetAllMeetings();
+  var today=new Date(); today.setHours(0,0,0,0);
+  var todayStr=today.toISOString().slice(0,10);
+
+  /* خريطة التاريخ → اجتماعات */
+  var meetMap={};
+  allMeets.forEach(function(m){
+    if(!meetMap[m.date])meetMap[m.date]=[];
+    meetMap[m.date].push(m);
+  });
+
+  var firstDay=new Date(s3CalYear,s3CalMonth,1);
+  var lastDay =new Date(s3CalYear,s3CalMonth+1,0);
+  var startDow=firstDay.getDay();
+
+  /* رؤوس الأيام */
+  var html='';
+  S3_DAYS_AR.forEach(function(d){
+    html+='<div class="s3-cal-dow">'+d+'</div>';
+  });
+  for(var b=0;b<startDow;b++) html+='<div class="s3-cal-day other-month"></div>';
+
+  for(var day=1;day<=lastDay.getDate();day++){
+    var mm2=String(s3CalMonth+1).padStart(2,'0');
+    var dd2=String(day).padStart(2,'0');
+    var ds=s3CalYear+'-'+mm2+'-'+dd2;
+    var mts=meetMap[ds]||[];
+    var isToday=ds===todayStr;
+    var diff=Math.round((new Date(ds)-today)/86400000);
+
+    var cls='s3-cal-day'+(isToday?' today':'')+(mts.length?' has-meet':'');
+
+    var dots='';
+    var show=Math.min(mts.length,4);
+    for(var q=0;q<show;q++){
+      var dc=isToday?'today-dot':diff<0?'past':diff<=7?'soon':'future';
+      dots+='<span class="s3-cal-dot '+dc+'"></span>';
+    }
+    if(mts.length>4) dots+='<small style="font-size:8px;color:#7c3aed">+'+(mts.length-4)+'</small>';
+
+    /* نمرر بيانات الاجتماعات كـ index */
+    var meetsLabel=mts.map(function(m){return m.di+','+m.mi;}).join(';');
+
+    html+='<div class="'+cls+'" data-date="'+ds+'" data-mi="'+meetsLabel+'">'
+      +'<span class="s3-cal-day-num">'+day+'</span>'
+      +'<div class="s3-cal-dots">'+dots+'</div>'
+      +'</div>';
+  }
+
+  grid.innerHTML=html;
+
+  /* ربط الأحداث */
+  grid.querySelectorAll('.s3-cal-day.has-meet').forEach(function(el){
+    el.addEventListener('click',function(){
+      var ds=el.getAttribute('data-date');
+      s3CalDayClick(ds);
+    });
+    el.addEventListener('mouseenter',function(ev){s3CalShowTip(el,ev);});
+    el.addEventListener('mouseleave',s3CalHideTip);
+  });
+
+  renderS3Upcoming(allMeets,today);
+}
+
+function renderS3Upcoming(allMeets,today){
+  var upWrap=document.getElementById('s3UpcomingWrap');
+  if(!upWrap)return;
+
+  /* الاجتماعات في الـ 30 يوماً القادمة */
+  var future=allMeets.filter(function(m){
+    var d=new Date(m.date);d.setHours(0,0,0,0);
+    var diff=Math.round((d-today)/86400000);
+    return diff>=0&&diff<=30;
+  }).sort(function(a,b){return a.date<b.date?-1:1;});
+
+  if(!future.length){
+    upWrap.innerHTML='';
+    return;
+  }
+
+  var today2=new Date();today2.setHours(0,0,0,0);
+  var todayStr=today2.toISOString().slice(0,10);
+
+  var rows=future.slice(0,8).map(function(m){
+    var d=new Date(m.date);d.setHours(0,0,0,0);
+    var diff=Math.round((d-today2)/86400000);
+    var badgeColor=diff===0?'#7c3aed':diff<=3?'#dc2626':diff<=7?'#d97706':'#2563eb';
+    var badgeLabel=diff===0?'اليوم':diff===1?'غداً':diff+'ي';
+    return '<div class="s3-cal-up-item" onclick="s3CalJump('+m.di+')" style="cursor:pointer">'
+      +'<span class="s3-cal-up-badge" style="background:'+badgeColor+'18;color:'+badgeColor+';border:1px solid '+badgeColor+'44">'+badgeLabel+'</span>'
+      +'<span class="s3-cal-up-name" title="'+m.committee+'">'+m.committee.substring(0,35)+'</span>'
+      +'<span class="s3-cal-up-date">'+m.date+'</span>'
+      +'</div>';
+  }).join('');
+
+  upWrap.innerHTML='<div class="s3-cal-upcoming">'
+    +'<div class="s3-cal-upcoming-title">'
+    +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4a2080" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+    +' اجتماعات قادمة ('+future.length+')'
+    +'</div>'+rows
+    +(future.length>8?'<div style="font-size:10px;color:#888;text-align:center;padding:3px 0">+ '+(future.length-8)+' اجتماع آخر...</div>':'')
+    +'</div>';
+}
+
+function s3CalShowTip(el,ev){
+  var tt=document.getElementById('s3CalTooltip');
+  if(!tt)return;
+  var miStr=el.getAttribute('data-mi');
+  if(!miStr)return;
+  var date=el.getAttribute('data-date');
+  var lines=miStr.split(';').map(function(pair){
+    var p=pair.split(','); var di=parseInt(p[0]); var mi=parseInt(p[1]);
+    if(isNaN(di)||isNaN(mi)||!D[di])return '';
+    var m=GM(di)[mi]; if(!m)return '';
+    return D[di].n.substring(0,30)+(m.loc?' — '+m.loc.substring(0,18):'');
+  }).filter(Boolean);
+  if(!lines.length)return;
+  tt.innerHTML='<div style="font-weight:700;margin-bottom:4px;color:#a78bfa">'+date+'</div>'
+    +lines.map(function(l){return'<div style="padding:1px 0">• '+l+'</div>';}).join('');
+  tt.style.display='block';
+  tt.style.left=(ev.clientX+12)+'px';
+  tt.style.top=(ev.clientY-10)+'px';
+}
+
+function s3CalHideTip(){
+  var tt=document.getElementById('s3CalTooltip');
+  if(tt)tt.style.display='none';
+}
+
+function s3CalDayClick(dateStr){
+  var allMeets=s3GetAllMeetings();
+  var found=allMeets.find(function(m){return m.date===dateStr;});
+  if(found)s3CalJump(found.di);
+}
+
+function s3CalJump(di){
+  /* نختار اللجنة ونعرض اجتماعاتها */
+  selectedS3=di;
+  renS3Sidebar();
+  renS3Main();
+  /* نمرر للاجتماعات */
+  setTimeout(function(){
+    var sc=document.getElementById('s3Content');
+    if(sc)sc.scrollTop=0;
+  },100);
+}
+
+
+
+/* تنظيف حقل التحديث من أي SVG أو HTML tags */
+function cleanUpdateField(val){
+  if(!val)return '';
+  /* إزالة SVG كامل */
+  val=val.replace(/<svg[\s\S]*?<\/svg>/gi,'');
+  /* إزالة أي HTML tags */
+  val=val.replace(/<[^>]+>/g,'');
+  /* إزالة path d= المتبقية */
+  val=val.replace(/path d="[^"]*"/g,'');
+  val=val.replace(/[a-zA-Z0-9]+ [a-zA-Z0-9]+=["'][^"']*["']/g,'');
+  return val.trim();
 }
 
 function openAdminPanel(){
