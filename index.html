@@ -2048,7 +2048,7 @@ async function doSave(){
         var chk=await sbFetch('lajan_committees?id=eq.'+SB_ROW_C+'&select=updated_at');
         if(chk&&chk.length>0&&chk[0].updated_at&&chk[0].updated_at!==SB_LAST_UPDATED_C){
           setSyncUI('err','<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> تعارض: بيانات أحدث من مستخدم آخر');
-          showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> تنبيه: قام مستخدم آخر بتعديل البيانات. جاري تحميل أحدث نسخة...',true);
+          showToast('تنبيه: قام مستخدم آخر بتعديل البيانات. جاري تحميل أحدث نسخة...',true);
           /* لا نتجاهل البيانات المعلقة — نحفظها أولاً */
           setTimeout(async function(){
             /* نحمل أحدث بيانات من Supabase */
@@ -2088,7 +2088,7 @@ async function doSave(){
   }catch(err){
     setSyncUI('err','فشل الحفظ — انقر للإعادة');
     console.error('Save error:',err);
-    showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> خطأ في الحفظ: '+err.message+'. انقر على مؤشر الحفظ لإعادة المحاولة.',true);
+    showToast('خطأ في الحفظ:'+err.message+'. انقر على مؤشر الحفظ لإعادة المحاولة.',true);
   }
 }
 document.getElementById('syncBar').addEventListener('click',function(){if(syncTimer)clearTimeout(syncTimer);doSave();});
@@ -2153,10 +2153,10 @@ function setSecbar(sec){
 function goTo(sec){
   /* فحص صلاحية الوصول للقسم */
   if(sec==='s2'&&!canDo('view_dashboard')){
-    showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الوصول للوحة الإحصاءات',true);return;
+    showToast('ليس لديك صلاحية الوصول للوحة الإحصاءات',true);return;
   }
   if(sec==='s3'&&!canDo('view_s3')){
-    showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الوصول لقسم تحضير الاجتماعات',true);return;
+    showToast('ليس لديك صلاحية الوصول لقسم تحضير الاجتماعات',true);return;
   }
   currSec=sec;
   document.getElementById('homeScreen').style.display='none';
@@ -2185,7 +2185,7 @@ function updateSelBar(){
 }
 function clearSelection(){selectedItems.clear();updateSelBar();renCards();}
 function printSelectedReport(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
   if(!selectedItems.size){alert('لم تحدد أي لجنة');return;}
   var items=[];
   selectedItems.forEach(function(di){items.push(D[di]);});
@@ -2303,7 +2303,7 @@ document.getElementById('s1Grid').addEventListener('click',function(ev){
   } else {
     /* لا يوجد ملف — افتح نموذج التعديل */
     openCF(fi);
-    showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> لا توجد صورة قرار — يمكنك إضافتها هنا');
+    showToast('لا توجد صورة قرار — يمكنك إضافتها هنا');
   }
 }else if(a==='del'){if(currentUser&&currentUser.role==='viewer')return;confirmDel(d.n,function(ok){if(!ok)return;var delItem=Object.assign({},d);var delMeet=M[di]?JSON.parse(JSON.stringify(M[di])):[];moveToTrash('committee',{committee:delItem,meetings:delMeet},d.n);D.splice(di,1);var nm={};Object.keys(M).forEach(function(k){var ki=parseInt(k);if(ki<di)nm[ki]=M[k];else if(ki>di)nm[ki-1]=M[k];});M=nm;refRep();applyF();upTop();scheduleSave();});}});
 
@@ -2548,11 +2548,11 @@ if((f==='tasks'||f==='all')&&aT.length){
 async function exportPPTX(pMode){
   var _PptxCls=typeof PptxGenJS!=='undefined'?PptxGenJS:(typeof pptxgen!=='undefined'?pptxgen:null);
   if(!_PptxCls){
-    showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> مكتبة PPTX لم تُحمَّل بعد، انتظر ثانية وحاول مجدداً',true);return;
+    showToast('مكتبة PPTX لم تُحمَّل بعد، انتظر ثانية وحاول مجدداً',true);return;
   }
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية التصدير',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التصدير',true);return;}
 
-  showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M5 3h14"/><path d="m17 3-5 7-5-7"/><path d="M5 21h14"/><path d="m17 21-5-7-5 7"/></svg> جاري إنشاء ملف PowerPoint...');
+  showToast('جاري إنشاء ملف PowerPoint...');
 
   var pptx=new _PptxCls();
   pptx.layout='LAYOUT_16x9';
@@ -2822,15 +2822,15 @@ async function exportPPTX(pMode){
   var dateStr=new Date().toISOString().slice(0,10);
   var filename=(pMode==='tasks'?'Tasks-Report':'Committees-Report')+'-'+dateStr+'.pptx';
   pptx.writeFile({fileName:filename})
-    .then(function(){showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="20 6 9 17 4 12"/></svg> تم تصدير ملف PowerPoint — تحقق من مجلد التنزيلات');})
+    .then(function(){showToast('تم تصدير ملف PowerPoint — تحقق من مجلد التنزيلات');})
     .catch(function(err){
       console.error('PPTX Error:',err);
-      showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> خطأ: '+( err&&err.message?err.message:String(err)),true);
+      showToast('خطأ:'+( err&&err.message?err.message:String(err)),true);
     });
 }
 
 function dashPrint(printMode){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var pMode=printMode||'all';
   var modeLabels={'committees':'تقرير المجالس واللجان','tasks':'تقرير التكليفات','all':'التقرير الشامل'};
   var pModeLbl=modeLabels[pMode]||'التقرير الشامل';
@@ -3770,7 +3770,7 @@ function openPickModal(){
 
 /* MEETING MODAL */
 function openSM(di,mi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية التعديل',true);return;}var m=mi===-1?NM():GM(di)[mi];var isNew=mi===-1;var wt=m.tasks.map(function(t){return Object.assign({},t);});var wA=m.agendaItems&&m.agendaItems.length?m.agendaItems.map(function(x){return{text:x.text||x||''};}):(m.agenda?[{text:m.agenda}]:[]);document.getElementById('smTitle').innerHTML=(isNew?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> اجتماع جديد — ':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل — ')+D[di].n.substring(0,38);function aH(){var el=document.getElementById('agendaList');if(!el)return;if(!wA.length){el.innerHTML='<div style="text-align:center;padding:7px;color:#b0a8c8;font-size:10px">لا توجد بنود</div>';return;}el.innerHTML=wA.map(function(a,ai){return'<div style="display:flex;gap:5px;margin-bottom:4px"><span style="background:linear-gradient(135deg,#2c1654,#38b6e8);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+(ai+1)+'</span><input class="finp ai-inp" style="flex:1;padding:5px 8px;font-size:11px" data-ai="'+ai+'" value="'+e(a.text||'')+'"><button class="ab abr ai-del" data-ai="'+ai+'" style="padding:2px 6px;font-size:9px;flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>';}).join('');el.querySelectorAll('.ai-inp').forEach(function(inp){inp.oninput=function(){wA[parseInt(this.getAttribute('data-ai'))].text=this.value;};});el.querySelectorAll('.ai-del').forEach(function(btn){btn.onclick=function(){wA.splice(parseInt(this.getAttribute('data-ai')),1);aH();};});}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التعديل',true);return;}var m=mi===-1?NM():GM(di)[mi];var isNew=mi===-1;var wt=m.tasks.map(function(t){return Object.assign({},t);});var wA=m.agendaItems&&m.agendaItems.length?m.agendaItems.map(function(x){return{text:x.text||x||''};}):(m.agenda?[{text:m.agenda}]:[]);document.getElementById('smTitle').innerHTML=(isNew?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> اجتماع جديد — ':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل — ')+D[di].n.substring(0,38);function aH(){var el=document.getElementById('agendaList');if(!el)return;if(!wA.length){el.innerHTML='<div style="text-align:center;padding:7px;color:#b0a8c8;font-size:10px">لا توجد بنود</div>';return;}el.innerHTML=wA.map(function(a,ai){return'<div style="display:flex;gap:5px;margin-bottom:4px"><span style="background:linear-gradient(135deg,#2c1654,#38b6e8);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+(ai+1)+'</span><input class="finp ai-inp" style="flex:1;padding:5px 8px;font-size:11px" data-ai="'+ai+'" value="'+e(a.text||'')+'"><button class="ab abr ai-del" data-ai="'+ai+'" style="padding:2px 6px;font-size:9px;flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>';}).join('');el.querySelectorAll('.ai-inp').forEach(function(inp){inp.oninput=function(){wA[parseInt(this.getAttribute('data-ai'))].text=this.value;};});el.querySelectorAll('.ai-del').forEach(function(btn){btn.onclick=function(){wA.splice(parseInt(this.getAttribute('data-ai')),1);aH();};});}
 function tH(){autoUpdateOverdueTasks();if(!wt.length)return'<div id="tarea" style="text-align:center;padding:9px;color:#b0a8c8;font-size:10px">لا توجد تكليفات</div>';return'<table id="tarea" class="s3m-at"><thead><tr><th>#</th><th>التكليف</th><th style="width:110px">المسؤول</th><th style="width:78px">من</th><th style="width:78px">إلى</th><th style="width:78px">الحالة</th><th style="width:120px">آخر تحديث</th><th style="width:30px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></th></tr></thead><tbody>'+wt.map(function(t,ti){return'<tr><td style="text-align:center;color:#bbb;font-size:9px">'+(ti+1)+'</td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%" data-ti="'+ti+'" data-f="task" value="'+e(t.task||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%" data-ti="'+ti+'" data-f="responsible" value="'+e(t.responsible||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateFrom" value="'+e(t.dateFrom||'')+'"></td><td><input class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateTo" value="'+e(t.dateTo||'')+'"></td><td><select class="fsel ts" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%" data-ti="'+ti+'">'+['قيد الانتظار','جارٍ','منجز','متأخر'].map(function(s){return'<option'+(s===t.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></td><td><input class="finp ti" style="border:none;background:#fffde7;padding:3px 5px;font-size:10.5px;width:100%;border-radius:4px" data-ti="'+ti+'" data-f="update" placeholder="التحديث..." value="'+e(t.update||'')+'"></td><td><button class="ab abr tdl" data-ti="'+ti+'" style="padding:1px 4px;font-size:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td></tr>';}).join('')+'</tbody></table>';}
 function rfT(){var old=document.getElementById('tarea');var tmp=document.createElement('div');tmp.innerHTML=tH();old.parentNode.replaceChild(tmp.firstChild,old);wireT();}
 function attachRespAC(inp){inp.setAttribute('autocomplete','off');var drop=document.createElement('div');drop.style.cssText='position:absolute;z-index:9999;background:#fff;border:1.5px solid #c0a8e8;border-radius:9px;box-shadow:0 4px 18px rgba(44,22,84,.18);max-height:180px;overflow-y:auto;min-width:220px;display:none;font-size:11px;font-family:Tahoma,Arial;direction:rtl';document.body.appendChild(drop);function show(q2){var filtered=RESP_LIST.filter(function(r){return r.includes(q2);});if(!filtered.length||!q2){drop.style.display='none';return;}drop.innerHTML=filtered.map(function(r){return'<div class="ac-item" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid #f0ecff;color:#2c1654;font-weight:600">'+r+'</div>';}).join('');drop.querySelectorAll('.ac-item').forEach(function(item){item.onmousedown=function(ev2){ev2.preventDefault();inp.value=item.textContent;var ti2=parseInt(inp.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=item.textContent;drop.style.display='none';};item.onmouseover=function(){this.style.background='#ede8ff';};item.onmouseout=function(){this.style.background='';};});var rect=inp.getBoundingClientRect();drop.style.top=(rect.bottom+window.scrollY+2)+'px';drop.style.right=(window.innerWidth-rect.right)+'px';drop.style.display='block';}inp.addEventListener('input',function(){show(this.value);var ti2=parseInt(this.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=this.value;});inp.addEventListener('focus',function(){show(this.value||'');});inp.addEventListener('blur',function(){setTimeout(function(){drop.style.display='none';},150);});inp._acDrop=drop;}
@@ -3828,7 +3828,7 @@ function rdF(){return{n:gv('fn'),r:gv('fr'),ar:gv('far'),ro:gv('fro'),st:gv('fst
 
 function openView(fi){var d=flt[fi];document.getElementById('vTitle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> '+d.n.substring(0,50);function item(l,v,f){return v?'<div class="di'+(f?' full':'')+'"><div class="dlbl">'+l+'</div><div class="dval">'+v+'</div></div>':'';}document.getElementById('vBody').innerHTML='<div class="dg">'+item('ممثل الوكالة',e(d.r))+item('الدور','<span class="rb '+RC(d.ro)+'">'+e(d.ro)+'</span>')+item('الحالة','<span class="badge '+SC(d.st)+'">'+d.st+'</span>')+item('النطاق','<span class="badge '+SCC(d.sc)+'">'+d.sc+'</span>')+item('النوع',d.ty)+item('المدة','<span class="badge '+DC(d.du)+'">'+d.du+'</span>')+item('الرئاسة',e(d.ch))+item('الهدف',e(d.go),true)+item('سند التشكيل',e(d.ba),true)+(d.no?item('ملاحظات','<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> '+e(d.no),true):'')+item('رقم خطاب الترشيح',e(d.rn))+item('تاريخ الخطاب',e(d.rd))+'</div><div style="display:flex;gap:7px;margin-top:11px"><button style="flex:1;background:linear-gradient(135deg,#d68910,#e67e22);color:#fff;border:none;border-radius:9px;padding:8px;font-size:11.5px;cursor:pointer;font-family:inherit" id="vEdit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل</button><button style="flex:1;background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;border:none;border-radius:9px;padding:8px;font-size:11.5px;cursor:pointer;font-family:inherit" id="vMeet"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> الاجتماعات</button></div>';document.getElementById('vEdit').onclick=function(){clM('viewModal');openEdit(fi);};document.getElementById('vMeet').onclick=function(){clM('viewModal');var di=D.indexOf(flt[fi]);goTo('s3');setTimeout(function(){selectS3(di);},200);};shM('viewModal');}
 function openEdit(fi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية التعديل',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التعديل',true);return;}
   var d=flt[fi]; cfEditI=D.indexOf(d);
   cfSet(d);
   document.getElementById('cfModalTitle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> '+d.n.substring(0,38);
@@ -3842,7 +3842,7 @@ function openEdit(fi){
 }
 
 function openAdd(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الإضافة',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الإضافة',true);return;}
   /* Reset form */
   cfSet({});
   document.getElementById('cfModalTitle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة لجنة جديدة';
@@ -3932,7 +3932,7 @@ if(m.date)meetMeta+='<span style="background:rgba(255,255,255,.2);color:#fff;bor
 if(m.loc)meetMeta+='<span style="background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:2px 9px;font-size:11px;font-family:Sakkal Majalla,Tahoma"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> '+e(m.loc)+'</span>';
 var items=m.agendaItems&&m.agendaItems.length?m.agendaItems:(m.agenda?[{text:m.agenda}]:[]);var rows=m.tasks.map(function(t,i){return'<tr><td style="text-align:center;color:#999;font-size:9px;padding:6px 7px;width:25px;border:1px solid #e8e0ff">'+(i+1)+'</td><td style="padding:6px 9px;font-size:11px;border:1px solid #e8e0ff">'+e(t.task||'—')+(t.notes?'<div style="font-size:9.5px;color:#888;margin-top:3px;background:#f9f6ff;border-right:2px solid #c0a8e8;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+e(t.notes)+'</div>':'')+(t.update?'<div style="font-size:9.5px;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(cleanUpdateField(t.update||''))+'</div>':'')+'</td><td style="padding:6px 9px;font-weight:700;font-size:11px;width:130px;border:1px solid #e8e0ff">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="padding:6px 7px;font-size:9.5px;width:110px;border:1px solid #e8e0ff">'+(t.dateFrom?'من: '+e(t.dateFrom)+'<br>':'')+(t.dateTo?'إلى: '+e(t.dateTo):'')+'</td>':'<td style="color:#ccc;padding:6px 7px;border:1px solid #e8e0ff">—</td>')+'<td style="text-align:center;padding:6px 7px;width:85px;border:1px solid #e8e0ff"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700">'+t.status+'</span></td>'+'</tr>';}).join('');return'<div style="border:2px solid #4a2080;border-radius:10px;margin-bottom:20px;overflow:hidden"><div style="background:linear-gradient(135deg,#2c1654,#4a2080,#38b6e8);padding:10px 14px"><div style="color:#fff;font-size:14px;font-weight:700;font-family:Sakkal Majalla,Tahoma">'+label+'</div><div style="margin-top:5px">'+meetMeta+'</div></div><div style="padding:13px 14px">'+(items.length?'<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:700;color:#2c1654;background:linear-gradient(135deg,#ede8ff,#e0f0ff);padding:6px 11px;border-right:4px solid #4a2080;border-radius:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg> جدول الأعمال</div><div style="padding:8px 11px">'+items.map(function(a){return'<div style="font-size:11px;margin-bottom:3px">'+e(a.text||a)+'</div>';}).join('')+'</div></div>':'')+(m.notes?'<div style="margin-bottom:10px;background:#eaf4fb;border-radius:8px;overflow:hidden">'+'<div style="font-size:10px;font-weight:700;color:#1a5276;background:linear-gradient(135deg,#d6eaf8,#a9cce3);padding:5px 10px;border-right:3px solid #2980b9"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> ملاحظات الاجتماع</div>'+'<div style="padding:7px 10px;font-size:10px;color:#2c3e50;line-height:1.7">'+e(m.notes)+'</div></div>':'')+(m.remarks?'<div style="margin-bottom:10px;background:#fffbe7;border-radius:8px;overflow:hidden">'+'<div style="font-size:10px;font-weight:700;color:#7d5700;background:linear-gradient(135deg,#fff3cd,#ffe082);padding:5px 10px;border-right:3px solid #f39c12"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg> المرئيات على عرض الاجتماع</div>'+'<div style="padding:7px 10px;font-size:10px;color:#4a3000;line-height:1.7">'+e(m.remarks)+'</div></div>':'')+(rows?'<table style="width:100%;border-collapse:collapse"><thead><tr>'+['#','التكليف','المسؤول','الفترة','الحالة'].map(function(c){return'<th style="background:#ede8ff;color:#2c1654;padding:6px 8px;text-align:right;border:1px solid #d0c0f0">'+c+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>':'')+'</div></div>';}
 function printSingle(di,mi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var d=D[di],m=GM(di)[mi];
   var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
   var sco={'قيد الانتظار':'#856404','جارٍ':'#004085','منجز':'#155724','متأخر':'#721c24'};
@@ -3959,11 +3959,11 @@ function printSingle(di,mi){
   blobDL(d.n+' — اجتماع',mSec(d,m,mi)+pendingHtml,{rep:d.r});
 }
 function printAll(di){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}var d=D[di],ms=GM(di);if(!ms.length)return;blobDL(d.n,ms.map(function(m,si){return mSec(d,m,si);}).join(''),{rep:d.r});}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var d=D[di],ms=GM(di);if(!ms.length)return;blobDL(d.n,ms.map(function(m,si){return mSec(d,m,si);}).join(''),{rep:d.r});}
 function printRow(fi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}var d=flt[fi];function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:7px 9px;width:33%;font-size:11px">'+l+'</td><td style="padding:7px 9px;font-size:11px">'+e(v)+'</td></tr>':'';}blobDL(d.n,'<table style="border-collapse:collapse">'+row('ممثل الوكالة',d.r)+row('الممثل البديل',d.ar)+row('الدور',d.ro)+row('النوع',d.ty)+row('الحالة',d.st)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+row('رقم خطاب الترشيح',d.rn)+row('تاريخ الخطاب',d.rd)+row('الهدف',d.go)+row('سند التشكيل',d.ba)+row('ملاحظات',d.no)+'</table>',{rep:d.r,hdr:'بيانات اللجنة'});}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var d=flt[fi];function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:7px 9px;width:33%;font-size:11px">'+l+'</td><td style="padding:7px 9px;font-size:11px">'+e(v)+'</td></tr>':'';}blobDL(d.n,'<table style="border-collapse:collapse">'+row('ممثل الوكالة',d.r)+row('الممثل البديل',d.ar)+row('الدور',d.ro)+row('النوع',d.ty)+row('الحالة',d.st)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+row('رقم خطاب الترشيح',d.rn)+row('تاريخ الخطاب',d.rd)+row('الهدف',d.go)+row('سند التشكيل',d.ba)+row('ملاحظات',d.no)+'</table>',{rep:d.r,hdr:'بيانات اللجنة'});}
 function printFullReport(fi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var d=flt[fi],di=D.indexOf(d),ms=GM(di);
   function row(l,v){return v?'<tr><td style="background:#f0f0f8;font-weight:700;padding:6px 10px;width:28%;font-size:11px;border:1px solid #ddd">'+l+'</td><td style="padding:6px 10px;font-size:11px;border:1px solid #ddd">'+e(v)+'</td></tr>':'';}
   var basicTable='<table style="width:100%;border-collapse:collapse;margin-bottom:20px">'+row('ممثل الوكالة',d.r)+(d.ar?row('الممثل البديل',d.ar):'')+row('الدور',d.ro)+row('الحالة',d.st)+row('النوع',d.ty)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+(d.rn?row('رقم خطاب الترشيح',d.rn):'')+(d.rd?row('تاريخ الخطاب',d.rd):'')+row('الهدف من التشكيل',d.go)+row('سند التشكيل',d.ba)+(d.no?row('ملاحظات',d.no):'')+'</table>';
@@ -4063,12 +4063,12 @@ function printFullReport(fi){
   var _burl=URL.createObjectURL(new Blob([html2],{type:'text/html;charset=utf-8'}));var _w=window.open(_burl,'_blank','width=900,height=700,scrollbars=yes,resizable=yes');if(!_w){var a=document.createElement('a');a.href=_burl;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
 }
 function printTable(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}var rows=flt.map(function(d,i){return'<tr><td style="text-align:center;padding:5px 7px">'+(i+1)+'</td><td style="padding:5px 7px">'+e(d.n)+'</td><td style="padding:5px 7px">'+e(d.r)+'</td><td style="padding:5px 7px">'+d.ro+'</td><td style="padding:5px 7px">'+d.st+'</td><td style="padding:5px 7px">'+d.ty+'</td><td style="padding:5px 7px">'+d.du+'</td><td style="padding:5px 7px">'+d.sc+'</td></tr>';}).join('');blobDL('جدول المجالس واللجان','<table style="font-size:10px"><thead><tr>'+['#','الاسم','الممثل','الدور','الحالة','النوع','المدة','النطاق'].map(function(c){return'<th style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;padding:6px 7px;text-align:right;white-space:nowrap">'+c+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>',{hdr:'جدول اللجان والمجالس'});}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var rows=flt.map(function(d,i){return'<tr><td style="text-align:center;padding:5px 7px">'+(i+1)+'</td><td style="padding:5px 7px">'+e(d.n)+'</td><td style="padding:5px 7px">'+e(d.r)+'</td><td style="padding:5px 7px">'+d.ro+'</td><td style="padding:5px 7px">'+d.st+'</td><td style="padding:5px 7px">'+d.ty+'</td><td style="padding:5px 7px">'+d.du+'</td><td style="padding:5px 7px">'+d.sc+'</td></tr>';}).join('');blobDL('جدول المجالس واللجان','<table style="font-size:10px"><thead><tr>'+['#','الاسم','الممثل','الدور','الحالة','النوع','المدة','النطاق'].map(function(c){return'<th style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;padding:6px 7px;text-align:right;white-space:nowrap">'+c+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>',{hdr:'جدول اللجان والمجالس'});}
 
 
 /* ===== EXCEL EXPORT ===== */
 function exportS1Excel(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية التصدير',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التصدير',true);return;}
   var rows=flt.map(function(d,i){
     var di=D.indexOf(d);
     var mc=GM(di).length;
@@ -4130,7 +4130,7 @@ function exportS1Excel(){
 }
 
 function exportS3Excel(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية التصدير',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التصدير',true);return;}
   /* Sheet 1: all meetings */
   var meetRows=[];
   D.forEach(function(d,di){
@@ -4284,7 +4284,7 @@ async function init(){
       : 'خطأ في الاتصال — بيانات محلية ('+D.length+')';
     setSyncUI('err',msg);
     if(isNetErr){
-      showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> تعذّر الاتصال بـ Supabase. إذا كان المشروع موقوفاً، افتح supabase.com/dashboard وفعّله من جديد.',true);
+      showToast('تعذّر الاتصال بـ Supabase. إذا كان المشروع موقوفاً، افتح supabase.com/dashboard وفعّله من جديد.',true);
     }
     console.error('Init error:',err);
   }
@@ -4311,10 +4311,10 @@ async function forceReloadEmbedded(){
       /* لا نمسح الاجتماعات — نحتفظ بها كما هي */
       setSyncUI('ok','تم التحديث ✓');
       refRep();applyF();updateHomeStats();
-      showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="20 6 9 17 4 12"/></svg> تم رفع بيانات اللجان ('+D.length+' لجنة) — الاجتماعات محفوظة.');
+      showToast('تم رفع بيانات اللجان ('+D.length+' لجنة) — الاجتماعات محفوظة.');
     }catch(e){
       M={};refRep();applyF();updateHomeStats();
-      showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> خطأ: '+e.message,true);
+      showToast('خطأ:'+e.message,true);
     }
   });
 }
@@ -4325,7 +4325,7 @@ function showToast(msg,isErr){
     +'background:'+(isErr?'#e74c3c':'#1d8a4e')+';color:#fff;border-radius:12px;padding:12px 24px;'
     +'font-family:Tahoma,Arial;font-size:13px;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.3);'
     +'animation:toastIn .3s ease;pointer-events:none;white-space:nowrap';
-  t.textContent=msg;
+  t.innerHTML=msg;
   var s=document.createElement('style');
   s.textContent='@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
   document.head.appendChild(s);
@@ -4416,7 +4416,7 @@ async function moveToTrash(type,item_data,item_label){
 }
 
 async function openTrashModal(){
-  if(!currentUser||currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية',true);return;}
+  if(!currentUser||currentUser.role==='viewer'){showToast('ليس لديك صلاحية',true);return;}
   try{
     var rows=await sbFetch('lajan_trash?restored=is.false&order=deleted_at.desc&limit=60');
     var modal=document.getElementById('trashModal');
@@ -4484,7 +4484,7 @@ async function restoreFromTrash(trashId){
 }
 
 async function openAuditModal(){
-  if(!currentUser||currentUser.role!=='admin'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> متاح للمدير فقط',true);return;}
+  if(!currentUser||currentUser.role!=='admin'){showToast('متاح للمدير فقط',true);return;}
   try{
     var rows=await sbFetch('lajan_audit?select=*&order=created_at.desc&limit=100');
     var modal=document.getElementById('auditModal');
@@ -4887,7 +4887,7 @@ document.addEventListener('change',function(e){
         if(cbtn)cbtn.style.display='inline-block';
       }
     },
-    function(err){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> '+err,true);}
+    function(err){showToast('خطأ: '+err,true);}
   );
 });
 
@@ -5016,7 +5016,9 @@ function renderS3Cal(){
 
   var allMeets=s3GetAllMeetings();
   var today=new Date(); today.setHours(0,0,0,0);
-  var todayStr=today.toISOString().slice(0,10);
+  /* نستخدم التوقيت المحلي لتجنب فروق UTC */
+  var _ty=today.getFullYear(),_tm=String(today.getMonth()+1).padStart(2,'0'),_td=String(today.getDate()).padStart(2,'0');
+  var todayStr=_ty+'-'+_tm+'-'+_td;
 
   /* خريطة التاريخ → اجتماعات */
   var meetMap={};
@@ -5042,7 +5044,10 @@ function renderS3Cal(){
     var ds=s3CalYear+'-'+mm2+'-'+dd2;
     var mts=meetMap[ds]||[];
     var isToday=ds===todayStr;
-    var diff=Math.round((new Date(ds)-today)/86400000);
+    /* مقارنة محلية للتواريخ - تجنب مشاكل UTC */
+    var _dp=ds.split('-'),_dy=parseInt(_dp[0]),_dm=parseInt(_dp[1])-1,_dd=parseInt(_dp[2]);
+    var _dDate=new Date(_dy,_dm,_dd); /* محلي تلقائياً */
+    var diff=Math.round((_dDate-today)/86400000);
 
     var cls='s3-cal-day'+(isToday?' today':'')+(mts.length?' has-meet':'');
 
@@ -5084,7 +5089,8 @@ function renderS3Upcoming(allMeets,today){
 
   /* الاجتماعات في الـ 30 يوماً القادمة */
   var future=allMeets.filter(function(m){
-    var d=new Date(m.date);d.setHours(0,0,0,0);
+    var p=m.date.split('-');
+    var d=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
     var diff=Math.round((d-today)/86400000);
     return diff>=0&&diff<=30;
   }).sort(function(a,b){return a.date<b.date?-1:1;});
@@ -5095,11 +5101,12 @@ function renderS3Upcoming(allMeets,today){
   }
 
   var today2=new Date();today2.setHours(0,0,0,0);
-  var todayStr=today2.toISOString().slice(0,10);
+  var _t2y=today2.getFullYear(),_t2m=String(today2.getMonth()+1).padStart(2,'0'),_t2d=String(today2.getDate()).padStart(2,'0');
+  var todayStr=_t2y+'-'+_t2m+'-'+_t2d;
 
   var rows=future.slice(0,8).map(function(m){
     var d=new Date(m.date);d.setHours(0,0,0,0);
-    var diff=Math.round((d-today2)/86400000);
+    var p2=m.date.split('-');var d2=new Date(parseInt(p2[0]),parseInt(p2[1])-1,parseInt(p2[2]));var diff=Math.round((d2-today2)/86400000);
     var badgeColor=diff===0?'#7c3aed':diff<=3?'#dc2626':diff<=7?'#d97706':'#2563eb';
     var badgeLabel=diff===0?'اليوم':diff===1?'غداً':diff+'ي';
     return '<div class="s3-cal-up-item" onclick="s3CalJump('+m.di+')" style="cursor:pointer">'
@@ -5128,7 +5135,7 @@ function s3CalShowTip(el,ev){
     var p=pair.split(','); var di=parseInt(p[0]); var mi=parseInt(p[1]);
     if(isNaN(di)||isNaN(mi)||!D[di])return '';
     var m=GM(di)[mi]; if(!m)return '';
-    return D[di].n.substring(0,30)+(m.loc?' — '+m.loc.substring(0,18):'');
+    return D[di].n.substring(0,45)+(m.loc?' — '+m.loc.substring(0,18):'');
   }).filter(Boolean);
   if(!lines.length)return;
   tt.innerHTML='<div style="font-weight:700;margin-bottom:4px;color:#a78bfa">'+date+'</div>'
@@ -5392,7 +5399,7 @@ function saveExecSumFields(){
 }
 
 function printPrepSummary(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
   saveExecSumFields();
   var di=esCurrentDi, mi=esCurrentMi;
   var d=D[di], m=GM(di)[mi];
@@ -5459,7 +5466,7 @@ function printPrepSummary(){
 }
 
 function printExecSummary(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية الطباعة',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
   saveExecSumFields();
   var di=esCurrentDi, mi=esCurrentMi;
   var d=D[di], m=GM(di)[mi];
@@ -5784,7 +5791,7 @@ function cfGet(){
 
 
 function exportMeetingExcel(di,mi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> ليس لديك صلاحية التصدير',true);return;}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التصدير',true);return;}
   var d=D[di], m=GM(di)[mi];
   if(!m)return;
   var label=m.meetNum?'اجتماع_'+m.meetNum:'اجتماع_'+(mi+1);
@@ -5972,7 +5979,7 @@ function doMonthlyBackup(dest){
   /* ثم افتح وجهة الرفع */
   var urls={sharepoint:'https://saudimoegov.sharepoint.com',drive:'https://drive.google.com'};
   if(urls[dest])window.open(urls[dest],'_blank');
-  showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="20 6 9 17 4 12"/></svg> تم تصدير النسخة الشهرية — ارفعها على '+( dest==='sharepoint'?'SharePoint':'Google Drive'));
+  showToast('تم تصدير النسخة الشهرية — ارفعها على'+( dest==='sharepoint'?'SharePoint':'Google Drive'));
   dismissMonthlyBackup();
 }
 function doMonthlyBackupSP(){doMonthlyBackup('sharepoint');}
@@ -6121,10 +6128,10 @@ async function savePermissions(email){
       applyRoleUI();
     }
     document.getElementById('permModal').remove();
-    showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="20 6 9 17 4 12"/></svg> تم حفظ الصلاحيات لـ '+email);
+    showToast('تم حفظ الصلاحيات لـ'+email);
     auditLog('تعديل صلاحيات',email,'صلاحيات مخصصة محدّثة');
   }catch(err){
-    showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> خطأ في الحفظ: '+err.message,true);
+    showToast('خطأ في الحفظ:'+err.message,true);
   }
 }
 function closeChangelogModal(){
@@ -6187,7 +6194,7 @@ function closeRLSGuide(){
       var fname='نسخة_احتياطية_'+dt.getFullYear()+'_'+(dt.getMonth()+1)+'_'+dt.getDate()+'.xlsx';
       XLSX.writeFile(wb,fname);
       try{localStorage.setItem(BACKUP_KEY,Date.now().toString());}catch(e){}
-      showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> تم حفظ النسخة الاحتياطية الأسبوعية: '+fname);
+      showToast('تم حفظ النسخة الاحتياطية الأسبوعية:'+fname);
       /* فحص النسخة الشهرية الخارجية */
       try{
         var lastM=localStorage.getItem(MONTHLY_BACKUP_KEY);
@@ -6208,7 +6215,7 @@ function closeRLSGuide(){
   window.manualBackup=function(){
     try{localStorage.removeItem(BACKUP_KEY);}catch(e){}
     if(typeof XLSX!=='undefined')doAutoBackup();
-    else showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M5 3h14"/><path d="m17 3-5 7-5-7"/><path d="M5 21h14"/><path d="m17 21-5-7-5 7"/></svg> جاري تحميل مكتبة Excel...',true);
+    else showToast('جاري تحميل مكتبة Excel...',true);
   };
 })();
 
@@ -6225,7 +6232,7 @@ function closeRLSGuide(){
         if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
         if(_pendingSave){await doSave();}
         await init();
-        showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> تم تحديث البيانات من مستخدم آخر');
+        showToast('تم تحديث البيانات من مستخدم آخر');
       }
     }catch(e){}
   },SYNC_INTERVAL);
@@ -6283,13 +6290,13 @@ window.addEventListener('keydown',function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='p'){
     if(currentUser&&currentUser.role==='viewer'){
       e.preventDefault();
-      showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> الطباعة غير متاحة لحساب المشاهدة',true);
+      showToast('الطباعة غير متاحة لحساب المشاهدة',true);
     }
   }
 });
 window.addEventListener('beforeprint',function(){
   if(currentUser&&currentUser.role==='viewer'){
-    showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> الطباعة غير متاحة لحساب المشاهدة',true);
+    showToast('الطباعة غير متاحة لحساب المشاهدة',true);
   }
 });
 
@@ -6342,7 +6349,7 @@ window.addEventListener('beforeprint',function(){
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(function(r){
         if(r.outcome==='accepted'){
-          showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="20 6 9 17 4 12"/></svg> تم تثبيت النظام على جهازك بنجاح!');
+          showToast('تم تثبيت النظام على جهازك بنجاح!');
           var bar=document.getElementById('pwa-install-bar');
           if(bar)bar.style.display='none';
         }
@@ -6351,7 +6358,7 @@ window.addEventListener('beforeprint',function(){
     });
   }
   window.addEventListener('appinstalled',function(){
-    showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><line x1="12" y1="3" x2="12" y2="21"/><path d="M3 9l9-7 9 7"/><path d="M5 9v11h14V9"/></svg> تم تثبيت النظام بنجاح على جهازك');
+    showToast('تم تثبيت النظام بنجاح على جهازك');
     var bar=document.getElementById('pwa-install-bar');
     if(bar)bar.style.display='none';
   });
