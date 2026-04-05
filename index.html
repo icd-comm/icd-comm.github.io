@@ -25,16 +25,16 @@ body{font-family:Tahoma,Arial,sans-serif;background:#0a0e1a;color:#1a1a2e;direct
 .particle{position:absolute;border-radius:50%;animation:float linear infinite;opacity:0}
 @keyframes float{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:.6}90%{opacity:.3}100%{transform:translateY(-100px) scale(1.2);opacity:0}}
 .home-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;max-width:900px;padding:30px 20px}
-.home-logo{width:140px;height:140px;background:none;border-radius:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.home-logo{width:200px;height:auto;background:none;border-radius:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 @keyframes logoPulse{0%,100%{box-shadow:0 8px 32px rgba(26,82,118,.5),0 0 0 1px rgba(255,255,255,.1)}50%{box-shadow:0 12px 48px rgba(26,82,118,.8),0 0 0 1px rgba(255,255,255,.2),0 0 60px rgba(29,138,78,.2)}}
 .home-title{text-align:center;margin-bottom:8px}
 .home-title h1{font-size:clamp(20px,4vw,32px);font-weight:700;color:#fff;letter-spacing:1px;line-height:1.4;text-shadow:0 2px 20px rgba(0,0,0,.5)}
 .home-title .sub1{font-size:clamp(13px,2.5vw,17px);color:rgba(255,255,255,.75);margin-top:6px;font-weight:600}
 .home-title .sub2{font-size:clamp(11px,2vw,14px);color:rgba(255,255,255,.5);margin-top:3px}
 .home-divider{width:120px;height:3px;background:linear-gradient(90deg,transparent,#38b6e8,#1d8a4e,transparent);border-radius:2px;margin:20px 0 32px}
-.home-clock{text-align:center;position:relative;z-index:2;margin-bottom:12px}
-.home-clock-time{font-size:clamp(28px,6vw,48px);font-weight:700;color:#fff;letter-spacing:4px;font-variant-numeric:tabular-nums;text-shadow:0 2px 20px rgba(0,0,0,.4)}
-.home-clock-date{font-size:clamp(11px,2vw,14px);color:rgba(255,255,255,.6);margin-top:4px;letter-spacing:1px}
+.home-clock{text-align:center;position:relative;z-index:2;margin-bottom:6px}
+.home-clock-time{font-size:clamp(16px,3vw,26px);font-weight:700;color:rgba(255,255,255,.8);letter-spacing:3px;font-variant-numeric:tabular-nums}
+.home-clock-date{font-size:clamp(10px,1.5vw,12px);color:rgba(255,255,255,.5);margin-top:2px;letter-spacing:1px}
 .home-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;width:100%}
 @media(max-width:640px){.home-cards{grid-template-columns:1fr;gap:14px}.home-inner{padding:20px 14px}}
 .hcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px 22px 26px;cursor:pointer;transition:all .35s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;backdrop-filter:blur(10px)}
@@ -480,6 +480,15 @@ html,body{max-width:100vw;overflow-x:hidden}
 .ms-footer button{flex:1;border:none;border-radius:6px;padding:5px 0;font-size:10.5px;font-family:inherit;cursor:pointer;font-weight:700}
 .ms-all{background:#e8f4ff;color:#1a5276}
 .ms-clear{background:#fee;color:#e74c3c}
+
+input[type="date"]{color:#333}
+input[type="date"]::-webkit-datetime-edit{color:#333}
+input[type="date"]::-webkit-datetime-edit-text{color:#333}
+input[type="date"]::-webkit-datetime-edit-month-field{color:#333}
+input[type="date"]::-webkit-datetime-edit-day-field{color:#333}
+input[type="date"]::-webkit-datetime-edit-year-field{color:#333}
+input[type="date"]::-webkit-inner-spin-button{display:none}
+input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
 </style>
 </head>
 <body>
@@ -545,15 +554,11 @@ html,body{max-width:100vw;overflow-x:hidden}
 <div id="homeScreen" style="display:none">
   <div class="home-particles" id="particles"></div>
   <div class="home-inner">
-    <div class="home-logo" style="background:none;box-shadow:none;animation:logoPulse 3s ease-in-out infinite;padding:0;overflow:visible;border-radius:0"><img id="homeLogo" src="" alt="وزارة التعليم" style="height:68px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2))"></div>
+    <div class="home-logo" style="background:none;box-shadow:none;padding:0;overflow:visible;border-radius:0;margin-bottom:14px"><img id="homeLogo" src="" alt="وزارة التعليم" style="height:180px;object-fit:contain;display:block;filter:drop-shadow(0 4px 16px rgba(0,0,0,.3))"></div>
     <div class="home-title">
       <h1>نظام إدارة المجالس واللجان وفرق العمل</h1>
       <div class="sub1">وكالة التعاون الدولي</div>
       <div class="sub2">وزارة التعليم — المملكة العربية السعودية</div>
-    </div>
-    <div class="home-clock">
-      <div class="home-clock-time" id="homeClock">--:--:--</div>
-      <div class="home-clock-date" id="homeClockDate"></div>
     </div>
     <div class="home-divider"></div>
     <div class="home-cards">
@@ -585,6 +590,10 @@ html,body{max-width:100vw;overflow-x:hidden}
       <div class="hstat"><div class="hstat-v" id="hst3">—</div><div class="hstat-l">اجتماع مسجّل</div></div>
       <div class="hstat"><div class="hstat-v" id="hst4">—</div><div class="hstat-l">تكليف نشط</div></div>
       <div class="hstat" id="hstat-late-card" style="border:1px solid rgba(231,76,60,.35);background:rgba(231,76,60,.07)"><div class="hstat-v" id="hst-late" style="color:#e74c3c">—</div><div class="hstat-l" style="color:rgba(231,76,60,.75)">تكليف متأخر</div></div>
+    </div>
+    <div class="home-clock" style="margin-top:16px;margin-bottom:4px">
+      <div class="home-clock-time" id="homeClock">--:--:--</div>
+      <div class="home-clock-date" id="homeClockDate"></div>
     </div>
     <div id="pwa-install-bar" style="display:none;margin-top:12px;position:relative;z-index:2;text-align:center">
     <button id="pwa-install-btn" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:9px 20px;color:#fff;font-size:12px;font-family:Tahoma,Arial;cursor:pointer;display:inline-flex;align-items:center;gap:8px">
@@ -2196,7 +2205,7 @@ function printSelectedReport(){
   if(!selectedItems.size){alert('لم تحدد أي لجنة');return;}
   var items=[];
   selectedItems.forEach(function(di){items.push(D[di]);});
-  function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:6px 9px;width:30%;font-size:13px;font-family:Sakkal Majalla,Tahoma">'+l+'</td><td style="padding:6px 9px;font-size:13px;font-family:Sakkal Majalla,Tahoma">'+e(v)+'</td></tr>':'';}
+  function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:8px 12px;width:30%;font-size:14pt;font-family:Sakkal Majalla,Tahoma">'+l+'</td><td style="padding:8px 12px;font-size:14pt;font-family:Sakkal Majalla,Tahoma">'+e(v)+'</td></tr>':'';}
   var body=items.map(function(d,i){
     return'<div style="border:2px solid #1a5276;border-radius:10px;margin-bottom:20px;page-break-inside:avoid;overflow:hidden">'
       +'<div style="background:linear-gradient(135deg,#1a3a5c,#1a5276);padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
@@ -3951,7 +3960,7 @@ function printSingle(di,mi){
         +'<td style="text-align:center;color:#999;font-size:12px;padding:6px;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">'+(i+1)+'</td>'
         +'<td style="padding:6px 9px;font-size:16px;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">'+e(t.task||'—')+(t.update?'<div style="font-size:12px;color:#1a5276;margin-top:4px;background:#e8f4fd;border-right:3px solid #2980b9;padding:3px 7px;border-radius:4px;font-family:Sakkal Majalla,Tahoma"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(cleanUpdateField(t.update||''))+'</div>':'')+'</td>'
         +'<td style="padding:6px 9px;font-size:16px;font-weight:700;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">'+e(t.responsible||'—')+'</td>'
-        +'<td style="padding:6px 7px;font-size:14px;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">م'+t.fromMeet+'</td>'
+        +'<td style="padding:6px 7px;font-size:14px;width:110px;border:1px solid #e8e0ff;font-family:Sakkal Majalla,Tahoma">'+(t.dateTo||t.dateFrom||'—')+'</td>'
         +'<td style="text-align:center;padding:6px;border:1px solid #e8e0ff">'
         +'<span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:2px 8px;font-size:14px;font-weight:700;font-family:Sakkal Majalla,Tahoma">'+t.status+'</span>'
         +'</td>'+'</tr>';
@@ -3960,19 +3969,120 @@ function printSingle(di,mi){
       +'<div style="background:linear-gradient(135deg,#6d4c00,#d68910,#f39c12);padding:8px 14px">'
       +'<div style="color:#fff;font-size:16px;font-weight:700;font-family:Sakkal Majalla,Tahoma"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg> التكليفات الجارية والمتأخرة والمعلقة لهذه اللجنة</div>'
       +'</div><table style="width:100%;border-collapse:collapse">'
-      +'<thead><tr>'+['#','التكليف','المسؤول','من اجتماع','الحالة'].map(function(c){return'<th style="background:#fff8e1;color:#6d4c00;padding:7px 9px;text-align:right;border:1px solid #ffe082;font-size:16px;font-family:Sakkal Majalla,Tahoma">'+c+'</th>';}).join('')+'</tr></thead>'
+      +'<thead><tr>'+['#','التكليف','المسؤول','تاريخ الاستحقاق','الحالة'].map(function(c){return'<th style="background:#fff8e1;color:#6d4c00;padding:7px 9px;text-align:right;border:1px solid #ffe082;font-size:16px;font-family:Sakkal Majalla,Tahoma">'+c+'</th>';}).join('')+'</tr></thead>'
       +'<tbody>'+pRows+'</tbody></table></div>';
   }
   blobDL(d.n+' — اجتماع',mSec(d,m,mi)+pendingHtml,{rep:d.r});
 }
 function printAll(di){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var d=D[di],ms=GM(di);if(!ms.length)return;blobDL(d.n,ms.map(function(m,si){return mSec(d,m,si);}).join(''),{rep:d.r});}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  var d=D[di], ms=GM(di);
+  if(!ms.length){showToast('لا توجد اجتماعات لهذه اللجنة',true);return;}
+  var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
+  var sco={'قيد الانتظار':'#856404','جارٍ':'#004085','منجز':'#155724','متأخر':'#721c24'};
+
+  /* بناء محتوى كل اجتماع */
+  var meetSections=ms.map(function(m,si){
+    var label=m.meetNum?'اجتماع رقم '+m.meetNum:'اجتماع '+(si+1);
+    var items=m.agendaItems&&m.agendaItems.length?m.agendaItems:(m.agenda?[{text:m.agenda}]:[]);
+
+    /* تكليفات الاجتماع */
+    var taskRows=m.tasks.map(function(t,ti){
+      return'<tr>'
+        +'<td style="text-align:center;width:28px;color:#888;font-size:11pt;padding:5px 4px;border:1px solid #e0d5f5">'+(ti+1)+'</td>'
+        +'<td style="font-size:12pt;padding:6px 9px;border:1px solid #e0d5f5">'+e(cleanUpdateField(t.task||'—'))
+          +(t.update?'<div style="font-size:9.5pt;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 5px;border-radius:3px"> آخر تحديث: '+e(cleanUpdateField(t.update))+'</div>':'')
+        +'</td>'
+        +'<td style="font-size:12pt;font-weight:700;width:130px;padding:6px 9px;border:1px solid #e0d5f5">'+e(t.responsible||'—')+'</td>'
+        +(t.dateFrom||t.dateTo?'<td style="font-size:10pt;width:100px;padding:5px 7px;border:1px solid #e0d5f5">'+(t.dateFrom?'من: '+t.dateFrom+'<br>':'')+(t.dateTo?'إلى: '+t.dateTo:'')+'</td>':'<td style="color:#ccc;padding:5px;border:1px solid #e0d5f5;text-align:center">—</td>')
+        +'<td style="text-align:center;width:85px;padding:5px;border:1px solid #e0d5f5"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:2px 7px;font-size:10pt;font-weight:700">'+t.status+'</span></td>'
+        +'</tr>';
+    }).join('');
+
+    return'<div style="margin-bottom:28px;break-inside:avoid;page-break-inside:avoid">'
+      /* رأس الاجتماع */
+      +'<div style="background:linear-gradient(135deg,#1a3a5c,#2980b9);padding:10px 16px;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="color:#fff;font-size:14pt;font-weight:700;font-family:Sakkal Majalla,Tahoma"> '+e(label)+'</div>'
+      +(m.date?'<div style="color:rgba(255,255,255,.8);font-size:11pt;font-family:Sakkal Majalla,Tahoma"> '+e(m.date)+(m.loc?' — '+e(m.loc):'')+'</div>':'')
+      +'</div>'
+      /* تفاصيل الاجتماع */
+      +'<div style="background:#f8f9ff;border:1px solid #d0dde8;border-top:none;border-radius:0 0 10px 10px;padding:12px 16px">'
+      /* جدول الأعمال */
+      +(items.length
+        ?'<div style="margin-bottom:10px"><div style="font-size:12pt;font-weight:700;color:#1a3a5c;border-right:4px solid #2980b9;padding-right:8px;margin-bottom:6px"> جدول الأعمال</div>'
+          +'<div style="background:#f0f7ff;border-radius:7px;padding:9px 13px">'
+          +items.map(function(a,ii){return'<div style="font-size:12pt;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #d0e8f5">'+(ii+1)+'. '+e(a.text||a)+'</div>';}).join('')
+          +'</div></div>'
+        :'')
+      /* ملاحظات */
+      +(m.notes?'<div style="background:#fff9e6;border-right:3px solid #f39c12;border-radius:0 7px 7px 0;padding:7px 12px;margin-bottom:8px;font-size:11.5pt"><b> ملاحظات:</b> '+e(m.notes)+'</div>':'')
+      /* مرئيات */
+      +(m.remarks?'<div style="background:#fffbe7;border-right:3px solid #e67e22;border-radius:0 7px 7px 0;padding:7px 12px;margin-bottom:8px;font-size:11.5pt"><b> المرئيات:</b> '+e(m.remarks)+'</div>':'')
+      /* التكليفات */
+      +(m.tasks.length
+        ?'<div style="margin-top:8px"><div style="font-size:12pt;font-weight:700;color:#2c1654;border-right:4px solid #4a2080;padding-right:8px;margin-bottom:6px"> التكليفات</div>'
+          +'<table style="width:100%;border-collapse:collapse"><thead><tr>'
+          +['#','التكليف','المسؤول','الفترة','الحالة'].map(function(c){return'<th style="background:linear-gradient(135deg,#2c1654,#4a2080);color:#fff;padding:6px 8px;text-align:right;font-size:11pt">'+c+'</th>';}).join('')
+          +'</tr></thead><tbody>'+taskRows+'</tbody></table></div>'
+        :'')
+      /* الملخص التنفيذي */
+      +(m.execSummary?'<div style="margin-top:8px;background:#f0fff4;border:1px solid #c3e6cb;border-radius:7px;padding:9px 13px;font-size:11.5pt"><b style="color:#1d6a3b"> الملخص التنفيذي:</b><br>'+e(m.execSummary)+'</div>':'')
+      /* التوجيهات */
+      +(m.directives?'<div style="margin-top:8px;background:#fdf0f5;border:1px solid #f5c6cb;border-radius:7px;padding:9px 13px;font-size:11.5pt"><b style="color:#c0392b"> التوجيهات:</b><br>'+e(m.directives)+'</div>':'')
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  /* بناء الصفحة الكاملة */
+  var html='<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'
+    +'<title>اجتماعات '+e(d.n)+'</title>'
+    +'<style>'
+    +'@font-face{font-family:"Sakkal Majalla";src:local("Sakkal Majalla")}'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:"Sakkal Majalla",Tahoma,Arial;direction:rtl;background:#f0f4f8;font-size:15pt}'
+    +'.page{max-width:870px;margin:0 auto;background:#fff;padding:28px}'
+    +'.toolbar{background:#1a3a5c;padding:10px 20px;display:flex;gap:10px;align-items:center;position:sticky;top:0;z-index:99}'
+    +'@media print{.toolbar{display:none!important}.page{padding:0}@page{margin:12mm;size:A4}}'
+    +'</style></head><body>'
+    /* شريط طباعة */
+    +'<div class="toolbar">'
+    +'<button onclick="window.print()" style="background:linear-gradient(135deg,#27ae60,#1d8a4e);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13pt;font-family:Sakkal Majalla,Tahoma;cursor:pointer;font-weight:700"> طباعة / PDF</button>'
+    +'<button onclick="window.close()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:8px 14px;font-size:12pt;font-family:Sakkal Majalla,Tahoma;cursor:pointer;margin-right:auto"> إغلاق</button>'
+    +'</div>'
+    +'<div class="page">'
+    /* الترويسة */
+    +'<div style="background:linear-gradient(135deg,#0d2137,#1a3a5c,#1d6a3b);padding:18px 22px;border-radius:12px;margin-bottom:22px;display:flex;align-items:center;gap:16px">'
+    +'<img src="'+LOGO2_SRC+'" style="height:56px;object-fit:contain;filter:brightness(0) invert(1)">'
+    +'<div>'
+    +'<div style="color:rgba(255,255,255,.65);font-size:11pt">وزارة التعليم — وكالة التعاون الدولي</div>'
+    +'<div style="color:#fff;font-size:17pt;font-weight:700;margin-top:3px"> سجل اجتماعات اللجنة</div>'
+    +'<div style="color:rgba(255,255,255,.85);font-size:12pt;margin-top:2px">'+e(d.n)+'</div>'
+    +'</div></div>'
+    /* بيانات اللجنة */
+    +'<table style="width:100%;border-collapse:collapse;margin-bottom:20px">'
+    +'<tr><td style="background:#f0f7ff;font-weight:700;padding:7px 12px;width:28%;border:1px solid #d0dde8;font-size:12pt">اسم اللجنة / المجلس</td><td style="padding:7px 12px;border:1px solid #d0dde8;font-size:12pt">'+e(d.n)+'</td></tr>'
+    +'<tr><td style="background:#f0f7ff;font-weight:700;padding:7px 12px;border:1px solid #d0dde8;font-size:12pt">ممثل الوكالة</td><td style="padding:7px 12px;border:1px solid #d0dde8;font-size:12pt">'+e(d.r||'—')+'</td></tr>'
+    +'<tr><td style="background:#f0f7ff;font-weight:700;padding:7px 12px;border:1px solid #d0dde8;font-size:12pt">عدد الاجتماعات</td><td style="padding:7px 12px;border:1px solid #d0dde8;font-size:12pt">'+ms.length+' اجتماع</td></tr>'
+    +'</table>'
+    +meetSections
+    /* الفوتر */
+    +'<div style="margin-top:24px;border-top:2px solid #1a5276;padding-top:10px;display:flex;justify-content:space-between;font-size:11pt;color:#888">'
+    +'<span>وحدة المجالس واللجان — وكالة التعاون الدولي</span>'
+    +'<span>'+new Date().toLocaleDateString('en-GB')+'</span>'
+    +'</div>'
+    +'</div></body></html>';
+
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var w=window.open(url,'_blank','width=960,height=800,scrollbars=yes,resizable=yes');
+  if(!w){var a=document.createElement('a');a.href=url;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
+}
 function printRow(fi){
   if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var d=flt[fi];function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:7px 9px;width:33%;font-size:11px">'+l+'</td><td style="padding:7px 9px;font-size:11px">'+e(v)+'</td></tr>':'';}blobDL(d.n,'<table style="border-collapse:collapse">'+row('ممثل الوكالة',d.r)+row('الممثل البديل',d.ar)+row('الدور',d.ro)+row('النوع',d.ty)+row('الحالة',d.st)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+row('رقم خطاب الترشيح',d.rn)+row('تاريخ الخطاب',d.rd)+row('الهدف',d.go)+row('سند التشكيل',d.ba)+row('ملاحظات',d.no)+'</table>',{rep:d.r,hdr:'بيانات اللجنة'});}
 function printFullReport(fi){
   if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var d=flt[fi],di=D.indexOf(d),ms=GM(di);
-  function row(l,v){return v?'<tr><td style="background:#f0f0f8;font-weight:700;padding:6px 10px;width:28%;font-size:11px;border:1px solid #ddd">'+l+'</td><td style="padding:6px 10px;font-size:11px;border:1px solid #ddd">'+e(v)+'</td></tr>':'';}
+  function row(l,v){return v?'<tr><td style="background:#f0f0f8;font-weight:700;padding:8px 12px;width:28%;font-size:16px;border:1px solid #ddd">'+l+'</td><td style="padding:8px 12px;font-size:16px;border:1px solid #ddd">'+e(v)+'</td></tr>':'';}
   var basicTable='<table style="width:100%;border-collapse:collapse;margin-bottom:20px">'+row('ممثل الوكالة',d.r)+(d.ar?row('الممثل البديل',d.ar):'')+row('الدور',d.ro)+row('الحالة',d.st)+row('النوع',d.ty)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+(d.rn?row('رقم خطاب الترشيح',d.rn):'')+(d.rd?row('تاريخ الخطاب',d.rd):'')+row('الهدف من التشكيل',d.go)+row('سند التشكيل',d.ba)+(d.no?row('ملاحظات',d.no):'')+'</table>';
 
   /* ── Collect task stats ── */
@@ -4053,7 +4163,7 @@ function printFullReport(fi){
   }
 
   var html2='<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير — '+e(d.n)+'</title>'
-  +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Tahoma;direction:rtl;padding:22px;color:#1a1a2e;font-size:12px}@media print{.np{display:none!important}}</style>'
+  +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sakkal Majalla",Tahoma;direction:rtl;padding:22px;color:#1a1a2e;font-size:16px}@media print{.np{display:none!important}}</style>'
   +'</head><body>'
   +'<div style="background:linear-gradient(135deg,#0d3b66,#1a5276,#1d6a3b);padding:13px 18px;border-radius:10px;margin-bottom:16px;display:flex;align-items:center;gap:14px"><img src="'+LOGO2_SRC+'" alt="" style="height:52px;object-fit:contain;flex-shrink:0;filter:brightness(0) invert(1)"><div style="flex:1"><div style="color:#fff;font-size:14px;font-weight:700"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> تقرير — '+e(d.n)+'</div><div style="color:rgba(255,255,255,.85);font-size:10.5px;margin-top:2px">'+e(d.r)+' • '+d.ty+' • '+d.st+'</div></div></div>'
   +'<div class="np" style="margin-bottom:14px"><button onclick="window.print()" style="background:#4a2080;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-family:Tahoma;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> طباعة</button></div>'
@@ -5439,7 +5549,7 @@ function printPrepSummary(overrideDi,overrideMi){
         +(t.update?'<div style="font-size:10pt;color:#1a5276;margin-top:3px;background:#e8f4fd;border-right:2px solid #2980b9;padding:2px 6px;border-radius:3px"> آخر تحديث: '+e(cleanUpdateField(t.update))+'</div>':'')
       +'</td>'
       +'<td style="font-size:13pt;font-weight:700;width:140px;padding:7px 10px;border:1px solid #ffe082">'+e(t.responsible||'—')+'</td>'
-      +'<td style="font-size:11pt;width:70px;padding:6px 8px;border:1px solid #ffe082;text-align:center">م'+t.fromMeet+'</td>'
+      +'<td style="font-size:11pt;width:110px;padding:6px 8px;border:1px solid #ffe082">'+(t.dateTo||t.dateFrom||'—')+'</td>'
       +'<td style="text-align:center;width:90px;padding:6px;border:1px solid #ffe082"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:3px 8px;font-size:11pt;font-weight:700">'+t.status+'</span></td>'
       +'</tr>';
   }).join('');
@@ -5514,7 +5624,7 @@ function printPrepSummary(overrideDi,overrideMi){
       ?'<div style="margin-bottom:18px">'
         +'<div style="font-size:14pt;font-weight:700;color:#6d4c00;border-right:5px solid #f39c12;padding-right:10px;margin-bottom:8px"> التكليفات الجارية والمعلقة لهذه اللجنة</div>'
         +'<table>'
-        +'<thead><tr>'+['#','التكليف','المسؤول','م.اجتماع','الحالة'].map(function(c){return'<th style="background:#fff8e1;color:#6d4c00;padding:7px 9px;text-align:right;border:1px solid #ffe082;font-size:12pt">'+c+'</th>';}).join('')+'</tr></thead>'
+        +'<thead><tr>'+['#','التكليف','المسؤول','تاريخ الاستحقاق','الحالة'].map(function(c){return'<th style="background:#fff8e1;color:#6d4c00;padding:7px 9px;text-align:right;border:1px solid #ffe082;font-size:12pt">'+c+'</th>';}).join('')+'</tr></thead>'
         +'<tbody>'+pendingRows+'</tbody></table></div>'
       :'')
 
