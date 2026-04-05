@@ -623,6 +623,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
       <span class="sync-txt" id="syncTxt">جاهز</span>
       <span style="font-size:11px;color:rgba(255,255,255,.7)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
     </div>
+    <!-- زر تسجيل الخروج -->
+    <button id="btnLogout" onclick="showLogoutModal()" style="background:rgba(231,76,60,.15);color:#e74c3c;border:1px solid rgba(231,76,60,.35);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Tahoma,Arial;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;transition:background .2s" onmouseover="this.style.background='rgba(231,76,60,.3)'" onmouseout="this.style.background='rgba(231,76,60,.15)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> خروج</button>
   </div>
   <div id="dynSecbar"></div>
   <div class="sbody">
