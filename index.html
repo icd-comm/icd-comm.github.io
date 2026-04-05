@@ -5835,15 +5835,15 @@ function s4RenGantt(tasks){
     +'</div>';
 
   return '<div style="position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden">'
-    /* رأس أعمدة */
+    /* رأس أعمدة — RTL: المدة يسار، التكليف يمين */
     +'<div style="display:flex;flex-shrink:0;background:linear-gradient(135deg,#1a2744,#2c3e6b)">'
-      +'<div style="width:'+COL_TASK+'px;min-width:'+COL_TASK+'px;padding:7px 10px;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;border-left:1px solid rgba(255,255,255,.1)">التكليف / اللجنة</div>'
-      +'<div style="width:'+COL_RESP+'px;min-width:'+COL_RESP+'px;padding:7px 8px;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;border-left:1px solid rgba(255,255,255,.1)">المسؤول</div>'
-      +'<div style="width:'+COL_ST+'px;min-width:'+COL_ST+'px;padding:7px 6px;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;text-align:center;border-left:1px solid rgba(255,255,255,.1)">الحالة</div>'
+      +'<div style="width:'+COL_DUR+'px;min-width:'+COL_DUR+'px;padding:7px 4px;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;text-align:center;border-left:1px solid rgba(255,255,255,.1)">المدة</div>'
       +'<div style="flex:1;padding:0;border-left:1px solid rgba(255,255,255,.1)">'
         +'<div style="display:flex;height:100%">'+monthHdr+'</div>'
       +'</div>'
-      +'<div style="width:'+COL_DUR+'px;min-width:'+COL_DUR+'px;padding:7px 4px;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;text-align:center">المدة</div>'
+      +'<div style="width:'+COL_ST+'px;min-width:'+COL_ST+'px;padding:7px 6px;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;text-align:center;border-right:1px solid rgba(255,255,255,.1)">الحالة</div>'
+      +'<div style="width:'+COL_RESP+'px;min-width:'+COL_RESP+'px;padding:7px 8px;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;border-right:1px solid rgba(255,255,255,.1)">المسؤول</div>'
+      +'<div style="width:'+COL_TASK+'px;min-width:'+COL_TASK+'px;padding:7px 10px;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;border-right:1px solid rgba(255,255,255,.1)">التكليف / اللجنة</div>'
     +'</div>'
     /* Canvas منطقة */
     +'<div id="s4GanttScroll" style="flex:1;overflow-y:auto;overflow-x:hidden;position:relative">'
@@ -5864,138 +5864,159 @@ function s4DrawGantt(){
   var rng=window._s4GanttRange;
   var fmtD=window._s4GanttFmtD||function(d){return d?d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear():'';};
 
-  var COL_TASK=220, COL_RESP=120, COL_ST=68, COL_DUR=50;
-  var ROW_H=38, FONT='Tahoma,Arial';
+  /* ── أبعاد الأعمدة (RTL: x=0 هو اليمين) ── */
+  var COL_TASK=220, COL_RESP=130, COL_ST=70, COL_DUR=52;
+  var ROW_H=40, FONT='Tahoma,Arial';
   var scrollW=scroll.clientWidth||800;
-  var BAR_X=COL_TASK+COL_RESP+COL_ST;
-  var BAR_W=Math.max(200,scrollW-BAR_X-COL_DUR);
-  var totalH=tasks.length*ROW_H;
 
-  canvas.width=scrollW;
-  canvas.height=totalH;
-  var ctx=canvas.getContext('2d');
+  /* x في الـ canvas (LTR): 0 = يسار، scrollW = يمين
+     لكن نريد RTL: 0 = يمين
+     نستخدم: rtlX(x_rtl) = scrollW - x_rtl - width
+     
+     ترتيب الأعمدة من اليمين:
+     [0..COL_TASK]           = التكليف
+     [COL_TASK..+COL_RESP]   = المسؤول
+     [COL_TASK+COL_RESP..+COL_ST] = الحالة
+     [..BAR_W..]             = الشريط
+     [..COL_DUR]             = المدة (يسار)
+  */
+
+  var X_TASK  = scrollW - COL_TASK;         /* بداية عمود التكليف (من اليمين) */
+  var X_RESP  = scrollW - COL_TASK - COL_RESP;
+  var X_ST    = scrollW - COL_TASK - COL_RESP - COL_ST;
+  var X_BAR   = COL_DUR;                    /* شريط يبدأ بعد عمود المدة (من اليسار) */
+  var BAR_W   = Math.max(200, scrollW - COL_TASK - COL_RESP - COL_ST - COL_DUR);
+  var totalH  = tasks.length * ROW_H;
+
+  canvas.width  = scrollW;
+  canvas.height = totalH;
+  var ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,scrollW,totalH);
 
-  /* ألوان الحالة */
-  var statC={'قيد الانتظار':'#fb8c00','جارٍ':'#1e88e5','متأخر':'#e53935','منجز':'#43a047','معلق':'#8e24aa'};
-  var statBg={'قيد الانتظار':'#fff8e1','جارٍ':'#e3f2fd','متأخر':'#ffebee','منجز':'#e8f5e9','معلق':'#f3e5f5'};
+  /* ألوان */
+  var statC  = {'قيد الانتظار':'#fb8c00','جارٍ':'#1e88e5','متأخر':'#e53935','منجز':'#43a047','معلق':'#8e24aa'};
+  var statBg = {'قيد الانتظار':'#fff8e1','جارٍ':'#e3f2fd','متأخر':'#ffebee','منجز':'#e8f5e9','معلق':'#f3e5f5'};
 
-  /* خطوط شبكة عمودية */
-  ctx.strokeStyle='rgba(0,0,0,.05)';
-  ctx.lineWidth=1;
+  /* ── خطوط شبكة عمودية على منطقة الشريط ── */
+  ctx.strokeStyle='rgba(0,0,0,.05)'; ctx.lineWidth=1;
   for(var g=0;g<=rng.total;g+=10){
-    var gx=BAR_X+Math.round((g/rng.total)*BAR_W);
+    var gx=X_BAR+Math.round((g/rng.total)*BAR_W);
     ctx.beginPath(); ctx.moveTo(gx,0); ctx.lineTo(gx,totalH); ctx.stroke();
   }
 
   tasks.forEach(function(t,ri){
     var y=ri*ROW_H;
-    var rowBg=ri%2===0?'#fff':'#f9f9fc';
-
     /* خلفية الصف */
-    ctx.fillStyle=rowBg;
+    ctx.fillStyle=ri%2===0?'#fff':'#f9f9fc';
     ctx.fillRect(0,y,scrollW,ROW_H);
-
     /* فاصل */
-    ctx.strokeStyle='#eeecf5'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(0,y+ROW_H-0.5); ctx.lineTo(scrollW,y+ROW_H-0.5); ctx.stroke();
+    ctx.strokeStyle='#eeecf5'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(0,y+ROW_H); ctx.lineTo(scrollW,y+ROW_H); ctx.stroke();
 
-    /* ── عمود التكليف ── */
+    /* ════ عمود التكليف (اليمين) ════ */
+    ctx.save();
+    ctx.beginPath(); ctx.rect(X_TASK,y,COL_TASK,ROW_H); ctx.clip();
     ctx.fillStyle='#1a1a2e'; ctx.font='bold 11px '+FONT;
-    var taskName=t.task.length>28?t.task.substring(0,27)+'…':t.task;
     ctx.textAlign='right'; ctx.textBaseline='middle';
-    ctx.fillText(taskName,COL_TASK-8,y+ROW_H/2-6);
+    ctx.fillText(t.task, scrollW-8, y+ROW_H/2-6);
     ctx.fillStyle='#999'; ctx.font='9px '+FONT;
-    var commName=t.committee.length>30?t.committee.substring(0,29)+'…':t.committee;
-    ctx.fillText(commName,COL_TASK-8,y+ROW_H/2+7);
+    ctx.fillText(t.committee, scrollW-8, y+ROW_H/2+7);
+    ctx.restore();
 
-    /* ── عمود المسؤول ── */
+    /* ════ عمود المسؤول ════ */
+    ctx.save();
+    ctx.beginPath(); ctx.rect(X_RESP,y,COL_RESP,ROW_H); ctx.clip();
     ctx.fillStyle='#1a3a5c'; ctx.font='bold 11px '+FONT;
-    var respName=(t.responsible||'—');
-    respName=respName.length>16?respName.substring(0,15)+'…':respName;
-    ctx.fillText(respName,COL_TASK+COL_RESP-6,y+ROW_H/2-5);
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(t.responsible||'—', X_RESP+COL_RESP-8, y+ROW_H/2-5);
+    if(t.dateTo){
+      ctx.fillStyle='#aaa'; ctx.font='9px '+FONT;
+      ctx.fillText(fmtD(new Date(t.dateTo.split('-').map(Number)[0],t.dateTo.split('-').map(Number)[1]-1,t.dateTo.split('-').map(Number)[2])), X_RESP+COL_RESP-8, y+ROW_H/2+7);
+    }
+    ctx.restore();
 
-    /* ── عمود الحالة ── */
+    /* ════ عمود الحالة ════ */
     var sc=statC[t.status]||'#888';
     var sb=statBg[t.status]||'#f5f5f5';
-    var stX=COL_TASK+COL_RESP+4, stW=COL_ST-8, stH=18;
+    var stW=COL_ST-10, stH=18;
+    var stX=X_ST+5, stY=y+(ROW_H-stH)/2;
     ctx.fillStyle=sb;
-    ctx.beginPath();
-    ctx.roundRect(stX,y+(ROW_H-stH)/2,stW,stH,4);
-    ctx.fill();
-    ctx.fillStyle=sc; ctx.font='bold 9px '+FONT; ctx.textAlign='center';
-    ctx.fillText(t.status,stX+stW/2,y+ROW_H/2);
+    ctx.beginPath(); ctx.roundRect(stX,stY,stW,stH,4); ctx.fill();
+    ctx.fillStyle=sc; ctx.font='bold 9px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(t.status, stX+stW/2, stY+stH/2);
 
-    /* ── شريط الجانت ── */
+    /* ════ شريط الجانت ════ */
     var rag=s4GetRAG(t);
-    var sd=t.dateFrom?new Date(parseInt(t.dateFrom.split('-')[0]),parseInt(t.dateFrom.split('-')[1])-1,parseInt(t.dateFrom.split('-')[2])):new Date();
-    var ed=t.dateTo?new Date(parseInt(t.dateTo.split('-')[0]),parseInt(t.dateTo.split('-')[1])-1,parseInt(t.dateTo.split('-')[2])):new Date(new Date().getTime()+7*86400000);
+    var p=function(s){return s?s.split('-').map(Number):null;};
+    var sdP=p(t.dateFrom), edP=p(t.dateTo);
+    var today=new Date(); today.setHours(0,0,0,0);
+    var sd=sdP?new Date(sdP[0],sdP[1]-1,sdP[2]):today;
+    var ed=edP?new Date(edP[0],edP[1]-1,edP[2]):new Date(today.getTime()+7*86400000);
     var startOff=Math.max(0,Math.round((sd-rng.start)/86400000));
     var endOff  =Math.min(rng.total,Math.round((ed-rng.start)/86400000));
-    var bx=BAR_X+Math.round((startOff/rng.total)*BAR_W);
+    var bx=X_BAR+Math.round((startOff/rng.total)*BAR_W);
     var bw=Math.max(3,Math.round(((endOff-startOff)/rng.total)*BAR_W));
     var barY=y+(ROW_H-16)/2;
 
-    /* خلفية المنطقة */
+    /* خلفية منطقة الشريط */
     ctx.fillStyle='#f0eef8';
-    ctx.beginPath(); ctx.roundRect(BAR_X+2,barY,BAR_W-4,16,3); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(X_BAR+2,barY,BAR_W-4,16,3); ctx.fill();
 
-    /* الشريط */
-    ctx.fillStyle=rag.color;
-    ctx.globalAlpha=0.88;
+    /* الشريط الملوّن */
+    ctx.fillStyle=rag.color; ctx.globalAlpha=0.88;
     ctx.beginPath(); ctx.roundRect(bx,barY+2,bw,12,3); ctx.fill();
     ctx.globalAlpha=1;
 
-    /* تاريخ داخل الشريط إذا كان واسعاً */
-    if(bw>60){
-      var endStr=fmtD(ed);
-      ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='bold 8px '+FONT; ctx.textAlign='center';
-      ctx.fillText(endStr,bx+bw/2,barY+8);
+    /* اسم التكليف داخل الشريط إذا كان واسعاً */
+    if(bw>55){
+      ctx.fillStyle='rgba(255,255,255,.95)'; ctx.font='bold 8px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+      var lbl=t.task.length>20?t.task.substring(0,19)+'…':t.task;
+      ctx.fillText(lbl, bx+bw/2, barY+8);
     }
 
-    /* تاريخ أسفل الشريط */
-    ctx.fillStyle='#bbb'; ctx.font='8px '+FONT; ctx.textAlign='right';
-    ctx.fillText(fmtD(sd),BAR_X+BAR_W-4,y+ROW_H-5);
+    /* تواريخ أسفل الشريط */
+    ctx.fillStyle='#bbb'; ctx.font='8px '+FONT; ctx.textBaseline='middle';
+    ctx.textAlign='right';
+    ctx.fillText(fmtD(sd), X_BAR+BAR_W-3, y+ROW_H-5);
     ctx.textAlign='left';
-    ctx.fillText(fmtD(ed),BAR_X+4,y+ROW_H-5);
+    ctx.fillText(fmtD(ed), X_BAR+3, y+ROW_H-5);
 
-    /* ── خط اليوم ── */
-    var todayX=BAR_X+Math.round((rng.todayOff/rng.total)*BAR_W);
-    ctx.strokeStyle='#e53935'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(todayX,y); ctx.lineTo(todayX,y+ROW_H); ctx.stroke();
-
-    /* ── عمود المدة ── */
+    /* ════ عمود المدة (يسار) ════ */
     var dur=Math.max(0,Math.round((ed-sd)/86400000));
     ctx.fillStyle=dur>30?'#e53935':dur>14?'#fb8c00':'#43a047';
-    ctx.font='bold 13px '+FONT; ctx.textAlign='center';
-    ctx.fillText(dur,BAR_X+BAR_W+COL_DUR/2+2,y+ROW_H/2-2);
+    ctx.font='bold 13px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(dur, COL_DUR/2, y+ROW_H/2-4);
     ctx.fillStyle='#aaa'; ctx.font='8px '+FONT;
-    ctx.fillText('يوم',BAR_X+BAR_W+COL_DUR/2+2,y+ROW_H/2+8);
+    ctx.fillText('يوم', COL_DUR/2, y+ROW_H/2+8);
 
-    /* فواصل الأعمدة */
-    ctx.strokeStyle='#e0dde8'; ctx.lineWidth=0.5;
-    [COL_TASK,COL_TASK+COL_RESP,COL_TASK+COL_RESP+COL_ST,BAR_X+BAR_W].forEach(function(cx){
+    /* ════ فواصل الأعمدة ════ */
+    ctx.strokeStyle='#ddd'; ctx.lineWidth=0.5;
+    [X_TASK, X_RESP, X_ST, X_BAR].forEach(function(cx){
       ctx.beginPath(); ctx.moveTo(cx,y); ctx.lineTo(cx,y+ROW_H); ctx.stroke();
     });
   });
 
-  /* خط اليوم عنوان */
-  var todayX=BAR_X+Math.round((rng.todayOff/rng.total)*BAR_W);
-  ctx.strokeStyle='#e53935'; ctx.lineWidth=1.5;
+  /* خط اليوم فوق كل شيء */
+  var todayX=X_BAR+Math.round((rng.todayOff/rng.total)*BAR_W);
+  ctx.strokeStyle='rgba(229,57,53,.7)'; ctx.lineWidth=1.5;
+  ctx.setLineDash([4,3]);
   ctx.beginPath(); ctx.moveTo(todayX,0); ctx.lineTo(todayX,totalH); ctx.stroke();
+  ctx.setLineDash([]);
 
-  /* ── Tooltip on hover ── */
+  /* ── Tooltip ── */
   canvas.onmousemove=function(ev){
     var rect=canvas.getBoundingClientRect();
     var my=ev.clientY-rect.top;
-    var ri=Math.floor(my/ROW_H);
+    var ri2=Math.floor(my/ROW_H);
     var tip=document.getElementById('s4GanttTooltipDiv');
     if(!tip)return;
-    if(ri<0||ri>=tasks.length){tip.style.display='none';return;}
-    var t2=tasks[ri];
+    if(ri2<0||ri2>=tasks.length){tip.style.display='none';return;}
+    var t2=tasks[ri2];
     var rag2=s4GetRAG(t2);
-    var sd2=t2.dateFrom?new Date(t2.dateFrom.split('-').map(Number)[0],t2.dateFrom.split('-').map(Number)[1]-1,t2.dateFrom.split('-').map(Number)[2]):null;
-    var ed2=t2.dateTo?new Date(t2.dateTo.split('-').map(Number)[0],t2.dateTo.split('-').map(Number)[1]-1,t2.dateTo.split('-').map(Number)[2]):null;
+    var p2=function(s){return s?s.split('-').map(Number):null;};
+    var sd2P=p2(t2.dateFrom), ed2P=p2(t2.dateTo);
+    var sd2=sd2P?new Date(sd2P[0],sd2P[1]-1,sd2P[2]):null;
+    var ed2=ed2P?new Date(ed2P[0],ed2P[1]-1,ed2P[2]):null;
     var dur2=sd2&&ed2?Math.round((ed2-sd2)/86400000):null;
     tip.innerHTML=
       '<div style="font-weight:700;font-size:12px;color:#1a2744;margin-bottom:6px;border-bottom:2px solid '+rag2.color+';padding-bottom:5px">'+rag2.dot+' '+e(t2.task)+'</div>'
