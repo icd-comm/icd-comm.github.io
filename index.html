@@ -227,8 +227,9 @@ html,body{max-width:100vw;overflow-x:hidden}
 .secbar-sub{color:rgba(255,255,255,.7);font-size:10px;margin-top:1px}
 .secbar-actions{display:flex;gap:6px;align-items:center}
 .sbody{flex:1;overflow:hidden;position:relative}
-.spanel{position:absolute;inset:0;overflow-y:auto;display:none;opacity:0;transition:opacity .25s ease}
+.spanel{position:absolute;inset:0;overflow-y:auto;display:none;opacity:0}
 .spanel.active{display:block;opacity:1}
+#panel-s4.active{display:flex!important;flex-direction:row}
 #panel-s3.active{display:flex!important;flex-direction:row;overflow:hidden}
 .s1-toolbar{background:#fff;padding:10px 16px;border-bottom:1px solid #e0e8f0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:sticky;top:0;z-index:50}
 .s1-search-box{flex:1;min-width:200px;position:relative}
@@ -492,7 +493,7 @@ input[type="date"]::-webkit-inner-spin-button{display:none}
 input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
 
 /* ══ القسم S4 - لوحة متابعة التكليفات ══ */
-#panel-s4{display:flex;flex-direction:row;height:100%;overflow:hidden;width:100%;max-width:100%}
+#panel-s4{flex-direction:row;height:100%;overflow:hidden;width:100%;max-width:100%;position:absolute;inset:0}
 .s4-sidebar{width:165px;min-width:165px;background:linear-gradient(180deg,#1a3a5c 0%,#2c1654 100%);display:flex;flex-direction:column;padding:12px 0;gap:4px;overflow-y:auto;flex-shrink:0}
 .s4-sidebar-title{color:rgba(255,255,255,.6);font-size:10px;font-weight:700;font-family:Tahoma,Arial;padding:0 14px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px;letter-spacing:.5px}
 .s4-tab{background:transparent;color:rgba(255,255,255,.65);border:none;border-radius:0;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:Tahoma,Arial;transition:.15s;text-align:right;width:100%;display:flex;align-items:center;gap:8px;border-right:3px solid transparent}
@@ -2293,6 +2294,7 @@ function setSecbar(sec){
   document.getElementById('dynSecbar').innerHTML='<div class="secbar '+m.cls+'"><div><div class="secbar-title">'+m.title+'</div><div class="secbar-sub">'+m.sub+'</div>'+s3kpi+'</div><div class="secbar-actions">'+acts+'</div></div>';
   if(sec==='s2')document.getElementById('btnDashPrint').onclick=dashPrint;
   if(sec==='s3')renS3KPIs();
+  if(sec==='s4'){/* S4 لا يحتاج secbar إضافي */}
 }
 
 function goTo(sec){
@@ -2313,7 +2315,7 @@ function goTo(sec){
   document.querySelectorAll('.spanel').forEach(function(p){p.classList.remove('active');p.style.opacity='0';});
   var activePanel=document.getElementById('panel-'+sec);
   activePanel.classList.add('active');
-  requestAnimationFrame(function(){activePanel.style.opacity='1';});
+  activePanel.style.opacity='1';
   if(sec==='s1'){refRep();buildS1Filters();applyF();if(currentUser)applyRoleUI();}
   if(sec==='s2'){buildS2Filters();renDash();}
   if(sec==='s3'){selectedS3=-1;autoUpdateOverdueTasks();renS3Sidebar();renS3Main();renderS3Cal();}
