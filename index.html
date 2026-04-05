@@ -821,24 +821,31 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
           جانت
         </button>
         <div style="height:1px;background:rgba(255,255,255,.1);margin:8px 0"></div>
-        <div style="padding:0 10px;display:flex;flex-direction:column;gap:6px">
-          <div style="color:rgba(255,255,255,.5);font-size:10px;font-family:Tahoma;padding-bottom:2px">تصفية</div>
-          <select id="s4FltComm" onchange="renS4()" style="width:100%;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:5px 6px;font-size:10px;font-family:Tahoma">
-            <option value="" style="color:#333;background:#fff">كل اللجان</option>
+        <div style="padding:0 8px;display:flex;flex-direction:column;gap:5px">
+          <div style="color:rgba(255,255,255,.5);font-size:10px;font-family:Tahoma;padding:4px 2px 2px">تصفية</div>
+          <select id="s4FltComm" onchange="renS4()"
+            style="width:100%;background:#fff;color:#1a1a2e;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 6px;font-size:11px;font-family:Tahoma;cursor:pointer;outline:none">
+            <option value="">كل اللجان</option>
           </select>
-          <select id="s4FltStatus" onchange="renS4()" style="width:100%;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:5px 6px;font-size:10px;font-family:Tahoma">
-            <option value="" style="color:#333;background:#fff">كل الحالات</option>
-            <option style="color:#333;background:#fff">معلق</option>
-            <option style="color:#333;background:#fff">قيد الانتظار</option>
-            <option style="color:#333;background:#fff">جارٍ</option>
-            <option style="color:#333;background:#fff">متأخر</option>
+          <select id="s4FltStatus" onchange="renS4()"
+            style="width:100%;background:#fff;color:#1a1a2e;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 6px;font-size:11px;font-family:Tahoma;cursor:pointer;outline:none">
+            <option value="">كل الحالات</option>
+            <option>معلق</option>
+            <option>قيد الانتظار</option>
+            <option>جارٍ</option>
+            <option>متأخر</option>
+            <option>منجز</option>
           </select>
-          <select id="s4FltResp" onchange="renS4()" style="width:100%;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:5px 6px;font-size:10px;font-family:Tahoma">
-            <option value="" style="color:#333;background:#fff">كل المسؤولين</option>
+          <select id="s4FltResp" onchange="renS4()"
+            style="width:100%;background:#fff;color:#1a1a2e;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 6px;font-size:11px;font-family:Tahoma;cursor:pointer;outline:none">
+            <option value="">كل المسؤولين</option>
           </select>
-          <input type="text" id="s4Search" placeholder="بحث..." oninput="renS4()"
-            style="width:100%;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:5px 6px;font-size:10px;font-family:Tahoma;direction:rtl;outline:none">
-          <button onclick="renS4()" style="width:100%;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:Tahoma">تحديث</button>
+          <input type="text" id="s4Search" placeholder="🔍 بحث..." oninput="renS4()"
+            style="width:100%;background:#fff;color:#1a1a2e;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 6px;font-size:11px;font-family:Tahoma;direction:rtl;outline:none">
+          <button onclick="s4ResetFilters()"
+            style="width:100%;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px;font-size:10px;font-weight:700;cursor:pointer;font-family:Tahoma;margin-top:2px">
+            ↺ إعادة تعيين
+          </button>
         </div>
       </div>
       <div class="s4-main">
@@ -3906,7 +3913,7 @@ function renS3Main(){
   if(currentUser&&currentUser.role==='viewer'){
     content.querySelectorAll('[data-ma="e"],[data-ma="d"]').forEach(function(b){b.style.display='none';});
   }
-  content.querySelectorAll('[data-ma]').forEach(function(btn){btn.addEventListener('click',function(ev){ev.stopPropagation();var a=btn.getAttribute('data-ma'),bdi=parseInt(btn.getAttribute('data-di')),bmi=parseInt(btn.getAttribute('data-mi'));if(a==='e')openSM(bdi,bmi);else if(a==='p')printPrepSummary(bdi,bmi);else if(a==='exec')openExecSum(bdi,bmi);else if(a==='xl')exportMeetingExcel(bdi,bmi);else if(a==='d'){confirmDel('هذا الاجتماع',function(ok2){if(!ok2)return;GM(bdi).splice(bmi,1);renS3Sidebar();renS3Main();renderS3Cal();upTop();scheduleSave();});}});});
+  content.querySelectorAll('[data-ma]').forEach(function(btn){btn.addEventListener('click',function(ev){ev.stopPropagation();var a=btn.getAttribute('data-ma'),bdi=parseInt(btn.getAttribute('data-di')),bmi=parseInt(btn.getAttribute('data-mi'));if(a==='e')openSM(bdi,bmi);else if(a==='p')printPrepSummary(bdi,bmi);else if(a==='exec')openExecSum(bdi,bmi);else if(a==='xl')exportMeetingExcel(bdi,bmi);else if(a==='d'){confirmDel('هذا الاجتماع',function(ok2){if(!ok2)return;var _m=GM(bdi)[bmi];var _d=D[bdi];var _label=(_d?_d.n:'لجنة')+' — اجتماع '+((_m&&_m.meetNum)||bmi+1);moveToTrash('meeting',{meeting:JSON.parse(JSON.stringify(_m)),di:bdi,committee_name:_d?_d.n:''},_label);GM(bdi).splice(bmi,1);renS3Sidebar();renS3Main();renderS3Cal();upTop();scheduleSave();});}});});
 }
 
 document.querySelectorAll('.task-chip').forEach(function(c){c.addEventListener('click',function(){taskFilter=c.getAttribute('data-ts');syncChipToFilter();renS3KPIs();renS3Sidebar();renS3Main();});});
@@ -3954,7 +3961,7 @@ function openSM(di,mi){
 function tH(){autoUpdateOverdueTasks();if(!wt.length)return'<div id="tarea" style="text-align:center;padding:9px;color:#b0a8c8;font-size:10px">لا توجد تكليفات</div>';return'<table id="tarea" class="s3m-at"><thead><tr><th style="width:24px">#</th><th>التكليف</th><th style="width:120px">المسؤول</th><th style="width:110px">من</th><th style="width:110px">إلى</th><th style="width:65px">الأولوية</th><th style="width:80px">الحالة</th><th style="width:120px">آخر تحديث</th><th style="width:30px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></th></tr></thead><tbody>'+wt.map(function(t,ti){return'<tr><td style="text-align:center;color:#bbb;font-size:9px">'+(ti+1)+'</td><td><textarea class="finp ti" rows="2" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%;resize:vertical;min-height:38px;line-height:1.4;vertical-align:top" data-ti="'+ti+'" data-f="task">'+e(t.task||'')+'</textarea></td><td><textarea class="finp ti" rows="2" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%;resize:vertical;min-height:38px;line-height:1.4;vertical-align:top" data-ti="'+ti+'" data-f="responsible">'+e(t.responsible||'')+'</textarea></td><td><input type="date" lang="en" class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateFrom" value="'+e(t.dateFrom||'')+'"></td><td><input type="date" lang="en" class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateTo" value="'+e(t.dateTo||'')+'"></td><td><select class="fsel ts" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%" data-ti="'+ti+'">'+['معلق','قيد الانتظار','جارٍ','منجز','متأخر'].map(function(s){return'<option'+(s===t.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></td><td><input class="finp ti" style="border:none;background:#fffde7;padding:3px 5px;font-size:10.5px;width:100%;border-radius:4px" data-ti="'+ti+'" data-f="update" placeholder="التحديث..." value="'+e(t.update||'')+'"></td><td><button class="ab abr tdl" data-ti="'+ti+'" style="padding:1px 4px;font-size:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td></tr>';}).join('')+'</tbody></table>';}
 function rfT(){var old=document.getElementById('tarea');var tmp=document.createElement('div');tmp.innerHTML=tH();old.parentNode.replaceChild(tmp.firstChild,old);wireT();}
 function attachRespAC(inp){inp.setAttribute('autocomplete','off');var drop=document.createElement('div');drop.style.cssText='position:absolute;z-index:9999;background:#fff;border:1.5px solid #c0a8e8;border-radius:9px;box-shadow:0 4px 18px rgba(44,22,84,.18);max-height:180px;overflow-y:auto;min-width:220px;display:none;font-size:11px;font-family:Tahoma,Arial;direction:rtl';document.body.appendChild(drop);function show(q2){var filtered=RESP_LIST.filter(function(r){return r.includes(q2);});if(!filtered.length||!q2){drop.style.display='none';return;}drop.innerHTML=filtered.map(function(r){return'<div class="ac-item" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid #f0ecff;color:#2c1654;font-weight:600">'+r+'</div>';}).join('');drop.querySelectorAll('.ac-item').forEach(function(item){item.onmousedown=function(ev2){ev2.preventDefault();inp.value=item.textContent;var ti2=parseInt(inp.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=item.textContent;drop.style.display='none';};item.onmouseover=function(){this.style.background='#ede8ff';};item.onmouseout=function(){this.style.background='';};});var rect=inp.getBoundingClientRect();drop.style.top=(rect.bottom+window.scrollY+2)+'px';drop.style.right=(window.innerWidth-rect.right)+'px';drop.style.display='block';}inp.addEventListener('input',function(){show(this.value);var ti2=parseInt(this.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=this.value;});inp.addEventListener('focus',function(){show(this.value||'');});inp.addEventListener('blur',function(){setTimeout(function(){drop.style.display='none';},150);});inp._acDrop=drop;}
-function wireT(){document.querySelectorAll('.ti').forEach(function(el){if(el.getAttribute('data-f')==='responsible'){attachRespAC(el);}else{el.oninput=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value;};}});document.querySelectorAll('.ts').forEach(function(el){el.onchange=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i].status=el.value;};});document.querySelectorAll('.tdl').forEach(function(el){el.onclick=function(){wt.splice(parseInt(el.getAttribute('data-ti')),1);rfT();};});}
+function wireT(){document.querySelectorAll('.ti').forEach(function(el){if(el.getAttribute('data-f')==='responsible'){attachRespAC(el);}else{el.oninput=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value;};}});document.querySelectorAll('.ts').forEach(function(el){el.onchange=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i].status=el.value;};});document.querySelectorAll('.tdl').forEach(function(el){el.onclick=function(){var ti2=parseInt(el.getAttribute('data-ti'));var _t=wt[ti2];var _di2=parseInt(document.getElementById('smModal').getAttribute('data-di')||'-1');var _mi2=parseInt(document.getElementById('smModal').getAttribute('data-mi')||'-1');var _comm=(_di2>=0&&D[_di2])?D[_di2].n:'لجنة';var _label=_comm+' — تكليف: '+(_t?(_t.task||'').substring(0,40):'');moveToTrash('task',{task:JSON.parse(JSON.stringify(_t||{})),di:_di2,mi:_mi2,committee_name:_comm},_label);wt.splice(ti2,1);rfT();};});}
 document.getElementById('smBody').innerHTML='<div style="background:linear-gradient(135deg,#ede8ff,#ddf0fb);border-radius:9px;padding:8px 12px;margin-bottom:11px;border-right:4px solid var(--s3-mid)"><div style="font-size:11px;font-weight:700">'+e(D[di].n)+'</div><div style="font-size:9.5px;color:var(--s3-accent);margin-top:1px">'+e(D[di].r)+' • '+D[di].ty+'</div></div><div class="mg2"><div class="mi"><div class="flbl">رقم الاجتماع</div><input id="smnum" class="finp" type="number" min="1" value="'+(m.meetNum||'')+'"></div><div class="mi"><div class="flbl">تاريخ الاجتماع</div><input id="smd" class="finp" type="date" lang="en" style="direction:ltr;text-align:left" value="'+e(m.date||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl">مكان الاجتماع</div><input id="sml" class="finp" value="'+e(m.loc||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl" style="display:flex;align-items:center;justify-content:space-between">جدول الأعمال <button id="btnAA" style="background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border:none;border-radius:6px;padding:2px 9px;font-size:10px;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة بند</button></div><div id="agendaList" style="margin-top:4px"></div></div><div class="mi" style="grid-column:1/-1"><div class="flbl">ملاحظات</div><textarea id="smn" class="finp" rows="3" style="resize:vertical">'+e(m.notes||'')+'</textarea></div>'+'<div class="mi" style="grid-column:1/-1">'+'<div class="flbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg> المرئيات على عرض الاجتماع</div>'+'<textarea id="smrv" class="finp" rows="4" style="resize:vertical" placeholder="أدخل المرئيات والتوصيات على عرض الاجتماع...">'+e(m.remarks||'')+'</textarea></div>'+'<div class="mi" style="grid-column:1/-1">'      +'<div class="flbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> محضر الاجتماع (PDF)</div>'      +'<div style="display:flex;align-items:center;gap:10px;margin-top:4px">'        +'<label style="display:inline-flex;align-items:center;gap:7px;background:#f0f8ff;border:1.5px dashed #1a5276;border-radius:10px;padding:9px 16px;cursor:pointer;font-size:12px;color:#1a5276;font-family:Tahoma;white-space:nowrap;flex-shrink:0">'          +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> اختر ملف PDF <input type="file" id="smm_file" accept=".pdf,application/pdf" style="display:none">'        +'</label>'        +'<span id="smm_file_name" style="font-size:11px;color:#555;font-family:Tahoma">لم يُختر ملف</span>'        +'<button type="button" id="smm_view_btn" style="display:none;background:#27ae60;color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:Tahoma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> عرض</button>'        +'<button type="button" id="smm_clear" data-clear="smm" style="display:none;background:#e74c3c;color:#fff;border:none;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:Tahoma">✕ حذف</button>'      +'</div>'      +'<input type="hidden" id="smm" value="'+e(m.minutes_pdf||'')+'">'    +'</div>'  +'</div><div class="s3stitle"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> التكليفات</span><button id="btnAT" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة تكليف</button></div>'+tH()+'<div style="display:flex;gap:7px;margin-top:12px"><button id="btnSaveSM" style="flex:1;background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;border:none;border-radius:9px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> '+(isNew?'إضافة':'حفظ')+'</button><button id="btnCancelSM" style="background:#e9ecef;color:#555;border:none;border-radius:9px;padding:8px 13px;font-size:12px;cursor:pointer;font-family:inherit">إلغاء</button></div>';
 setTimeout(function(){
     /* إضافة حقول الحضور والقرار برمجياً */
@@ -3998,6 +4005,9 @@ wireT();
   /* زر عرض المحضر */
   var _vbtn=document.getElementById('smm_view_btn');
   if(_vbtn)_vbtn.onclick=function(){openMinutesPDF(null);};
+  /* حفظ di و mi في الـ modal للاستخدام عند حذف التكليف */
+  var _sm2=document.getElementById('smModal');
+  if(_sm2){_sm2.setAttribute('data-di',di);_sm2.setAttribute('data-mi',isNew?-1:mi);}
   shM('smModal');}
 
 /* COMMITTEE FORM */
@@ -4756,7 +4766,7 @@ async function openTrashModal(){
       html+=rows.map(function(r){
         var dt=new Date(r.deleted_at).toLocaleDateString('ar-SA');
         var exp=new Date(r.expires_at).toLocaleDateString('ar-SA');
-        var typeLabel=r.item_type==='committee'?'لجنة':r.item_type==='meeting'?'اجتماع':'عنصر';
+        var typeLabel=r.item_type==='committee'?'🏛 لجنة':r.item_type==='meeting'?'📅 اجتماع':r.item_type==='task'?'✅ تكليف':'عنصر';
         return '<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #f0e0e0;border-radius:10px;margin-bottom:8px;background:#fff9f9">'
           +'<div style="flex:1">'          +'<div style="font-size:9.5px;color:#888;margin-bottom:3px;font-family:Tahoma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> تاريخ الحذف: <b style="color:#922b21">'+dt+'</b></div>'
           +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
@@ -4787,6 +4797,7 @@ async function restoreFromTrash(trashId){
     var rows=await sbFetch('lajan_trash?id=eq.'+trashId+'&select=*');
     if(!rows||!rows.length){alert('لم يُعثر على العنصر');return;}
     var row=rows[0];
+
     if(row.item_type==='committee'){
       var payload=row.item_data;
       var comm=payload.committee||payload;
@@ -4795,11 +4806,57 @@ async function restoreFromTrash(trashId){
       D.push(comm);
       if(meets.length){M[newIdx]=meets;}
       refRep();applyF();upTop();updateHomeStats();scheduleSave();
+      showToast('تم استرداد اللجنة: '+e(row.item_label));
     }
-    await sbFetch('lajan_trash?id=eq.'+trashId,'PATCH',{restored:true,restored_by:currentUser.email,restored_at:new Date().toISOString()});
-    await auditLog('استرداد',row.item_label,'استُعيد من سلة المحذوفات');
+
+    else if(row.item_type==='meeting'){
+      var pd=row.item_data;
+      var meet=pd.meeting;
+      var di=pd.di;
+      /* نجد اللجنة بالاسم إذا تغيّر الـ index */
+      if(di===undefined||di<0||!D[di]){
+        di=D.findIndex(function(d){return d.n===pd.committee_name;});
+      }
+      if(di<0||!meet){
+        alert('تعذّر الاسترداد: اللجنة غير موجودة');return;
+      }
+      if(!M[di])M[di]=[];
+      M[di].push(meet);
+      scheduleSave();
+      renS3Sidebar();renS3Main();renderS3Cal();updateHomeStats();
+      showToast('تم استرداد الاجتماع: '+e(row.item_label));
+    }
+
+    else if(row.item_type==='task'){
+      var pd2=row.item_data;
+      var task=pd2.task;
+      var di2=pd2.di;
+      var mi2=pd2.mi;
+      /* نجد اللجنة بالاسم */
+      if(di2===undefined||di2<0||!D[di2]){
+        di2=D.findIndex(function(d){return d.n===pd2.committee_name;});
+      }
+      if(di2<0||!task){
+        alert('تعذّر الاسترداد: اللجنة أو الاجتماع غير موجود');return;
+      }
+      var meets2=GM(di2);
+      /* نستخدم mi المحفوظ أو آخر اجتماع */
+      var mi2use=(mi2>=0&&meets2[mi2])?mi2:(meets2.length-1);
+      if(mi2use<0){
+        alert('تعذّر الاسترداد: لا توجد اجتماعات في هذه اللجنة');return;
+      }
+      meets2[mi2use].tasks.push(task);
+      scheduleSave();
+      showToast('تم استرداد التكليف: '+e(task.task||row.item_label));
+    }
+
+    await sbFetch('lajan_trash?id=eq.'+trashId,'PATCH',{
+      restored:true,
+      restored_by:currentUser.email,
+      restored_at:new Date().toISOString()
+    });
+    await auditLog('استرداد',row.item_label,'استُعيد من سلة المحذوفات ('+row.item_type+')');
     var tm=document.getElementById('trashModal');if(tm)tm.remove();
-    alert('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="20 6 9 17 4 12"/></svg> تم استرداد "'+e(row.item_label)+'" بنجاح — تحقق من نهاية القائمة');
   }catch(err){alert('خطأ في الاسترداد: '+err.message);}
 }
 
@@ -5564,13 +5621,34 @@ function s4InitFilters(){
   var commSel=document.getElementById('s4FltComm');
   var respSel=document.getElementById('s4FltResp');
   if(!commSel||!respSel) return;
-  var comms=[...new Set(D.map(function(d){return d.n;}))].sort();
-  commSel.innerHTML='<option value="">كل اللجان</option>'
-    +comms.map(function(c){return'<option>'+c+'</option>';}).join('');
+
+  /* احفظ القيم المختارة */
+  var prevComm=commSel.value;
+  var prevResp=respSel.value;
+
+  /* بناء قائمة اللجان */
+  var comms=[...new Set(D.map(function(d){return d.n;}).filter(Boolean))].sort();
+  commSel.innerHTML='<option value="">كل اللجان ('+D.length+')</option>'
+    +comms.map(function(c){return'<option value="'+e(c)+'">'+e(c)+'</option>';}).join('');
+
+  /* بناء قائمة المسؤولين */
   var tasks=s4GetAllTasks();
   var resps=[...new Set(tasks.map(function(t){return t.responsible;}).filter(Boolean))].sort();
-  respSel.innerHTML='<option value="">كل المسؤولين</option>'
-    +resps.map(function(r){return'<option>'+r+'</option>';}).join('');
+  respSel.innerHTML='<option value="">كل المسؤولين ('+resps.length+')</option>'
+    +resps.map(function(r){return'<option value="'+e(r)+'">'+e(r)+'</option>';}).join('');
+
+  /* استعادة القيم السابقة */
+  if(prevComm) commSel.value=prevComm;
+  if(prevResp) respSel.value=prevResp;
+}
+
+function s4ResetFilters(){
+  var ids=['s4FltComm','s4FltStatus','s4FltResp','s4Search'];
+  ids.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  renS4();
 }
 
 /* تصفية التكليفات */
