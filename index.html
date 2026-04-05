@@ -5768,10 +5768,13 @@ function s4RenKanban(tasks){
 /* ══ جانت ══ */
 function s4RenGantt(tasks){
   var today=new Date(); today.setHours(0,0,0,0);
+
+  /* ── نطاق: شهر قبل اليوم → 3 أشهر بعده ── */
   var rangeStart=new Date(today); rangeStart.setDate(1); rangeStart.setMonth(rangeStart.getMonth()-1);
-  var rangeEnd=new Date(today); rangeEnd.setMonth(rangeEnd.getMonth()+3); rangeEnd.setDate(0);
-  var totalDays=Math.round((rangeEnd-rangeStart)/86400000)||1;
-  var todayPct=((Math.round((today-rangeStart)/86400000))/totalDays*100).toFixed(2);
+  var rangeEnd  =new Date(today); rangeEnd.setMonth(rangeEnd.getMonth()+3); rangeEnd.setDate(0);
+  var totalDays =Math.round((rangeEnd-rangeStart)/86400000)||1;
+  var todayOff  =Math.round((today-rangeStart)/86400000);
+  var todayPct  =(todayOff/totalDays*100).toFixed(2);
 
   function parseDate(s){
     if(!s)return null;
@@ -5779,94 +5782,186 @@ function s4RenGantt(tasks){
     if(p.length<3)return null;
     return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
   }
+  function fmtDate(d){
+    if(!d)return '';
+    return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+  }
+  function fmtHijri(d){
+    if(!d)return '';
+    try{return d.toLocaleDateString('ar-SA-u-ca-islamic',{day:'numeric',month:'short',year:'numeric'});}
+    catch(e){return '';}
+  }
 
   var validTasks=tasks.filter(function(t){return t.dateFrom||t.dateTo;});
   if(!validTasks.length){
     return '<div style="text-align:center;padding:60px;color:#aaa;font-size:13px;font-family:Tahoma">'
-      +'<div style="font-size:32px;margin-bottom:12px;opacity:.4">📅</div>'
-      +'<div>لا توجد تكليفات بتواريخ محددة</div>'
-      +'<div style="font-size:11px;margin-top:6px;color:#ccc">أضف تواريخ للتكليفات لتظهر في هذا المخطط</div>'
+      +'<div style="font-size:40px;margin-bottom:12px;opacity:.3">📅</div>'
+      +'<div style="font-weight:700;color:#888">لا توجد تكليفات بتواريخ محددة</div>'
+      +'<div style="font-size:11px;margin-top:6px">أضف تواريخ البداية والانتهاء للتكليفات</div>'
       +'</div>';
   }
 
-  var sbg={'قيد الانتظار':'#f39c12','جارٍ':'#2980b9','متأخر':'#e74c3c','منجز':'#27ae60'};
-
-  /* رأس الأشهر */
+  /* ── رأس: أشهر ── */
   var monthHdr='';
   var cur=new Date(rangeStart);
   while(cur<=rangeEnd){
-    var startOfMonth=new Date(cur.getFullYear(),cur.getMonth(),1);
-    var endOfMonth=new Date(cur.getFullYear(),cur.getMonth()+1,0);
-    var s=Math.max(0,Math.round((startOfMonth-rangeStart)/86400000));
-    var e2=Math.min(totalDays,Math.round((endOfMonth-rangeStart)/86400000));
-    var w=((e2-s)/totalDays*100).toFixed(1);
-    monthHdr+='<div style="width:'+w+'%;text-align:center;font-size:10px;font-weight:700;color:#4a2080;border-left:1px solid #e0d5f5;padding:3px 2px;font-family:Tahoma;flex-shrink:0">'+cur.toLocaleDateString('ar-SA',{month:'short',year:'2-digit'})+'</div>';
+    var mStart=new Date(cur.getFullYear(),cur.getMonth(),1);
+    var mEnd  =new Date(cur.getFullYear(),cur.getMonth()+1,0);
+    var s0=Math.max(0,Math.round((mStart-rangeStart)/86400000));
+    var e0=Math.min(totalDays,Math.round((mEnd-rangeStart)/86400000));
+    var w=((e0-s0)/totalDays*100).toFixed(2);
+    var isCurrentMonth=(cur.getMonth()===today.getMonth()&&cur.getFullYear()===today.getFullYear());
+    monthHdr+='<div style="width:'+w+'%;text-align:center;font-size:10px;font-weight:700;'
+      +'color:'+(isCurrentMonth?'#fff':'rgba(255,255,255,.7)')+';'
+      +'background:'+(isCurrentMonth?'rgba(255,255,255,.15)':'transparent')+';'
+      +'border-left:1px solid rgba(255,255,255,.15);padding:5px 2px;flex-shrink:0;'
+      +'font-family:Tahoma;white-space:nowrap">'
+      +cur.toLocaleDateString('ar-SA',{month:'long'})+' '+cur.getFullYear()
+      +'</div>';
     cur.setMonth(cur.getMonth()+1); cur.setDate(1);
   }
 
-  /* صفوف الجدول */
+  /* ── رأس: أسابيع ── */
+  var weekHdr='';
+  var wCur=new Date(rangeStart);
+  while(wCur<=rangeEnd){
+    var wNext=new Date(wCur.getTime()+7*86400000);
+    if(wNext>rangeEnd) wNext=new Date(rangeEnd);
+    var ws=Math.max(0,Math.round((wCur-rangeStart)/86400000));
+    var we=Math.min(totalDays,Math.round((wNext-rangeStart)/86400000));
+    var ww=((we-ws)/totalDays*100).toFixed(2);
+    weekHdr+='<div style="width:'+ww+'%;text-align:center;font-size:9px;color:rgba(255,255,255,.5);'
+      +'border-left:1px solid rgba(255,255,255,.08);padding:3px 0;flex-shrink:0;font-family:Tahoma">'
+      +wCur.getDate()+'</div>';
+    wCur=wNext;
+  }
+
+  /* ── خطوط العشرة أيام للشبكة ── */
+  var gridLines='';
+  for(var g=0;g<=totalDays;g+=10){
+    var gPct=(g/totalDays*100).toFixed(2);
+    gridLines+='<div style="position:absolute;top:0;bottom:0;right:'+gPct+'%;width:1px;background:rgba(0,0,0,.06)"></div>';
+  }
+
+  /* ── صفوف التكليفات ── */
+  var RAGcolors={'R':'#e53935','A':'#fb8c00','G':'#43a047'};
+  var statColors={'قيد الانتظار':'#fb8c00','جارٍ':'#1e88e5','متأخر':'#e53935','منجز':'#43a047','معلق':'#8e24aa'};
+  var statBg   ={'قيد الانتظار':'#fff8e1','جارٍ':'#e3f2fd','متأخر':'#ffebee','منجز':'#e8f5e9','معلق':'#f3e5f5'};
+
   var rows='';
-  validTasks.forEach(function(t,rowIdx){
+  validTasks.forEach(function(t,ri){
     var sd=parseDate(t.dateFrom)||today;
     var ed=parseDate(t.dateTo)||new Date(today.getTime()+7*86400000);
     var startOff=Math.max(0,Math.round((sd-rangeStart)/86400000));
-    var endOff=Math.min(totalDays,Math.round((ed-rangeStart)/86400000));
-    var barL=(startOff/totalDays*100).toFixed(2);
-    var barW=Math.max(0.5,((endOff-startOff)/totalDays*100)).toFixed(2);
-    var rag=s4GetRAG(t);
-    var color=rag.color;
-    var rowBg=rowIdx%2===0?'#fff':'#faf5ff';
+    var endOff  =Math.min(totalDays,Math.round((ed-rangeStart)/86400000));
+    var barL    =(startOff/totalDays*100).toFixed(2);
+    var barW    =Math.max(0.8,((endOff-startOff)/totalDays*100)).toFixed(2);
+    var rag     =s4GetRAG(t);
+    var barColor=rag.color;
+    var statC   =statColors[t.status]||'#888';
+    var statBgC =statBg[t.status]||'#f5f5f5';
+    var rowBg   =ri%2===0?'#fff':'#f9f9fc';
+    var dur     =Math.max(0,Math.round((ed-sd)/86400000));
 
-    rows+='<tr class="s4-gantt-row" data-idx="'+rowIdx+'" style="background:'+rowBg+';border-bottom:1px solid #f0e8ff">'
-      /* عمود التكليف - عرض كامل مع tooltip */
-      +'<td style="padding:7px 12px;font-size:11.5px;font-family:Tahoma;color:#1a1a2e;width:320px;max-width:320px">'
-      +'<div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:310px" title="'+e(t.task)+'">'+e(t.task)+'</div>'
-      +'<div style="font-size:9.5px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:310px;margin-top:2px" title="'+e(t.committee)+'">'+e(t.committee)+'</div>'
+    /* label داخل الشريط إذا كان واسعاً كافياً */
+    var barWidthNum=parseFloat(barW);
+    var barLabel=barWidthNum>8
+      ?'<span style="position:absolute;inset:0;display:flex;align-items:center;padding:0 6px;font-size:9px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl;font-family:Tahoma">'+e(t.task.substring(0,30))+'</span>'
+      :'';
+
+    rows+='<tr class="s4-gantt-row" data-idx="'+ri+'" style="background:'+rowBg+';border-bottom:1px solid #eeecf5">'
+
+      /* ① اسم التكليف */
+      +'<td style="padding:6px 10px;width:200px;min-width:200px;max-width:200px;vertical-align:middle">'
+        +'<div style="font-size:11.5px;font-weight:700;color:#1a1a2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Tahoma" title="'+e(t.task)+'">'+e(t.task)+'</div>'
+        +'<div style="font-size:9px;color:#888;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Tahoma" title="'+e(t.committee)+'"> '+e(t.committee)+'</div>'
       +'</td>'
-      /* عمود المسؤول - عرض كامل */
-      +'<td style="padding:7px 10px;font-size:11px;font-family:Tahoma;color:#4a2080;font-weight:700;width:180px;max-width:180px">'
-      +'<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px" title="'+e(t.responsible||'—')+'">'+e(t.responsible||'—')+'</div>'
-      +(t.dateTo?'<div style="font-size:9px;color:#888;margin-top:2px">حتى: '+t.dateTo+'</div>':'')
+
+      /* ② المسؤول */
+      +'<td style="padding:6px 8px;width:120px;min-width:120px;max-width:120px;vertical-align:middle">'
+        +'<div style="font-size:11px;font-weight:700;color:#1a3a5c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Tahoma" title="'+e(t.responsible||'—')+'">'+e(t.responsible||'—')+'</div>'
+        +(t.dateTo?'<div style="font-size:9px;color:#888;margin-top:2px;font-family:Tahoma">'+fmtDate(ed)+'</div>'+(fmtHijri(ed)?'<div style="font-size:8.5px;color:#aaa;font-family:Tahoma">'+fmtHijri(ed)+'</div>':''):'')
       +'</td>'
-      /* شريط الجانت */
-      +'<td style="padding:4px 8px;position:relative;min-width:300px">'
-      +'<div style="position:relative;height:22px;background:#f4f0ff;border-radius:5px">'
-      +'<div style="position:absolute;top:-2px;bottom:-2px;width:2px;background:rgba(231,76,60,.8);right:'+todayPct+'%;z-index:2;border-radius:1px"></div>'
-      +'<div class="s4-gantt-bar" data-idx="'+rowIdx+'" style="position:absolute;top:3px;bottom:3px;right:'+barL+'%;width:'+barW+'%;background:'+color+';border-radius:3px;opacity:.85;cursor:pointer"></div>'
-      +'</div></td>'
+
+      /* ③ الحالة */
+      +'<td style="padding:6px 6px;width:72px;min-width:72px;text-align:center;vertical-align:middle">'
+        +'<div style="background:'+statBgC+';color:'+statC+';border-radius:5px;padding:2px 6px;font-size:9.5px;font-weight:700;font-family:Tahoma;white-space:nowrap">'+e(t.status)+'</div>'
+        +'<div style="font-size:11px;margin-top:3px" title="'+rag.label+'">'+rag.dot+'</div>'
+      +'</td>'
+
+      /* ④ شريط الجانت */
+      +'<td style="padding:4px 6px;position:relative;min-width:0">'
+        +'<div style="position:relative;height:28px;background:#f0eef8;border-radius:6px;overflow:visible">'
+          +gridLines
+          /* خط اليوم */
+          +'<div style="position:absolute;top:-4px;bottom:-4px;width:2px;background:#e53935;right:'+todayPct+'%;z-index:3;border-radius:1px" title="اليوم">'
+            +'<div style="position:absolute;top:-8px;right:-16px;background:#e53935;color:#fff;font-size:8px;font-family:Tahoma;padding:1px 4px;border-radius:3px;white-space:nowrap">اليوم</div>'
+          +'</div>'
+          /* الشريط */
+          +'<div style="position:absolute;top:4px;bottom:4px;right:'+barL+'%;width:'+barW+'%;background:'+barColor+';border-radius:4px;z-index:2;box-shadow:0 1px 4px rgba(0,0,0,.18);cursor:pointer;overflow:hidden" '
+            +'title="'+e(t.task)+' | '+fmtDate(sd)+'→'+fmtDate(ed)+' ('+dur+' يوم)">'
+            +barLabel
+          +'</div>'
+        +'</div>'
+        /* تواريخ تحت الشريط */
+        +'<div style="display:flex;justify-content:space-between;padding:1px 0;margin-top:1px">'
+          +'<div style="font-size:8px;color:#aaa;font-family:Tahoma">'+fmtDate(ed)+'</div>'
+          +'<div style="font-size:8px;color:#aaa;font-family:Tahoma;direction:ltr">'+fmtDate(sd)+'</div>'
+        +'</div>'
+      +'</td>'
+
+      /* ⑤ المدة */
+      +'<td style="padding:6px 6px;width:52px;min-width:52px;text-align:center;vertical-align:middle">'
+        +'<div style="font-size:13px;font-weight:800;color:'+(dur>30?'#e53935':dur>14?'#fb8c00':'#43a047')+'">'+dur+'</div>'
+        +'<div style="font-size:8.5px;color:#aaa;font-family:Tahoma">يوم</div>'
+      +'</td>'
+
       +'</tr>';
   });
 
-  /* نخزن البيانات في window لاستخدامها في tooltip */
-  window._s4GanttTasks=validTasks;
-
-  var legend='<div style="display:flex;gap:12px;padding:8px 12px;background:#f8f5ff;border-top:1px solid #e0d5f5;flex-wrap:wrap;align-items:center">'
-    +'<span style="font-size:10px;font-family:Tahoma;color:#888">مؤشر RAG: </span>'
-    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;font-family:Tahoma;color:#2e7d32">'
-    +'<span style="width:12px;height:12px;border-radius:3px;background:#27ae60;display:inline-block"></span>أخضر = على المسار</span>'
-    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;font-family:Tahoma;color:#f57f17">'
-    +'<span style="width:12px;height:12px;border-radius:3px;background:#f39c12;display:inline-block"></span>أصفر = يحتاج متابعة</span>'
-    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;font-family:Tahoma;color:#c62828">'
-    +'<span style="width:12px;height:12px;border-radius:3px;background:#e74c3c;display:inline-block"></span>أحمر = متأخر / مشكلة</span>'
-    +'<span style="display:flex;align-items:center;gap:4px;font-size:10px;font-family:Tahoma;color:#6a1b9a">'
-    +'<span style="width:12px;height:12px;border-radius:3px;background:#8e24aa;display:inline-block"></span>بنفسجي = معلق</span>'
+  /* ── legend ── */
+  var legend='<div style="display:flex;gap:14px;padding:8px 12px;background:#1a2744;flex-wrap:wrap;align-items:center">'
+    +'<span style="font-size:10px;font-family:Tahoma;color:rgba(255,255,255,.6)">مؤشر RAG:</span>'
+    +'<span style="font-size:10px;font-family:Tahoma;color:#81c784;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#43a047;border-radius:2px;display:inline-block"></span>أخضر: على المسار (أكثر من 7 أيام)</span>'
+    +'<span style="font-size:10px;font-family:Tahoma;color:#ffb74d;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#fb8c00;border-radius:2px;display:inline-block"></span>أصفر: يحتاج متابعة (أقل من 7 أيام)</span>'
+    +'<span style="font-size:10px;font-family:Tahoma;color:#ef9a9a;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#e53935;border-radius:2px;display:inline-block"></span>أحمر: متأخر</span>'
+    +'<span style="font-size:10px;font-family:Tahoma;color:#ce93d8;display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#8e24aa;border-radius:2px;display:inline-block"></span>بنفسجي: معلق</span>'
     +'</div>';
 
-  return '<div style="display:flex;flex-direction:column;height:100%">'
-    +'<div style="overflow:auto;flex:1;position:relative">'
-    +'<table style="width:100%;border-collapse:collapse">'
-    +'<colgroup><col style="width:320px"><col style="width:180px"><col></colgroup>'
-    +'<thead style="position:sticky;top:0;z-index:3">'
-    +'<tr style="background:linear-gradient(135deg,#2c1654,#4a2080)">'
-    +'<th style="padding:8px 12px;text-align:right;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700">التكليف / اللجنة</th>'
-    +'<th style="padding:8px 10px;text-align:right;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700">المسؤول</th>'
-    +'<th style="padding:6px 8px;border-bottom:none">'
-    +'<div style="display:flex">'+monthHdr+'</div>'
-    +'</th>'
-    +'</tr>'
-    +'</thead>'
-    +'<tbody id="s4GanttBody">'+rows+'</tbody>'
-    +'</table></div></div>'+legend;
+  return '<div style="display:flex;flex-direction:column;height:100%;min-height:0">'
+    /* رأس ثابت */
+    +'<div style="flex-shrink:0;overflow:hidden">'
+      +'<table style="width:100%;border-collapse:collapse;table-layout:fixed">'
+        +'<colgroup><col style="width:200px"><col style="width:120px"><col style="width:72px"><col><col style="width:52px"></colgroup>'
+        +'<thead>'
+          /* صف العناوين */
+          +'<tr style="background:linear-gradient(135deg,#1a2744,#2c3e6b)">'
+            +'<th style="padding:8px 10px;text-align:right;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;border-left:1px solid rgba(255,255,255,.1)"> التكليف / اللجنة</th>'
+            +'<th style="padding:8px 8px;text-align:right;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;border-left:1px solid rgba(255,255,255,.1)"> المسؤول / الانتهاء</th>'
+            +'<th style="padding:8px 6px;text-align:center;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700;border-left:1px solid rgba(255,255,255,.1)">الحالة</th>'
+            +'<th style="padding:0;border-left:1px solid rgba(255,255,255,.1)">'
+              +'<div style="background:linear-gradient(135deg,#1a2744,#2c3e6b)">'
+                /* أشهر */
+                +'<div style="display:flex;border-bottom:1px solid rgba(255,255,255,.1)">'+monthHdr+'</div>'
+                /* أسابيع */
+                +'<div style="display:flex">'+weekHdr+'</div>'
+              +'</div>'
+            +'</th>'
+            +'<th style="padding:8px 6px;text-align:center;font-size:11px;font-family:Tahoma;color:#fff;font-weight:700"> المدة</th>'
+          +'</tr>'
+        +'</thead>'
+      +'</table>'
+    +'</div>'
+    /* صفوف قابلة للتمرير */
+    +'<div id="s4GanttBody" style="flex:1;overflow-y:auto;overflow-x:auto">'
+      +'<table style="width:100%;border-collapse:collapse;table-layout:fixed">'
+        +'<colgroup><col style="width:200px"><col style="width:120px"><col style="width:72px"><col><col style="width:52px"></colgroup>'
+        +'<tbody id="s4GanttBodyInner">'+rows+'</tbody>'
+      +'</table>'
+    +'</div>'
+    /* legend */
+    +legend
+    +'</div>';
 }
 
 /* ══ Tooltip الجانت — يُربط بعد عرض المخطط ══ */
@@ -5880,7 +5975,7 @@ function s4BindGanttTooltip(){
     document.body.appendChild(tip);
   }
   /* ربط الأحداث على الصفوف */
-  var body=document.getElementById('s4GanttBody');
+  var body=document.getElementById('s4GanttBodyInner');
   if(!body) return;
   body.querySelectorAll('.s4-gantt-row').forEach(function(row){
     row.addEventListener('mouseenter',function(ev){
@@ -5888,14 +5983,25 @@ function s4BindGanttTooltip(){
       var tasks=window._s4GanttTasks||[];
       var t=tasks[idx];
       if(!t) return;
+      var sd=t.dateFrom?t.dateFrom.split('-').map(Number):null;
+      var ed=t.dateTo?t.dateTo.split('-').map(Number):null;
+      var sdObj=sd?new Date(sd[0],sd[1]-1,sd[2]):null;
+      var edObj=ed?new Date(ed[0],ed[1]-1,ed[2]):null;
+      function fD(d){return d?d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear():'—';}
+      function fH(d){try{return d?d.toLocaleDateString('ar-SA-u-ca-islamic',{day:'numeric',month:'short',year:'numeric'}):'—';}catch(e){return '';}}
+      var dur=sdObj&&edObj?Math.round((edObj-sdObj)/86400000):null;
+      var rag=s4GetRAG(t);
       tip.innerHTML=
-        '<div style="font-weight:700;font-size:12px;color:#4a2080;margin-bottom:6px;border-bottom:1px solid #e0dde8;padding-bottom:5px">'+e(t.task)+'</div>'
-        +'<div><span style="color:#888">اللجنة: </span>'+e(t.committee)+'</div>'
-        +'<div><span style="color:#888">المسؤول: </span><b style="color:#1a3a5c">'+e(t.responsible||'—')+'</b></div>'
-        +(t.dateFrom?'<div><span style="color:#888">من: </span><span style="color:#333">'+t.dateFrom+'</span></div>':'')
-        +(t.dateTo?'<div><span style="color:#888">حتى: </span><span style="color:#333">'+t.dateTo+'</span></div>':'')
-        +'<div><span style="color:#888">الحالة: </span>'+e(t.status)+'</div>'
-        +(t.update?'<div style="font-size:10px;margin-top:4px;color:#888;border-top:1px solid #e0dde8;padding-top:4px">آخر تحديث: '+e(cleanUpdateField(t.update))+'</div>':'');
+        '<div style="font-weight:700;font-size:12px;color:#1a2744;margin-bottom:7px;border-bottom:2px solid '+rag.color+';padding-bottom:5px;display:flex;align-items:center;gap:6px">'+rag.dot+' '+e(t.task)+'</div>'
+        +'<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:Tahoma">'
+        +'<tr><td style="color:#888;padding:2px 0;width:70px">اللجنة</td><td style="font-weight:700;color:#1a2744">'+e(t.committee)+'</td></tr>'
+        +'<tr><td style="color:#888;padding:2px 0">المسؤول</td><td style="font-weight:700;color:#1a3a5c">'+e(t.responsible||'—')+'</td></tr>'
+        +(sdObj?'<tr><td style="color:#888;padding:2px 0">البداية</td><td><b>'+fD(sdObj)+'</b><span style="color:#aaa;font-size:9.5px;margin-right:6px">'+fH(sdObj)+'</span></td></tr>':'')
+        +(edObj?'<tr><td style="color:#888;padding:2px 0">الانتهاء</td><td><b>'+fD(edObj)+'</b><span style="color:#aaa;font-size:9.5px;margin-right:6px">'+fH(edObj)+'</span></td></tr>':'')
+        +(dur!==null?'<tr><td style="color:#888;padding:2px 0">المدة</td><td style="font-weight:700">'+dur+' يوم</td></tr>':'')
+        +'<tr><td style="color:#888;padding:2px 0">الحالة</td><td><span style="background:'+rag.bg+';color:'+rag.color+';border-radius:4px;padding:1px 7px;font-weight:700;font-size:10px">'+e(t.status)+'</span></td></tr>'
+        +(t.update?'<tr><td colspan="2" style="color:#888;font-size:9.5px;padding-top:5px;border-top:1px solid #eee;padding-top:4px">آخر تحديث: '+e(cleanUpdateField(t.update))+'</td></tr>':'')
+        +'</table>';
       tip.style.display='block';
       tip.style.left=(ev.clientX+16)+'px';
       tip.style.top=Math.max(10,ev.clientY-10)+'px';
