@@ -1072,6 +1072,8 @@ body{font-size:clamp(12px,1.4vw,14px);line-height:1.5}
           <button class="s1-btn s1-btn-add" id="btnAdd"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة لجنة</button>
           <button class="s1-btn s1-btn-print" id="btnPrint"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> طباعة</button>
           <button class="s1-btn" id="btnExcelS1" style="background:linear-gradient(135deg,#1d6a3b,#27ae60)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> تصدير Excel</button>
+          <button class="s1-btn" onclick="importDownloadTemplate()" style="background:linear-gradient(135deg,#2a6a8f,#3b83b5)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> قالب Excel</button>
+          <button class="s1-btn" onclick="importOpenModal()" style="background:linear-gradient(135deg,#3d8e6f,#48a883)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> استيراد Excel</button>
           <button class="s1-btn" onclick="forceReloadEmbedded()" style="background:linear-gradient(135deg,#7d3c98,#9b59b6)" title="استبدل بيانات السحابة ببيانات الملف الحالي"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> تحديث البيانات</button>
         </div>
         <div class="s1-search-box"><span class="s1-si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="srch" placeholder="ابحث في الاسم أو الممثل..."></div>
@@ -7836,6 +7838,655 @@ function xlBook(){
   wb.Workbook={Views:[{RTL:true}]};
   return wb;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   نظام استيراد Excel الذكي — الإصدار 1.0
+   Excel → Parse → Validate → Auto-correct → Preview → Confirm → Save
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── قاموس التصحيح التلقائي ── */
+var IMPORT_AC = {
+  status_comm: {
+    'مستمر':'مستمرة','active':'مستمرة','نشط':'مستمرة','نشطة':'مستمرة',
+    'منتهي':'منتهية','منتهى':'منتهية','ended':'منتهية','closed':'منتهية','مغلقة':'منتهية',
+    'لم يبدأ':'لم تبدأ','not started':'لم تبدأ','جديدة':'لم تبدأ',
+    'متعثر':'متعثرة','blocked':'متعثرة','معلق':'متعثرة'
+  },
+  status_task: {
+    'waiting':'قيد الانتظار','انتظار':'قيد الانتظار','pending':'قيد الانتظار','في الانتظار':'قيد الانتظار',
+    'in progress':'جارٍ','جاري':'جارٍ','جارى':'جارٍ','قيد التنفيذ':'جارٍ','running':'جارٍ',
+    'done':'منجز','completed':'منجز','مكتمل':'منجز','مكتملة':'منجز','انجز':'منجز','أنجز':'منجز',
+    'late':'متأخر','overdue':'متأخر','delayed':'متأخر','متاخر':'متأخر',
+    'hold':'معلق','on hold':'معلق','موقوف':'معلق','مؤجل':'معلق'
+  },
+  type: {
+    'committee':'لجنة','لجان':'لجنة','work team':'فرق عمل','فريق':'فرق عمل',
+    'council':'مجلس','مجلسي':'مجلس',
+    'international':'لجنة دولية مشتركة','دولي':'لجنة دولية مشتركة'
+  },
+  duration: {'permanent':'دائمة','دائم':'دائمة','temporary':'مؤقته','مؤقت':'مؤقته','temp':'مؤقته'},
+  scope: {
+    'internal':'داخلية','داخلي':'داخلية',
+    'international':'خارجية دولية','دولية':'خارجية دولية',
+    'external':'خارج نطاق الوزارة','خارجي':'خارج نطاق الوزارة'
+  },
+  role: {
+    'member':'عضو','chair':'رئيس','رئيسي':'رئيس','participant':'مشارك'},
+  origin: {'basic':'أساسية','اساسية':'أساسية','derived':'منبثقة','منبثق':'منبثقة'}
+};
+
+/* ── تطبيع التاريخ ── */
+function importNormDate(v){
+  if(!v) return '';
+  var s = String(v).trim();
+  /* YYYY-MM-DD */
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  /* DD/MM/YYYY */
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  /* YYYY/MM/DD */
+  m = s.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+  if(m) return m[1]+'-'+m[2]+'-'+m[3];
+  /* Excel serial */
+  if(/^\d{4,5}$/.test(s)){
+    var d=new Date(Date.UTC(1900,0,1)+(parseInt(s)-2)*86400000);
+    return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
+  }
+  return s;
+}
+
+/* ── تطبيع قيمة من قاموس ── */
+function importAC(val, dict){
+  if(!val) return '';
+  var v = String(val).trim();
+  var allowed = Object.values(dict);
+  if(allowed.indexOf(v) >= 0) return v; /* قيمة صحيحة */
+  var lo = v.toLowerCase();
+  if(dict[lo]) return dict[lo];
+  if(dict[v])  return dict[v];
+  /* fuzzy: ابحث عن قيمة تحتوي على النص */
+  for(var k in dict){
+    if(lo.includes(k.toLowerCase()) || k.toLowerCase().includes(lo))
+      return dict[k];
+  }
+  return v; /* لم يُصحَّح */
+}
+
+/* ── تحقق من صحة تاريخ ── */
+function importIsValidDate(s){
+  if(!s) return true; /* اختياري */
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s));
+}
+
+/* ── تحميل قالب Excel ── */
+function importDownloadTemplate(){
+  /* نبني القالب من XLSX في المتصفح */
+  if(typeof XLSX==='undefined'){showToast('مكتبة Excel غير محمّلة',true);return;}
+  var wb=XLSX.utils.book_new();
+  wb.Workbook={Views:[{RTL:true}]};
+
+  /* ── ورقة اللجان ── */
+  var commHdr=['اسم اللجنة / المجلس *','ممثل الوكالة *','ممثل بديل','الدور','الحالة','النوع','المدة','النطاق','أصل اللجنة','الرئاسة','رقم خطاب الترشيح','تاريخ الخطاب (YYYY-MM-DD)','الهدف من التشكيل','سند التشكيل','ملاحظات','المقطع / القطاع'];
+  var commEx=[
+    ['لجنة التعاون التعليمي السعودي الأمريكي','د. خالد العتيبي','م. فهد الرشيد','رئيس','مستمرة','لجنة دولية مشتركة','دائمة','خارجية دولية','أساسية','وكالة التعاون الدولي','خط/2025/001','2025-01-15','تعزيز التعاون التعليمي','قرار مجلس الوزراء رقم 250','اجتماعات ربعية','التعاون الدولي'],
+    ['مجلس إدارة البرنامج الابتعاثي','أ. سارة الغامدي','','عضو','مستمرة','مجلس','دائمة','داخلية','أساسية','وزارة التعليم','','','الإشراف على برامج الابتعاث','اللائحة التنظيمية','','الشؤون الأكاديمية'],
+  ];
+  var ws1=XLSX.utils.aoa_to_sheet([commHdr].concat(commEx));
+  ws1['!cols']=commHdr.map(function(h,i){return{wch:[38,22,22,18,16,24,12,22,14,22,20,20,35,28,30,20][i]||16};});
+  XLSX.utils.book_append_sheet(wb,ws1,'اللجان');
+
+  /* ── ورقة التكليفات ── */
+  var taskHdr=['اسم اللجنة (مطابق للورقة الأولى) *','رقم الاجتماع *','تاريخ الاجتماع (YYYY-MM-DD)','نص التكليف *','المسؤول عن التنفيذ *','تاريخ البداية (YYYY-MM-DD)','تاريخ الاستحقاق (YYYY-MM-DD)','الحالة','ملاحظات','آخر تحديث','موقع الاجتماع','جدول الأعمال'];
+  var taskEx=[
+    ['لجنة التعاون التعليمي السعودي الأمريكي',1,'2025-02-10','إعداد تقرير تقدم البرامج التعاونية','د. خالد العتيبي','2025-02-10','2025-03-01','منجز','تم الاعتماد','تم الرفع','مقر الوزارة','1. المراجعة  2. التوصيات'],
+    ['لجنة التعاون التعليمي السعودي الأمريكي',1,'2025-02-10','التواصل مع الجانب الأمريكي','م. فهد الرشيد','2025-02-15','2025-03-15','جارٍ','قيد المتابعة','','مقر الوزارة',''],
+  ];
+  var ws2=XLSX.utils.aoa_to_sheet([taskHdr].concat(taskEx));
+  ws2['!cols']=taskHdr.map(function(h,i){return{wch:[40,12,20,50,24,20,20,16,32,30,22,35][i]||16};});
+  XLSX.utils.book_append_sheet(wb,ws2,'التكليفات');
+
+  xlStyleSheet(ws1,true); xlStyleSheet(ws2,true);
+  XLSX.writeFile(wb,'قالب_الاستيراد_المجالس_والتكليفات.xlsx');
+  showToast('✅ تم تحميل قالب Excel');
+}
+
+/* ══════════════════════════════════════════
+   MAIN: فتح نافذة الاستيراد
+   ══════════════════════════════════════════ */
+function importOpenModal(){
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الاستيراد',true);return;}
+  var existing=document.getElementById('importModal');
+  if(existing){existing.style.display='flex';importResetState();return;}
+
+  var modal=document.createElement('div');
+  modal.id='importModal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99990;display:flex;align-items:center;justify-content:center;padding:12px;direction:rtl';
+  modal.innerHTML=
+    '<div style="background:#fff;border-radius:18px;width:100%;max-width:900px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.4);overflow:hidden">'+
+      /* رأس النافذة */
+      '<div style="background:linear-gradient(135deg,#3b83b5,#48a883);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px"> 📥</div>'+
+          '<div><div style="color:#fff;font-size:14px;font-weight:700;font-family:Tahoma">استيراد بيانات من Excel</div>'+
+          '<div style="color:rgba(255,255,255,.75);font-size:10px;font-family:Tahoma">اللجان والتكليفات</div></div>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;align-items:center">'+
+          '<button onclick="importDownloadTemplate()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:8px;padding:6px 12px;font-size:10px;font-weight:700;cursor:pointer;font-family:Tahoma;display:flex;align-items:center;gap:5px">'+
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'+
+            ' تحميل القالب</button>'+
+          '<button onclick="importCloseModal()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:Tahoma">✕</button>'+
+        '</div>'+
+      '</div>'+
+      /* خطوات */
+      '<div id="importSteps" style="display:flex;gap:0;background:#f8f9fa;border-bottom:1px solid #e8eef5;flex-shrink:0">'+
+        importStepHtml(1,'رفع الملف','📂',true)+
+        importStepHtml(2,'التحقق','🔍',false)+
+        importStepHtml(3,'المراجعة','📋',false)+
+        importStepHtml(4,'التأكيد','✅',false)+
+      '</div>'+
+      /* المحتوى */
+      '<div id="importContent" style="flex:1;overflow-y:auto;padding:20px">'+
+        importStep1Html()+
+      '</div>'+
+      /* شريط الأزرار */
+      '<div id="importFooter" style="border-top:1px solid #e8eef5;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#fafbfc">'+
+        '<div id="importFooterInfo" style="font-size:11px;color:#888;font-family:Tahoma"></div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button onclick="importCloseModal()" style="background:#f0f0f0;color:#555;border:1px solid #ddd;border-radius:8px;padding:7px 18px;font-size:11px;cursor:pointer;font-family:Tahoma">إغلاق</button>'+
+          '<button id="importNextBtn" onclick="importNext()" style="background:linear-gradient(135deg,#3b83b5,#48a883);color:#fff;border:none;border-radius:8px;padding:7px 22px;font-size:11px;font-weight:700;cursor:pointer;font-family:Tahoma;display:none">التالي ←</button>'+
+          '<button id="importConfirmBtn" onclick="importConfirm()" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:8px;padding:7px 22px;font-size:11px;font-weight:700;cursor:pointer;font-family:Tahoma;display:none">✅ تأكيد الاستيراد</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(modal);
+  importResetState();
+}
+
+function importStepHtml(n,label,icon,active){
+  return '<div class="imp-step'+(active?' imp-step-active':'')+'" id="impStep'+n+'" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-left:1px solid #e0e8f0;font-family:Tahoma;font-size:10px;color:'+(active?'#2a6a8f':'#aaa')+';font-weight:'+(active?'700':'400')+'">'+
+    '<span style="width:22px;height:22px;border-radius:50%;background:'+(active?'#3b83b5':'#ddd')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">'+n+'</span>'+
+    icon+' '+label+
+  '</div>';
+}
+
+function importStep1Html(){
+  return '<div style="text-align:center;padding:30px 20px">'+
+    '<div style="width:80px;height:80px;background:linear-gradient(135deg,#ebf5fb,#e8f8f0);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 18px">📂</div>'+
+    '<div style="font-size:14px;font-weight:700;color:#1a1a2e;font-family:Tahoma;margin-bottom:6px">رفع ملف Excel</div>'+
+    '<div style="font-size:11px;color:#888;font-family:Tahoma;margin-bottom:20px;line-height:1.8">قم برفع ملف Excel يحتوي على ورقتين: <b>اللجان</b> و <b>التكليفات</b><br>يمكنك تحميل القالب الجاهز من الزر أعلاه</div>'+
+    '<label id="importDropZone" style="display:inline-block;border:2px dashed #3b83b5;border-radius:14px;padding:28px 50px;cursor:pointer;background:#f0f7ff;transition:all .2s">'+
+      '<input type="file" id="importFileInput" accept=".xlsx,.xls" style="display:none" onchange="importFileSelected(this)">'+
+      '<div style="font-size:28px;margin-bottom:8px">📊</div>'+
+      '<div style="font-size:12px;font-weight:700;color:#3b83b5;font-family:Tahoma">انقر لاختيار ملف</div>'+
+      '<div style="font-size:10px;color:#888;font-family:Tahoma;margin-top:4px">.xlsx أو .xls</div>'+
+    '</label>'+
+    '<div id="importFileName" style="margin-top:14px;font-size:11px;color:#2a6a8f;font-family:Tahoma;font-weight:700"></div>'+
+  '</div>';
+}
+
+var importState={step:1,file:null,wb:null,parsed:{comms:[],tasks:[]},validated:{},corrections:[]};
+
+function importResetState(){
+  importState={step:1,file:null,wb:null,parsed:{comms:[],tasks:[]},validated:{},corrections:[]};
+  document.getElementById('importNextBtn').style.display='none';
+  document.getElementById('importConfirmBtn').style.display='none';
+  document.getElementById('importFooterInfo').textContent='';
+  importSetStep(1);
+  document.getElementById('importContent').innerHTML=importStep1Html();
+}
+
+function importSetStep(n){
+  importState.step=n;
+  [1,2,3,4].forEach(function(i){
+    var el=document.getElementById('impStep'+i);
+    if(!el)return;
+    var active=i===n;
+    el.style.color=active?'#2a6a8f':'#aaa';
+    el.style.fontWeight=active?'700':'400';
+    el.querySelector('span').style.background=i<n?'#48a883':(active?'#3b83b5':'#ddd');
+  });
+}
+
+function importCloseModal(){
+  var m=document.getElementById('importModal');
+  if(m) m.style.display='none';
+}
+
+function importFileSelected(input){
+  var file=input.files[0];
+  if(!file)return;
+  importState.file=file;
+  document.getElementById('importFileName').textContent='✓ '+file.name+' ('+Math.round(file.size/1024)+' KB)';
+  document.getElementById('importNextBtn').style.display='inline-block';
+  document.getElementById('importNextBtn').textContent='تحليل الملف ←';
+  document.getElementById('importFooterInfo').textContent='ملف محدد — اضغط "تحليل الملف" للمتابعة';
+}
+
+function importNext(){
+  if(importState.step===1) importParseFile();
+  else if(importState.step===2) importShowReview();
+}
+
+/* ── STEP 2: تحليل وتحقق ── */
+function importParseFile(){
+  if(!importState.file){showToast('الرجاء اختيار ملف أولاً',true);return;}
+  if(typeof XLSX==='undefined'){showToast('مكتبة Excel غير محمّلة',true);return;}
+
+  var content=document.getElementById('importContent');
+  content.innerHTML='<div style="text-align:center;padding:40px;font-family:Tahoma"><div style="font-size:32px;margin-bottom:12px">⏳</div><div style="font-size:12px;color:#888">جاري تحليل الملف...</div></div>';
+
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=new Uint8Array(e.target.result);
+      var wb=XLSX.read(data,{type:'array'});
+      importState.wb=wb;
+
+      /* قراءة الأوراق */
+      var commSheet=wb.Sheets['اللجان']||wb.Sheets[wb.SheetNames[0]];
+      var taskSheet=wb.Sheets['التكليفات']||wb.Sheets[wb.SheetNames[1]];
+
+      var commRaw=commSheet?XLSX.utils.sheet_to_json(commSheet,{defval:''}):[];
+      var taskRaw=taskSheet?XLSX.utils.sheet_to_json(taskSheet,{defval:''}):[];
+
+      /* تعيين الأعمدة */
+      var COMM_MAP={
+        'اسم اللجنة / المجلس *':'n','اسم اللجنة':'n','اسم المجلس':'n',
+        'ممثل الوكالة *':'r','ممثل الوكالة':'r','الممثل':'r',
+        'ممثل بديل':'ar','الدور':'ro','الحالة':'st','النوع':'ty',
+        'المدة':'du','النطاق':'sc','أصل اللجنة':'orig','الرئاسة':'ch',
+        'رقم خطاب الترشيح':'rn','تاريخ الخطاب (YYYY-MM-DD)':'rd','تاريخ الخطاب':'rd',
+        'الهدف من التشكيل':'go','الهدف':'go','سند التشكيل':'ba',
+        'ملاحظات':'no','المقطع / القطاع':'sec','القطاع':'sec'
+      };
+      var TASK_MAP={
+        'اسم اللجنة (مطابق للورقة الأولى) *':'committee','اسم اللجنة':'committee','اللجنة':'committee',
+        'رقم الاجتماع *':'meetNum','رقم الاجتماع':'meetNum','الاجتماع':'meetNum',
+        'تاريخ الاجتماع (YYYY-MM-DD)':'date','تاريخ الاجتماع':'date',
+        'نص التكليف *':'task','نص التكليف':'task','التكليف':'task',
+        'المسؤول عن التنفيذ *':'responsible','المسؤول':'responsible','المسؤول عن التنفيذ':'responsible',
+        'تاريخ البداية (YYYY-MM-DD)':'dateFrom','تاريخ البداية':'dateFrom','من':'dateFrom',
+        'تاريخ الاستحقاق (YYYY-MM-DD)':'dateTo','تاريخ الاستحقاق':'dateTo','إلى':'dateTo',
+        'الحالة':'status','ملاحظات':'notes','آخر تحديث':'update',
+        'موقع الاجتماع':'loc','المكان':'loc','جدول الأعمال':'agenda'
+      };
+
+      function mapRow(raw,mapDef){
+        var out={};
+        Object.keys(raw).forEach(function(k){
+          var mapped=mapDef[k.trim()];
+          if(mapped) out[mapped]=String(raw[k]||'').trim();
+        });
+        return out;
+      }
+
+      var comms=commRaw.map(function(r){return mapRow(r,COMM_MAP);}).filter(function(r){return r.n;});
+      var tasks=taskRaw.map(function(r){return mapRow(r,TASK_MAP);}).filter(function(r){return r.task;});
+
+      /* ── التحقق والتصحيح ── */
+      var corrections=[];
+      var errors=[];
+      var commNames=new Set(D.map(function(d){return d.n.trim();}));
+      var importCommNames=new Set();
+
+      comms.forEach(function(c,i){
+        /* إلزامي */
+        if(!c.n){errors.push({sheet:'اللجان',row:i+2,field:'اسم اللجنة',msg:'حقل إلزامي فارغ',type:'error'});return;}
+        if(!c.r){errors.push({sheet:'اللجان',row:i+2,field:'ممثل الوكالة',msg:'حقل إلزامي فارغ',type:'error'});return;}
+        importCommNames.add(c.n.trim());
+        /* تكرار */
+        if(commNames.has(c.n.trim())){
+          corrections.push({sheet:'اللجان',row:i+2,field:'اسم اللجنة',orig:c.n,fix:'(موجودة مسبقاً — سيُحدَّث)',type:'warn'});
+        }
+        /* تصحيح القيم */
+        var fixes=[
+          ['ro',IMPORT_AC.role,'الدور','عضو'],
+          ['st',IMPORT_AC.status_comm,'الحالة','مستمرة'],
+          ['ty',IMPORT_AC.type,'النوع','لجنة'],
+          ['du',IMPORT_AC.duration,'المدة','دائمة'],
+          ['sc',IMPORT_AC.scope,'النطاق','داخلية'],
+          ['orig',IMPORT_AC.origin,'أصل اللجنة','أساسية'],
+        ];
+        fixes.forEach(function(f){
+          var field=f[0],dict=f[1],label=f[2],def=f[3];
+          var allowed=Object.values(dict).concat(Object.keys(dict));
+          var orig=c[field]||'';
+          if(!orig){c[field]=def;return;}
+          var fixed=importAC(orig,dict);
+          if(fixed!==orig){
+            corrections.push({sheet:'اللجان',row:i+2,field:label,orig:orig,fix:fixed,type:'fix'});
+            c[field]=fixed;
+          }
+        });
+        /* تاريخ */
+        if(c.rd){
+          var fixed=importNormDate(c.rd);
+          if(fixed!==c.rd){corrections.push({sheet:'اللجان',row:i+2,field:'تاريخ الخطاب',orig:c.rd,fix:fixed,type:'fix'});c.rd=fixed;}
+          if(!importIsValidDate(c.rd)) errors.push({sheet:'اللجان',row:i+2,field:'تاريخ الخطاب',msg:'تنسيق تاريخ غير صحيح: '+c.rd,type:'error'});
+        }
+      });
+
+      tasks.forEach(function(t,i){
+        if(!t.task){errors.push({sheet:'التكليفات',row:i+2,field:'نص التكليف',msg:'حقل إلزامي فارغ',type:'error'});return;}
+        if(!t.responsible){errors.push({sheet:'التكليفات',row:i+2,field:'المسؤول',msg:'حقل إلزامي فارغ',type:'error'});return;}
+        if(!t.committee){errors.push({sheet:'التكليفات',row:i+2,field:'اسم اللجنة',msg:'حقل إلزامي فارغ',type:'error'});return;}
+        /* مطابقة اللجنة */
+        var cn=t.committee.trim();
+        if(!commNames.has(cn)&&!importCommNames.has(cn)){
+          /* fuzzy match */
+          var best=null,bestScore=0;
+          var allNames=Array.from(commNames).concat(Array.from(importCommNames));
+          allNames.forEach(function(name){
+            var score=0;
+            var a=cn.toLowerCase(),b=name.toLowerCase();
+            if(b.includes(a)||a.includes(b)) score=0.8;
+            else{
+              var common=0;
+              for(var ci=0;ci<Math.min(a.length,b.length);ci++) if(a[ci]===b[ci]) common++;
+              score=common/Math.max(a.length,b.length);
+            }
+            if(score>bestScore){bestScore=score;best=name;}
+          });
+          if(best&&bestScore>0.6){
+            corrections.push({sheet:'التكليفات',row:i+2,field:'اسم اللجنة',orig:cn,fix:best,type:'match'});
+            t.committee=best;
+          } else {
+            errors.push({sheet:'التكليفات',row:i+2,field:'اسم اللجنة',msg:'لا توجد لجنة باسم: '+cn,type:'error'});
+          }
+        }
+        /* رقم الاجتماع */
+        t.meetNum=parseInt(t.meetNum)||1;
+        /* تصحيح الحالة */
+        if(t.status){
+          var fs=importAC(t.status,IMPORT_AC.status_task);
+          if(fs!==t.status){corrections.push({sheet:'التكليفات',row:i+2,field:'الحالة',orig:t.status,fix:fs,type:'fix'});t.status=fs;}
+        } else {t.status='قيد الانتظار';}
+        /* تواريخ */
+        ['dateFrom','dateTo','date'].forEach(function(df){
+          if(t[df]){
+            var fd=importNormDate(t[df]);
+            if(fd!==t[df]){corrections.push({sheet:'التكليفات',row:i+2,field:df,orig:t[df],fix:fd,type:'fix'});t[df]=fd;}
+            if(!importIsValidDate(t[df])) errors.push({sheet:'التكليفات',row:i+2,field:df,msg:'تنسيق تاريخ غير صحيح',type:'error'});
+          }
+        });
+      });
+
+      importState.parsed={comms:comms,tasks:tasks};
+      importState.corrections=corrections;
+      importState.errors=errors;
+
+      /* عرض نتائج التحقق */
+      importShowValidation();
+    }catch(ex){
+      content.innerHTML='<div style="text-align:center;padding:40px;color:#e53935;font-family:Tahoma"><div style="font-size:28px;margin-bottom:10px">⚠</div><div>خطأ في قراءة الملف: '+e(ex.message)+'</div></div>';
+    }
+  };
+  reader.readAsArrayBuffer(importState.file);
+}
+
+/* ── STEP 2: عرض نتائج التحقق ── */
+function importShowValidation(){
+  importSetStep(2);
+  var p=importState.parsed, errs=importState.errors, corrs=importState.corrections;
+  var hasErrors=errs.length>0;
+  var content=document.getElementById('importContent');
+
+  var summHTML=
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">'+
+    statCard('📋 لجان',''+p.comms.length,'#3b83b5')+
+    statCard('✅ تكليفات',''+p.tasks.length,'#48a883')+
+    statCard('🔧 تصحيحات',''+corrs.length,'#fb8c00')+
+    statCard('⛔ أخطاء',''+errs.length,hasErrors?'#e53935':'#27ae60')+
+    '</div>';
+
+  /* أخطاء */
+  var errHTML='';
+  if(errs.length){
+    errHTML='<div style="background:#fdedec;border:1px solid #f5b7b1;border-radius:10px;padding:12px 14px;margin-bottom:14px">'+
+      '<div style="font-size:12px;font-weight:700;color:#c0392b;font-family:Tahoma;margin-bottom:8px">⛔ أخطاء تمنع الاستيراد ('+errs.length+')</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:10.5px;font-family:Tahoma">'+
+      '<thead><tr style="background:#f5b7b1"><th style="padding:5px 8px;text-align:right">الورقة</th><th>الصف</th><th>الحقل</th><th>الخطأ</th></tr></thead><tbody>'+
+      errs.map(function(e,i){return'<tr style="background:'+(i%2?'#fff':'#fef9f9')+'"><td style="padding:4px 8px;color:#555">'+e.sheet+'</td><td style="text-align:center;color:#555">'+e.row+'</td><td style="color:#c0392b;font-weight:700">'+e.field+'</td><td style="color:#333">'+e.msg+'</td></tr>';}).join('')+
+      '</tbody></table></div>';
+  }
+
+  /* تصحيحات */
+  var corrHTML='';
+  if(corrs.length){
+    corrHTML='<div style="background:#fef9e7;border:1px solid #f9e79f;border-radius:10px;padding:12px 14px;margin-bottom:14px">'+
+      '<div style="font-size:12px;font-weight:700;color:#8e6a00;font-family:Tahoma;margin-bottom:8px">🔧 تصحيحات مقترحة ('+corrs.length+')</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:10.5px;font-family:Tahoma">'+
+      '<thead><tr style="background:#f9e79f"><th style="padding:5px 8px;text-align:right">الورقة</th><th>الحقل</th><th>القيمة الأصلية</th><th>التصحيح المقترح</th><th>النوع</th></tr></thead><tbody>'+
+      corrs.map(function(c,i){
+        var typeLabel={'fix':'تصحيح','match':'مطابقة','warn':'تنبيه'}[c.type]||c.type;
+        var typeCl={'fix':'#1a6a4e','match':'#1a5276','warn':'#8e6a00'}[c.type]||'#555';
+        return'<tr style="background:'+(i%2?'#fff':'#fffde7')+'">'+
+          '<td style="padding:4px 8px;color:#555">'+c.sheet+'</td>'+
+          '<td style="color:#555">'+c.field+'</td>'+
+          '<td style="color:#c0392b;text-decoration:line-through">'+c.orig+'</td>'+
+          '<td style="color:#1d6a3b;font-weight:700">'+c.fix+'</td>'+
+          '<td><span style="background:'+typeCl+'22;color:'+typeCl+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+typeLabel+'</span></td>'+
+          '</tr>';
+      }).join('')+
+      '</tbody></table></div>';
+  }
+
+  var okHTML='';
+  if(!hasErrors){
+    okHTML='<div style="background:#eafaf1;border:1px solid #a9dfbf;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px">'+
+      '<div style="font-size:20px">✅</div>'+
+      '<div style="font-size:11px;color:#1d6a3b;font-family:Tahoma;font-weight:700">لا توجد أخطاء — البيانات جاهزة للاستيراد'+
+        (corrs.length?' (سيتم تطبيق '+corrs.length+' تصحيح تلقائي)':'')+'</div>'+
+    '</div>';
+  }
+
+  content.innerHTML=summHTML+errHTML+corrHTML+okHTML;
+
+  var nextBtn=document.getElementById('importNextBtn');
+  var footerInfo=document.getElementById('importFooterInfo');
+
+  if(hasErrors){
+    nextBtn.style.display='none';
+    footerInfo.textContent='⛔ يوجد '+errs.length+' خطأ — صحّح الملف وأعد الرفع';
+    footerInfo.style.color='#c0392b';
+  } else {
+    nextBtn.style.display='inline-block';
+    nextBtn.textContent='معاينة البيانات ←';
+    footerInfo.textContent='✓ '+p.comms.length+' لجنة + '+p.tasks.length+' تكليف — جاهزة للمراجعة';
+    footerInfo.style.color='#1d6a3b';
+  }
+}
+
+function statCard(label, val, color){
+  return'<div style="background:#fff;border:1px solid #e8eef5;border-radius:10px;padding:12px;text-align:center;border-top:3px solid '+color+'">'+
+    '<div style="font-size:20px;font-weight:700;color:'+color+';font-family:Tahoma">'+val+'</div>'+
+    '<div style="font-size:10px;color:#888;font-family:Tahoma;margin-top:2px">'+label+'</div>'+
+  '</div>';
+}
+
+/* ── STEP 3: معاينة ── */
+function importShowReview(){
+  importSetStep(3);
+  var p=importState.parsed;
+  var content=document.getElementById('importContent');
+
+  var tabsHTML=
+    '<div style="display:flex;gap:0;border-bottom:2px solid #e8eef5;margin-bottom:14px">'+
+      '<button onclick="importShowTab(\'comms\')" id="impTabComms" style="padding:8px 18px;background:#3b83b5;color:#fff;border:none;font-family:Tahoma;font-size:11px;font-weight:700;cursor:pointer;border-radius:8px 8px 0 0"> 📋 اللجان ('+p.comms.length+')</button>'+
+      '<button onclick="importShowTab(\'tasks\')" id="impTabTasks" style="padding:8px 18px;background:#f0f4f8;color:#555;border:none;font-family:Tahoma;font-size:11px;cursor:pointer;border-radius:8px 8px 0 0"> ✅ التكليفات ('+p.tasks.length+')</button>'+
+    '</div>'+
+    '<div id="impTabContent"></div>';
+
+  content.innerHTML=tabsHTML;
+  importShowTab('comms');
+
+  document.getElementById('importNextBtn').style.display='none';
+  document.getElementById('importConfirmBtn').style.display='inline-block';
+  document.getElementById('importFooterInfo').textContent='راجع البيانات — اضغط "تأكيد الاستيراد" للحفظ';
+  document.getElementById('importFooterInfo').style.color='#2a6a8f';
+}
+
+function importShowTab(tab){
+  var p=importState.parsed;
+  document.getElementById('impTabComms').style.background=tab==='comms'?'#3b83b5':'#f0f4f8';
+  document.getElementById('impTabComms').style.color=tab==='comms'?'#fff':'#555';
+  document.getElementById('impTabTasks').style.background=tab==='tasks'?'#48a883':'#f0f4f8';
+  document.getElementById('impTabTasks').style.color=tab==='tasks'?'#fff':'#555';
+
+  var tc=document.getElementById('impTabContent');
+  if(!tc)return;
+
+  if(tab==='comms'){
+    var rows=p.comms.slice(0,50).map(function(c,i){
+      var exists=D.some(function(d){return d.n.trim()===c.n.trim();});
+      return'<tr style="background:'+(i%2?'#f7f8fc':'#fff')+'">'+
+        '<td style="padding:5px 8px;font-size:10px;color:#888;text-align:center">'+(i+1)+'</td>'+
+        '<td style="padding:5px 8px;font-size:10.5px;font-weight:700;color:#1a1a2e">'+e(c.n)+(exists?'<span style="background:#fff3e0;color:#e65100;border-radius:4px;padding:1px 5px;font-size:8px;margin-right:4px">تحديث</span>':'<span style="background:#e8f5e9;color:#1d6a3b;border-radius:4px;padding:1px 5px;font-size:8px;margin-right:4px">جديد</span>')+'</td>'+
+        '<td style="padding:5px 8px;font-size:10px;color:#555">'+e(c.r||'—')+'</td>'+
+        '<td style="padding:5px 8px;font-size:10px;text-align:center"><span style="background:#e8f0fb;color:#2a6a8f;border-radius:4px;padding:1px 6px;font-size:9px">'+e(c.st||'مستمرة')+'</span></td>'+
+        '<td style="padding:5px 8px;font-size:10px;color:#555">'+e(c.ty||'—')+'</td>'+
+        '<td style="padding:5px 8px;font-size:10px;color:#555">'+e(c.sc||'—')+'</td>'+
+        '</tr>';
+    }).join('');
+    tc.innerHTML='<div style="overflow-x:auto;max-height:320px;overflow-y:auto">'+
+      '<table style="width:100%;border-collapse:collapse;font-family:Tahoma;direction:rtl">'+
+      '<thead><tr style="background:linear-gradient(135deg,#3b83b5,#3a8caa);position:sticky;top:0">'+
+      ['#','اسم اللجنة','الممثل','الحالة','النوع','النطاق'].map(function(h){return'<th style="padding:7px 8px;color:#fff;font-size:10px;text-align:right">'+h+'</th>';}).join('')+
+      '</tr></thead><tbody>'+rows+'</tbody></table>'+
+      (p.comms.length>50?'<div style="text-align:center;padding:8px;font-size:10px;color:#888;font-family:Tahoma">... و '+(p.comms.length-50)+' لجنة أخرى</div>':'')+
+    '</div>';
+  } else {
+    var rows2=p.tasks.slice(0,60).map(function(t,i){
+      var sc={منجز:'#27ae60',جارٍ:'#1e88e5','قيد الانتظار':'#fb8c00',متأخر:'#e53935',معلق:'#8e24aa'};
+      var bc=sc[t.status]||'#888';
+      return'<tr style="background:'+(i%2?'#f7f8fc':'#fff')+'">'+
+        '<td style="padding:5px 8px;font-size:10px;color:#888;text-align:center">'+(i+1)+'</td>'+
+        '<td style="padding:5px 8px;font-size:10px;color:#2a6a8f;font-weight:700">'+e((t.committee||'').substring(0,28))+'</td>'+
+        '<td style="padding:5px 8px;font-size:10px;text-align:center;color:#555">'+e(t.meetNum||1)+'</td>'+
+        '<td style="padding:5px 8px;font-size:10.5px;color:#1a1a2e">'+e((t.task||'').substring(0,45))+'</td>'+
+        '<td style="padding:5px 8px;font-size:10px;color:#555">'+e((t.responsible||'').substring(0,20))+'</td>'+
+        '<td style="padding:5px 8px;font-size:10px;text-align:center">'+e(t.dateTo||'—')+'</td>'+
+        '<td style="padding:5px 8px"><span style="background:'+bc+'22;color:'+bc+';border-radius:4px;padding:1px 7px;font-size:9px;font-weight:700">'+e(t.status||'—')+'</span></td>'+
+        '</tr>';
+    }).join('');
+    tc.innerHTML='<div style="overflow-x:auto;max-height:320px;overflow-y:auto">'+
+      '<table style="width:100%;border-collapse:collapse;font-family:Tahoma;direction:rtl">'+
+      '<thead><tr style="background:linear-gradient(135deg,#48a883,#3fa08a);position:sticky;top:0">'+
+      ['#','اللجنة','اجتماع','التكليف','المسؤول','الاستحقاق','الحالة'].map(function(h){return'<th style="padding:7px 8px;color:#fff;font-size:10px;text-align:right">'+h+'</th>';}).join('')+
+      '</tr></thead><tbody>'+rows2+'</tbody></table>'+
+      (p.tasks.length>60?'<div style="text-align:center;padding:8px;font-size:10px;color:#888;font-family:Tahoma">... و '+(p.tasks.length-60)+' تكليف آخر</div>':'')+
+    '</div>';
+  }
+}
+
+/* ── STEP 4: التأكيد والحفظ ── */
+function importConfirm(){
+  importSetStep(4);
+  var p=importState.parsed;
+  var content=document.getElementById('importContent');
+
+  content.innerHTML=
+    '<div style="text-align:center;padding:30px 20px">'+
+    '<div style="width:70px;height:70px;background:linear-gradient(135deg,#e8f5e9,#d5f5e3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px">✅</div>'+
+    '<div style="font-size:14px;font-weight:700;color:#1a1a2e;font-family:Tahoma;margin-bottom:8px">تأكيد الاستيراد النهائي</div>'+
+    '<div style="font-size:11px;color:#888;font-family:Tahoma;line-height:2;margin-bottom:20px">'+
+      'سيتم إضافة أو تحديث:<br>'+
+      '<b style="color:#3b83b5">'+p.comms.length+' لجنة / مجلس</b>  +  '+
+      '<b style="color:#48a883">'+p.tasks.length+' تكليف</b>'+
+      '<br><span style="color:#e67e22">⚠ هذا الإجراء لا يمكن التراجع عنه تلقائياً — تأكد من مراجعة البيانات</span>'+
+    '</div>'+
+    '<div style="display:flex;gap:10px;justify-content:center">'+
+      '<button onclick="importExecute()" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:12px;font-weight:700;cursor:pointer;font-family:Tahoma">✅ نعم، استورد البيانات</button>'+
+      '<button onclick="importResetState()" style="background:#f0f0f0;color:#555;border:1px solid #ddd;border-radius:10px;padding:10px 18px;font-size:12px;cursor:pointer;font-family:Tahoma">↩ العودة للبداية</button>'+
+    '</div>'+
+    '</div>';
+
+  document.getElementById('importConfirmBtn').style.display='none';
+  document.getElementById('importNextBtn').style.display='none';
+}
+
+/* ── STEP 4: التنفيذ الفعلي ── */
+function importExecute(){
+  var p=importState.parsed;
+  var content=document.getElementById('importContent');
+  var added=0, updated=0, tasksAdded=0;
+
+  try{
+    /* 1. اللجان */
+    p.comms.forEach(function(c){
+      var di=D.findIndex(function(d){return d.n.trim()===c.n.trim();});
+      var obj={
+        n:c.n,r:c.r,ar:c.ar||'',ro:c.ro||'عضو',
+        st:c.st||'مستمرة',ty:c.ty||'لجنة',du:c.du||'دائمة',
+        sc:c.sc||'داخلية',orig:c.orig||'أساسية',
+        ch:c.ch||'',rn:c.rn||'',rd:c.rd||'',
+        go:c.go||'',ba:c.ba||'',no:c.no||'',
+        sec:c.sec||'',sq:'',dn:'',dd:'',ar:c.ar||''
+      };
+      if(di===-1){D.push(obj);M[D.length-1]=[];added++;}
+      else{Object.assign(D[di],obj);updated++;}
+    });
+
+    /* 2. التكليفات — تجميع حسب (لجنة، رقم اجتماع) */
+    var meetMap={};
+    p.tasks.forEach(function(t){
+      var key=(t.committee||'')+'||'+(t.meetNum||1);
+      if(!meetMap[key]) meetMap[key]={committee:t.committee,meetNum:parseInt(t.meetNum)||1,date:t.date||'',loc:t.loc||'',agenda:t.agenda||'',tasks:[]};
+      meetMap[key].tasks.push({
+        task:t.task,responsible:t.responsible,
+        status:t.status||'قيد الانتظار',
+        dateFrom:t.dateFrom||'',dateTo:t.dateTo||'',
+        notes:t.notes||'',update:t.update||''
+      });
+      tasksAdded++;
+    });
+
+    Object.values(meetMap).forEach(function(mg){
+      var di=D.findIndex(function(d){return d.n.trim()===(mg.committee||'').trim();});
+      if(di===-1)return;
+      if(!M[di]) M[di]=[];
+      /* ابحث عن اجتماع موجود برقمه */
+      var mi=M[di].findIndex(function(m){return parseInt(m.meetNum)===mg.meetNum;});
+      if(mi===-1){
+        var nm={id:Date.now()+Math.random(),meetNum:mg.meetNum,date:mg.date,loc:mg.loc,
+                agendaItems:[],agenda:mg.agenda,notes:'',tasks:mg.tasks,
+                attendees:'',decisionNum:'',decisionDate:'',remarks:''};
+        M[di].unshift(nm);
+      } else {
+        /* أضف التكليفات للاجتماع الموجود */
+        mg.tasks.forEach(function(t){M[di][mi].tasks.push(t);});
+        if(mg.date&&!M[di][mi].date) M[di][mi].date=mg.date;
+      }
+    });
+
+    scheduleSave();
+    upTop();
+    applyF();
+
+    auditLog('استيراد Excel','البيانات','لجان:'+added+' جديدة + '+updated+' محدَّثة + '+tasksAdded+' تكليف');
+
+    content.innerHTML=
+      '<div style="text-align:center;padding:36px 20px">'+
+      '<div style="font-size:56px;margin-bottom:14px">🎉</div>'+
+      '<div style="font-size:16px;font-weight:700;color:#1d6a3b;font-family:Tahoma;margin-bottom:10px">تم الاستيراد بنجاح!</div>'+
+      '<div style="font-size:11px;color:#555;font-family:Tahoma;line-height:2.2">'+
+        '✅ لجان جديدة: <b>'+added+'</b><br>'+
+        '🔄 لجان محدَّثة: <b>'+updated+'</b><br>'+
+        '📌 تكليفات مضافة: <b>'+tasksAdded+'</b>'+
+      '</div>'+
+      '<button onclick="importCloseModal();goTo(\'s1\')" style="margin-top:18px;background:linear-gradient(135deg,#3b83b5,#48a883);color:#fff;border:none;border-radius:10px;padding:9px 24px;font-size:12px;font-weight:700;cursor:pointer;font-family:Tahoma">عرض البيانات →</button>'+
+      '</div>';
+
+    document.getElementById('importFooterInfo').textContent='✅ تم الاستيراد — '+added+' جديد + '+updated+' تحديث';
+    document.getElementById('importFooterInfo').style.color='#1d6a3b';
+
+  }catch(ex){
+    showToast('خطأ في الاستيراد: '+ex.message,true);
+    console.error('Import error:',ex);
+  }
+}
+
+
 
 init();
 
