@@ -6791,7 +6791,7 @@ function doManualBackup(){
     var ws=XLSX.utils.json_to_sheet(rows);
     ws['!cols']=[{wch:40},{wch:12},{wch:16},{wch:16},{wch:10},{wch:24},{wch:10},{wch:24},{wch:8},{wch:8}];
     xlStyleSheet(ws,true);
-    XLSX.utils.book_append_sheet(wb,'بيانات اللجان',ws);
+    XLSX.utils.book_append_sheet(wb,ws,'بيانات اللجان');
     /* ورقة الاجتماعات والتكليفات */
     var mrows=[];
     D.forEach(function(d,i){
@@ -6810,7 +6810,7 @@ function doManualBackup(){
     if(mrows.length){
       var ws2=XLSX.utils.json_to_sheet(mrows);
       xlStyleSheet(ws2,true);
-      XLSX.utils.book_append_sheet(wb,'الاجتماعات والتكليفات',ws2);
+      XLSX.utils.book_append_sheet(wb,ws2,'الاجتماعات والتكليفات');
     }
     var dt=new Date();
     var fname='نسخة_احتياطية_'+dt.getFullYear()+'_'+(dt.getMonth()+1)+'_'+dt.getDate()+'.xlsx';
@@ -7963,7 +7963,7 @@ function doMonthlyBackup(dest){
     });
     var wb=XLSX.utils.book_new();wb.Workbook={Views:[{RTL:true}]};
     var ws=XLSX.utils.json_to_sheet(rows);
-    XLSX.utils.book_append_sheet(wb,'بيانات اللجان',ws);
+    XLSX.utils.book_append_sheet(wb,ws,'بيانات اللجان');
     var dt=new Date();
     var fname='نسخة_شهرية_'+dt.getFullYear()+'_'+(dt.getMonth()+1)+'.xlsx';
     XLSX.writeFile(wb,fname);
@@ -8168,7 +8168,7 @@ function closeRLSGuide(){
       var wb=XLSX.utils.book_new();
       wb.Workbook={Views:[{RTL:true}]};
       var ws=XLSX.utils.json_to_sheet(rows);
-      XLSX.utils.book_append_sheet(wb,'بيانات اللجان',ws);
+      XLSX.utils.book_append_sheet(wb,ws,'بيانات اللجان');
       /* إضافة ورقة الاجتماعات */
       var mrows=[];
       D.forEach(function(d,i){
@@ -8181,7 +8181,7 @@ function closeRLSGuide(){
       });
       if(mrows.length){
         var ws2=XLSX.utils.json_to_sheet(mrows);
-        XLSX.utils.book_append_sheet(wb,'الاجتماعات والتكليفات',ws2);
+        XLSX.utils.book_append_sheet(wb,ws2,'الاجتماعات والتكليفات');
       }
       var dt=new Date();
       var fname='نسخة_احتياطية_'+dt.getFullYear()+'_'+(dt.getMonth()+1)+'_'+dt.getDate()+'.xlsx';
