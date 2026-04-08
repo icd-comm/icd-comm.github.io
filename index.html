@@ -6765,591 +6765,501 @@ function _ganttColor(status){
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── HTML scaffold (شريط الأدوات + حاوية الرسم) ── */
+/* ══════════════════════════════════════════════════════════════════
+   GANTT CHART v7 — RTL · ثلاثة أعمدة ثابتة + مخطط زمني SVG
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── HTML scaffold ── */
+/* ════════════════════════════════════════════════════════════════════
+   GANTT CHART v8
+   RTL · 3 sticky columns · full text · auto row height · SVG timeline
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── scaffold HTML (toolbar + body shell) ── */
 function s4RenGantt(tasks){
-  var vt=tasks.filter(function(t){return t.dateFrom||t.dateTo;});
-  if(!vt.length){
-    return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;'
-          +'height:100%;padding:60px;direction:rtl;background:#f8fafc">'
-          +'<div style="font-size:54px;margin-bottom:16px;opacity:.2">📅</div>'
-          +'<div style="font-size:14px;font-weight:700;color:#94a3b8;font-family:Tahoma">لا توجد تكليفات بتواريخ محددة</div>'
-          +'<div style="font-size:11px;color:#b0bec5;margin-top:6px;font-family:Tahoma">أضف تواريخ البداية والانتهاء للتكليفات لعرض المخطط</div>'
+  if(!tasks||!tasks.length){
+    return '<div style="display:flex;flex-direction:column;align-items:center;'
+          +'justify-content:center;height:100%;padding:60px;direction:rtl;background:#f8fafc">'
+          +'<div style="font-size:52px;margin-bottom:14px;opacity:.18">📅</div>'
+          +'<div style="font-size:14px;font-weight:700;color:#94a3b8;font-family:Tahoma">لا توجد تكليفات</div>'
+          +'<div style="font-size:11px;color:#b0bec5;margin-top:5px;font-family:Tahoma">أضف تكليفات لعرض المخطط</div>'
           +'</div>';
   }
 
-  window._s4GanttTasks = vt;
+  window._s4GanttTasks = tasks;
   window._s4GanttView  = window._s4GanttView  || 'month';
   window._s4GanttZoom  = window._s4GanttZoom  || 1;
 
-  /* أزرار العرض */
-  var VLBLS = {day:'يوم',week:'أسبوع',month:'شهر',quarter:'ربع سنة'};
-  var vbtns = ['day','week','month','quarter'].map(function(v){
-    var act = v===window._s4GanttView;
+  /* view buttons */
+  var VL = {day:'يوم',week:'أسبوع',month:'شهر',quarter:'ربع'};
+  var vb = ['day','week','month','quarter'].map(function(v){
+    var a = v===window._s4GanttView;
     return '<button onclick="s4GanttSetView(\''+v+'\')" id="s4GV_'+v+'"'
-          +' style="border:none;font-family:Tahoma,Arial;font-size:10.5px;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:700;transition:.15s;'
-          +'background:'+(act?'rgba(255,255,255,.28)':'transparent')+';color:'+(act?'#fff':'rgba(255,255,255,.7)')+'">'
-          +VLBLS[v]+'</button>';
+          +' style="border:none;font-family:Tahoma,Arial;font-size:10px;padding:4px 10px;'
+          +'border-radius:5px;cursor:pointer;font-weight:700;transition:.12s;'
+          +'background:'+(a?'rgba(255,255,255,.3)':'transparent')+';'
+          +'color:'+(a?'#fff':'rgba(255,255,255,.6)')+'">'+VL[v]+'</button>';
   }).join('');
 
-  /* عناصر الأسطورة */
-  var leg = [['#2ecc71','منجز'],['#3b9ae1','جارٍ'],['#f59e0b','انتظار'],['#ef4444','متأخر'],['#8b5cf6','معلق']].map(function(p){
-    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:9.5px;color:rgba(255,255,255,.85)">'
-          +'<span style="width:12px;height:12px;border-radius:3px;background:'+p[0]+';display:inline-block;flex-shrink:0"></span>'+p[1]+'</span>';
+  /* legend */
+  var LEG = [['#16a34a','منجز'],['#2563eb','جارٍ'],
+             ['#d97706','لم يبدأ'],['#dc2626','متأخر'],['#7c3aed','معلق']].map(function(p){
+    return '<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;color:rgba(255,255,255,.8)">'
+          +'<span style="width:10px;height:10px;border-radius:2px;background:'+p[0]+'"></span>'+p[1]+'</span>';
   }).join('');
 
   return (
-    '<div id="s4GanttWrap" style="position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;direction:rtl;font-family:Tahoma,Arial">'
+    '<div id="s4GWrap" style="position:absolute;inset:0;display:flex;flex-direction:column;'
+    +'overflow:hidden;direction:rtl;font-family:Tahoma,Arial">'
 
-    /* ══ TOOLBAR ══ */
-    +'<div id="s4GTbar" style="flex-shrink:0;display:flex;align-items:center;gap:7px;padding:8px 14px;'
-    +'background:linear-gradient(105deg,#1e3a5f 0%,#2a6a8f 40%,#1d8a6e 100%);'
-    +'box-shadow:0 3px 12px rgba(0,0,0,.25);flex-wrap:wrap;z-index:20">'
+    /* ── toolbar ── */
+    +'<div id="s4GTbar" style="flex-shrink:0;display:flex;align-items:center;gap:6px;'
+    +'padding:7px 12px;background:linear-gradient(105deg,#1e3a5f 0%,#2a6a8f 45%,#1d8a6e 100%);'
+    +'box-shadow:0 2px 8px rgba(0,0,0,.2);flex-wrap:wrap;z-index:30">'
 
-      /* View pills */
-      +'<div style="display:flex;gap:2px;background:rgba(0,0,0,.2);border-radius:8px;padding:3px">'
-      +vbtns
+      +'<div style="display:flex;gap:2px;background:rgba(0,0,0,.18);border-radius:6px;padding:3px">'+vb+'</div>'
+
+      +'<button onclick="s4GanttGoToday()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);'
+      +'color:#fff;font-family:Tahoma;font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">⊙ اليوم</button>'
+
+      +'<div style="display:flex;align-items:center;gap:1px;background:rgba(0,0,0,.18);border-radius:5px;padding:2px">'
+      +'<button onclick="s4GanttZoom(-1)" style="border:none;background:transparent;color:#fff;font-size:14px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px">−</button>'
+      +'<button onclick="s4GanttZoom(0)" id="s4GZlbl" style="border:none;background:transparent;color:rgba(255,255,255,.65);font-family:Tahoma;font-size:9px;min-width:34px;cursor:pointer;text-align:center">100%</button>'
+      +'<button onclick="s4GanttZoom(1)" style="border:none;background:transparent;color:#fff;font-size:14px;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px">+</button>'
       +'</div>'
 
-      /* Today button */
-      +'<button onclick="s4GanttGoToday()"'
-      +' style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:Tahoma,Arial;font-size:10.5px;padding:5px 11px;border-radius:7px;cursor:pointer;font-weight:700;transition:.15s">⊙ اليوم</button>'
-
-      /* Zoom group */
-      +'<div style="display:flex;align-items:center;gap:1px;background:rgba(0,0,0,.2);border-radius:7px;padding:2px">'
-      +'<button onclick="s4GanttZoom(-1)" style="border:none;background:transparent;color:#fff;font-size:16px;width:28px;height:28px;cursor:pointer;border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center">−</button>'
-      +'<button onclick="s4GanttZoom(0)"  id="s4GZoomLbl" style="border:none;background:transparent;color:rgba(255,255,255,.7);font-family:Tahoma;font-size:9.5px;min-width:38px;cursor:pointer;text-align:center">100%</button>'
-      +'<button onclick="s4GanttZoom(1)"  style="border:none;background:transparent;color:#fff;font-size:16px;width:28px;height:28px;cursor:pointer;border-radius:5px;line-height:1;display:flex;align-items:center;justify-content:center">+</button>'
-      +'</div>'
-
-      +'<div style="flex:1;min-width:0"></div>'
-
-      /* Legend */
-      +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
-      +leg
-      +'</div>'
-
-      /* Count */
-      +'<span id="s4GanttCount" style="font-size:10px;color:rgba(255,255,255,.6);font-family:Tahoma;white-space:nowrap"></span>'
-
-      /* Export */
-      +'<button onclick="s4GanttExportPDF()"'
-      +' style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;font-family:Tahoma,Arial;font-size:10.5px;padding:5px 11px;border-radius:7px;cursor:pointer;font-weight:700">🖨 PDF</button>'
+      +'<div style="flex:1"></div>'
+      +'<div style="display:flex;gap:7px;flex-wrap:wrap">'+LEG+'</div>'
+      +'<span id="s4GCnt" style="font-size:9px;color:rgba(255,255,255,.5)"></span>'
+      +'<button onclick="s4GanttExportPDF()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);'
+      +'color:#fff;font-family:Tahoma;font-size:10px;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">🖨 PDF</button>'
 
     +'</div>'
 
-    /* ══ CHART BODY ══ */
-    +'<div id="s4GBody" style="flex:1;min-height:0;overflow:hidden;position:relative;background:#f1f5f9"></div>'
+    /* ── chart body ── */
+    +'<div id="s4GBody" style="flex:1;min-height:0;overflow:hidden;position:relative;background:#f0f4f8"></div>'
 
-    /* ══ TOOLTIP ══ */
-    +'<div id="s4GTip" style="display:none;position:fixed;background:#fff;border-radius:12px;padding:14px 16px;'
-    +'font-size:11px;font-family:Tahoma,Arial;z-index:99999;pointer-events:none;max-width:310px;'
-    +'line-height:1.85;box-shadow:0 10px 40px rgba(0,0,0,.2);border:1px solid #e2e8f0;'
-    +'min-width:230px;direction:rtl"></div>'
+    /* ── tooltip ── */
+    +'<div id="s4GTip" style="display:none;position:fixed;background:#fff;border-radius:12px;'
+    +'padding:14px 16px;font-size:11px;font-family:Tahoma;z-index:99999;pointer-events:none;'
+    +'max-width:310px;min-width:220px;line-height:1.9;box-shadow:0 8px 36px rgba(0,0,0,.2);'
+    +'border:1px solid #e2e8f0;direction:rtl"></div>'
 
   +'</div>'
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   DRAW ENGINE — SVG pixel-perfect
-   ══════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════
+   DRAW — جدول HTML مع sticky columns + SVG timeline
+   ════════════════════════════════════════════════════════════════════ */
 function s4DrawGanttSVG(){
-  var tasks  = window._s4GanttTasks || [];
-  var body   = document.getElementById('s4GBody');
-  var cntEl  = document.getElementById('s4GanttCount');
-  var zlEl   = document.getElementById('s4GZoomLbl');
+  var tasks = window._s4GanttTasks||[];
+  var body  = document.getElementById('s4GBody');
+  var cEl   = document.getElementById('s4GCnt');
+  var zEl   = document.getElementById('s4GZlbl');
   if(!body||!tasks.length) return;
 
-  var view = window._s4GanttView || 'month';
-  var zoom = window._s4GanttZoom || 1;
-  if(cntEl) cntEl.textContent = tasks.length+' تكليف';
-  if(zlEl)  zlEl.textContent  = Math.round(zoom*100)+'%';
+  var view = window._s4GanttView||'month';
+  var zoom = window._s4GanttZoom||1;
+  if(cEl) cEl.textContent = tasks.length+' تكليف';
+  if(zEl) zEl.textContent = Math.round(zoom*100)+'%';
 
-  /* ── Day pixel width ── */
-  var BASE = {day:46, week:22, month:12, quarter:7}[view] || 12;
-  var DW   = Math.max(2, Math.round(BASE * zoom));
+  /* day width */
+  var DW = Math.max(2, Math.round(({day:46,week:22,month:12,quarter:7}[view]||12)*zoom));
 
-  /* ── Date range ── */
+  /* date range */
   var today = new Date(); today.setHours(0,0,0,0);
-  var allD  = [today];
+  var allD=[today];
   tasks.forEach(function(t){
     if(t.dateFrom) allD.push(new Date(t.dateFrom));
     if(t.dateTo)   allD.push(new Date(t.dateTo));
   });
-  var minD = new Date(Math.min.apply(null,allD));
-  var maxD = new Date(Math.max.apply(null,allD));
-  var pad  = {day:5, week:14, month:42, quarter:65}[view] || 42;
+  var minD=new Date(Math.min.apply(null,allD));
+  var maxD=new Date(Math.max.apply(null,allD));
+  var pad={day:5,week:14,month:42,quarter:65}[view]||42;
   minD.setDate(minD.getDate()-pad);
   maxD.setDate(maxD.getDate()+pad);
-  var DAYS = Math.max(1, Math.round((maxD-minD)/86400000));
+  var DAYS=Math.max(1,Math.round((maxD-minD)/86400000));
 
-  /* ── Layout constants ── */
-  var LW    = 270;   /* sticky label width */
-  var ROW_H = 52;    /* row height */
-  var H1    = 30;    /* month header height */
-  var H2    = 22;    /* day/week sub-header height */
-  var HDR   = H1+H2;
-  var BAR_H = 22;
-  var BAR_Y_OFF = Math.floor((ROW_H-BAR_H)/2);
-  var GW    = DAYS*DW;                /* chart grid width */
-  var SVG_W = LW+GW;
-  var SVG_H = HDR + tasks.length*ROW_H;
+  /* column widths */
+  var CW1=300; /* task + committee + dates */
+  var CW2=120; /* responsible */
+  var CW3=90;  /* status */
+  var STICKY=CW1+CW2+CW3;
+  var GW=DAYS*DW;
+  var TOTAL=STICKY+GW;
 
-  /* ── Color palette ── */
-  var COLORS = {
-    'منجز':         {bar:'#16a34a', prog:'#15803d', light:'#dcfce7', text:'#14532d', border:'#86efac'},
-    'جارٍ':         {bar:'#2563eb', prog:'#1d4ed8', light:'#dbeafe', text:'#1e3a8a', border:'#93c5fd'},
-    'متأخر':        {bar:'#dc2626', prog:'#b91c1c', light:'#fee2e2', text:'#7f1d1d', border:'#fca5a5'},
-    'قيد الانتظار':{bar:'#d97706', prog:'#b45309', light:'#fef3c7', text:'#78350f', border:'#fcd34d'},
-    'معلق':         {bar:'#7c3aed', prog:'#6d28d9', light:'#ede9fe', text:'#3b0764', border:'#c4b5fd'},
+  /* header heights */
+  var TH=52;  /* table header */
+  var SH1=28; /* svg month row */
+  var SH2=24; /* svg day row */
+  var SH=SH1+SH2; /* == TH? no — separate */
+  var BAR_H=18;
+  var ROW_MIN=56;
+
+  /* colors */
+  var C={
+    'منجز':        {b:'#16a34a',l:'#dcfce7',br:'#86efac',t:'#14532d'},
+    'جارٍ':        {b:'#2563eb',l:'#dbeafe',br:'#93c5fd',t:'#1e3a8a'},
+    'متأخر':       {b:'#dc2626',l:'#fee2e2',br:'#fca5a5',t:'#7f1d1d'},
+    'قيد الانتظار':{b:'#d97706',l:'#fef3c7',br:'#fcd34d',t:'#78350f'},
+    'معلق':        {b:'#7c3aed',l:'#ede9fe',br:'#c4b5fd',t:'#3b0764'},
   };
-  function getC(st){ return COLORS[st]||{bar:'#64748b',prog:'#475569',light:'#f1f5f9',text:'#1e293b',border:'#cbd5e1'}; }
+  function gc(st){ return C[st]||{b:'#64748b',l:'#f1f5f9',br:'#cbd5e1',t:'#334155'}; }
 
-  /* ── Helpers ── */
-  function dayOff(d)  { return Math.round((d-minD)/86400000); }
-  function xOf(d)     { return LW + dayOff(d)*DW; }
-  function isWE(d)    { var w=d.getDay(); return w===5||w===6; }
-  function parseD(s)  {
-    if(!s) return null;
-    var p=s.split('-'); if(p.length<3) return null;
+  /* helpers */
+  function pd(s){
+    if(!s)return null;
+    var p=s.split('-'); if(p.length<3)return null;
     var d=new Date(+p[0],+p[1]-1,+p[2]); return isNaN(d)?null:d;
   }
-  function fmtD(d)    { return d?d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear():'—'; }
-  function fmtShort(d){ return d?d.getDate()+'/'+(d.getMonth()+1):''; }
-  function esc(s)     {
-    return String(s||'')
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  function cut(s,n)   { s=String(s||''); return s.length>n?s.slice(0,n-1)+'…':s; }
+  function fd(d){ return d?d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear():'—'; }
+  function fs(d){ return d?d.getDate()+'/'+(d.getMonth()+1):''; }
+  function xe(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function isWE(d){ var w=d.getDay(); return w===5||w===6; }
+  function xp(d){ return Math.round((d-minD)/86400000)*DW; } /* x pixel offset in chart */
 
-  /* ══ SVG ══ */
-  var S = '';
+  /* ── SVG: header (months + days) ── */
+  function hdrSVG(){
+    var S='<svg xmlns="http://www.w3.org/2000/svg" id="s4GHdrSVG"'
+         +' width="'+GW+'" height="'+TH+'"'
+         +' style="display:block;direction:ltr;font-family:Tahoma,Arial">';
+    S+='<rect width="'+GW+'" height="'+TH+'" fill="rgba(30,58,95,.92)"/>';
 
-  /* DEFS */
-  S += '<defs>'
-    /* header gradient */
-    +'<linearGradient id="g_hdr" x1="0" x2="1" y1="0" y2="0">'
-    +'<stop offset="0%"   stop-color="#1e3a5f"/>'
-    +'<stop offset="45%"  stop-color="#2a6a8f"/>'
-    +'<stop offset="100%" stop-color="#1d8a6e"/>'
-    +'</linearGradient>'
-    /* label column bg */
-    +'<linearGradient id="g_lbl" x1="0" x2="1" y1="0" y2="0">'
-    +'<stop offset="0%"   stop-color="#f8fafc"/>'
-    +'<stop offset="100%" stop-color="#f1f5f9"/>'
-    +'</linearGradient>'
-    /* bar progress clip template (per bar — created inline) */
-    /* drop shadow for bars */
-    +'<filter id="f_bar" x="-4%" y="-25%" width="110%" height="160%">'
-    +'<feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.14)" flood-opacity="1"/>'
-    +'</filter>'
-    /* glow for today line */
-    +'<filter id="f_today" x="-200%" y="0" width="500%" height="100%">'
-    +'<feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>'
-    +'<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>'
-    +'</filter>'
-    /* overdue pulse */
-    +'<filter id="f_pulse">'
-    +'<feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>'
-    +'</filter>'
-    +'</defs>';
-
-  /* ══ BACKGROUND ══ */
-  S += '<rect width="'+SVG_W+'" height="'+SVG_H+'" fill="#f1f5f9"/>';
-
-  /* ══ ALTERNATING ROWS ══ */
-  tasks.forEach(function(_t,ri){
-    var ry = HDR+ri*ROW_H;
-    S += '<rect x="0" y="'+ry+'" width="'+SVG_W+'" height="'+ROW_H
-        +'" fill="'+(ri%2===0?'#ffffff':'#f8fafc')+'"/>';
-  });
-
-  /* ══ WEEKEND SHADING ══ */
-  var wd=new Date(minD);
-  while(+wd<=+maxD){
-    if(isWE(wd)){
-      var wx=xOf(wd);
-      S += '<rect x="'+wx+'" y="'+HDR+'" width="'+DW+'" height="'+(SVG_H-HDR)
-          +'" fill="rgba(148,163,184,.07)"/>';
+    /* month bands + labels */
+    var mc=new Date(minD.getFullYear(),minD.getMonth(),1);
+    while(+mc<=+maxD){
+      var ms=new Date(Math.max(+mc,+minD));
+      var me=new Date(mc.getFullYear(),mc.getMonth()+1,0);
+      me=new Date(Math.min(+me,+maxD));
+      var mx1=xp(ms), mx2=xp(me)+DW, mw=mx2-mx1;
+      if(mw>0){
+        var cur=mc.getMonth()===today.getMonth()&&mc.getFullYear()===today.getFullYear();
+        if(cur) S+='<rect x="'+mx1+'" y="0" width="'+mw+'" height="'+SH1+'" fill="rgba(255,255,255,.1)"/>';
+        S+='<line x1="'+mx1+'" y1="0" x2="'+mx1+'" y2="'+SH1+'" stroke="rgba(255,255,255,.2)" stroke-width="1"/>';
+        if(mw>50){
+          var ml=mc.toLocaleDateString('ar-SA',{month:'long'})+' '+mc.getFullYear();
+          S+='<text x="'+(mx1+mw/2)+'" y="'+(SH1/2+5)+'" text-anchor="middle"'
+            +' font-size="11" font-weight="700" fill="'+(cur?'#fff':'rgba(255,255,255,.82)')+'">'+xe(ml)+'</text>';
+        }
+      }
+      mc.setMonth(mc.getMonth()+1); mc.setDate(1);
     }
-    wd.setDate(wd.getDate()+1);
-  }
 
-  /* ══ VERTICAL GRID ══ */
-  var gc=new Date(minD);
-  while(+gc<=+maxD){
-    var gx=xOf(gc);
-    var isMon  = gc.getDate()===1;
-    var isWeek = gc.getDay()===0;
-    if(isMon){
-      S += '<line x1="'+gx+'" y1="'+HDR+'" x2="'+gx+'" y2="'+SVG_H
-          +'" stroke="#cbd5e1" stroke-width="1"/>';
-    } else if(isWeek && DW>=8){
-      S += '<line x1="'+gx+'" y1="'+HDR+'" x2="'+gx+'" y2="'+SVG_H
-          +'" stroke="#e2e8f0" stroke-width="0.7"/>';
-    } else if(DW>=22){
-      S += '<line x1="'+gx+'" y1="'+HDR+'" x2="'+gx+'" y2="'+SVG_H
-          +'" stroke="#eef2f7" stroke-width="0.4"/>';
+    /* day/week labels */
+    var dc=new Date(minD);
+    while(+dc<=+maxD){
+      var dx=xp(dc);
+      var isMon=dc.getDate()===1, isSun=dc.getDay()===0, isW=isWE(dc);
+      if(isW) S+='<rect x="'+dx+'" y="'+SH1+'" width="'+DW+'" height="'+SH2+'" fill="rgba(0,0,0,.1)"/>';
+      if(isMon||isSun) S+='<line x1="'+dx+'" y1="'+SH1+'" x2="'+dx+'" y2="'+TH+'" stroke="rgba(255,255,255,'+(isMon?'.25':'.1')+')" stroke-width="1"/>';
+      var show=isMon||(isSun&&DW>=10)||(DW>=22);
+      if(show) S+='<text x="'+(dx+DW/2)+'" y="'+(SH1+SH2/2+4)+'" text-anchor="middle"'
+               +' font-size="8.5" fill="rgba(255,255,255,.7)">'+dc.getDate()+'/'+(dc.getMonth()+1)+'</text>';
+      dc.setDate(dc.getDate()+(DW<7?7:1));
     }
-    /* step: daily when DW>=8, else weekly */
-    gc.setDate(gc.getDate()+(DW<8?7:1));
+    S+='</svg>';
+    return S;
   }
 
-  /* ══ ROW SEPARATORS (chart zone) ══ */
-  for(var ri2=0;ri2<=tasks.length;ri2++){
-    var ry2=HDR+ri2*ROW_H;
-    S += '<line x1="'+LW+'" y1="'+ry2+'" x2="'+SVG_W+'" y2="'+ry2
-        +'" stroke="#e2e8f0" stroke-width="0.5"/>';
-  }
+  /* ── SVG: single bar row ── */
+  function barSVG(t, rowH){
+    var cl=gc(t.status);
+    var sd=pd(t.dateFrom), ed=pd(t.dateTo);
+    if(!sd&&!ed) return '<div style="height:'+rowH+'px;width:'+GW+'px"></div>';
+    if(!sd) sd=ed; if(!ed) ed=sd;
+    if(+sd>+ed){var tmp=sd;sd=ed;ed=tmp;}
 
-  /* ══ BARS ══ */
-  tasks.forEach(function(t,ri){
-    var cl  = getC(t.status);
-    var rag = s4GetRAG(t);
-    var sd  = parseD(t.dateFrom)||today;
-    var ed  = parseD(t.dateTo)||new Date(+today+7*86400000);
-    if(+sd>+ed){ var tmp=sd; sd=ed; ed=tmp; }
+    var bx=xp(sd), bx2=xp(ed)+DW, bw=Math.max(DW,bx2-bx);
+    var by=Math.floor((rowH-BAR_H)/2);
+    var pct=t.status==='منجز'?100:(t.status==='جارٍ'?60:(t.status==='متأخر'?75:0));
+    var uid='c'+ri+'_'+Math.random().toString(36).slice(2,7);
 
-    var bx  = xOf(sd);
-    var bx2 = xOf(ed)+DW;
-    var bw  = Math.max(DW, bx2-bx);
-    var ry  = HDR+ri*ROW_H;
-    var by  = ry+BAR_Y_OFF;
-    var mid = ry+ROW_H/2;
+    var S='<svg xmlns="http://www.w3.org/2000/svg" width="'+GW+'" height="'+rowH+'"'
+         +' style="display:block;direction:ltr;font-family:Tahoma,Arial;overflow:visible">';
 
-    /* progress % */
-    var pct = t.status==='منجز'   ? 100
-            : t.status==='جارٍ'   ?  60
-            : t.status==='متأخر'  ?  75
-            : 0;
+    /* weekend shading */
+    var wd2=new Date(minD);
+    while(+wd2<=+maxD){
+      if(isWE(wd2)){
+        var wx2=xp(wd2);
+        S+='<rect x="'+wx2+'" y="0" width="'+DW+'" height="'+rowH+'" fill="rgba(148,163,184,.05)"/>';
+      }
+      wd2.setDate(wd2.getDate()+1);
+    }
 
-    /* ── shadow strip ── */
-    S += '<rect x="'+(bx+2)+'" y="'+(by+BAR_H+1)+'" width="'+bw+'" height="3"'
-        +' rx="2" fill="rgba(0,0,0,.07)"/>';
+    /* today band */
+    var tx=xp(today);
+    if(tx>=0&&tx<=GW) S+='<rect x="'+(tx-2)+'" y="0" width="4" height="'+rowH+'" fill="rgba(239,68,68,.07)"/>';
 
-    /* ── bar background (rounded) ── */
-    S += '<rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+BAR_H+'"'
-        +' rx="6" fill="'+cl.light+'" stroke="'+cl.border+'" stroke-width="1.5"'
-        +' filter="url(#f_bar)"/>';
+    /* grid verticals */
+    var gd=new Date(minD);
+    while(+gd<=+maxD){
+      var gx2=xp(gd);
+      if(gd.getDate()===1){
+        S+='<line x1="'+gx2+'" y1="0" x2="'+gx2+'" y2="'+rowH+'" stroke="#e2e8f0" stroke-width="0.8"/>';
+      } else if(gd.getDay()===0&&DW>=8){
+        S+='<line x1="'+gx2+'" y1="0" x2="'+gx2+'" y2="'+rowH+'" stroke="#eef2f7" stroke-width="0.5"/>';
+      }
+      gd.setDate(gd.getDate()+(DW<7?7:1));
+    }
 
-    /* ── progress fill with clip ── */
+    /* bar shadow */
+    S+='<rect x="'+(bx+2)+'" y="'+(by+BAR_H+1)+'" width="'+bw+'" height="3" rx="2" fill="rgba(0,0,0,.06)"/>';
+
+    /* bar bg */
+    S+='<rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+BAR_H+'"'
+      +' rx="5" fill="'+cl.l+'" stroke="'+cl.br+'" stroke-width="1.5"/>';
+
+    /* progress */
     if(pct>0){
-      var clipId='cp_'+ri;
-      var pw=Math.max(12, bw*pct/100);
-      S += '<clipPath id="'+clipId+'"><rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+BAR_H+'" rx="6"/></clipPath>';
-      S += '<rect x="'+bx+'" y="'+by+'" width="'+pw+'" height="'+BAR_H+'"'
-          +' rx="6" fill="'+cl.bar+'" clip-path="url(#'+clipId+')"/>';
-      /* pct label inside progress */
-      if(pw>30){
-        S += '<text x="'+(bx+pw/2)+'" y="'+(by+BAR_H/2+4)+'"'
-            +' text-anchor="middle" font-size="9" font-weight="700"'
-            +' fill="rgba(255,255,255,.92)" clip-path="url(#'+clipId+')">'
-            +pct+'%</text>';
-      }
+      var pw=Math.max(10,bw*pct/100);
+      S+='<clipPath id="'+uid+'"><rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+BAR_H+'" rx="5"/></clipPath>';
+      S+='<rect x="'+bx+'" y="'+by+'" width="'+pw+'" height="'+BAR_H+'" rx="5"'
+        +' fill="'+cl.b+'" clip-path="url(#'+uid+')"/>';
+      if(pw>26) S+='<text x="'+(bx+pw/2)+'" y="'+(by+BAR_H/2+4)+'"'
+               +' text-anchor="middle" font-size="9" font-weight="700"'
+               +' fill="rgba(255,255,255,.92)" clip-path="url(#'+uid+')">'+pct+'%</text>';
     }
 
-    /* ── date label (when bar wide enough & progress<50%) ── */
-    if(bw>60 && pct<50){
-      S += '<text x="'+(bx+bw/2)+'" y="'+(by+BAR_H/2+4)+'"'
-          +' text-anchor="middle" font-size="9" font-weight="700" fill="'+cl.bar+'">'
-          +esc(fmtShort(ed))+'</text>';
-    }
+    /* date label when empty */
+    if(bw>55&&pct<50) S+='<text x="'+(bx+bw/2)+'" y="'+(by+BAR_H/2+4)+'"'
+                     +' text-anchor="middle" font-size="9" font-weight="700" fill="'+cl.b+'">'+xe(fs(ed))+'</text>';
 
-    /* ── start diamond milestone ── */
-    var DS=5;
-    S += '<polygon points="'
-        +bx+','+(by+BAR_H/2)+' '
-        +(bx+DS)+','+(by+BAR_H/2-DS)+' '
-        +(bx+DS*2)+','+(by+BAR_H/2)+' '
-        +(bx+DS)+','+(by+BAR_H/2+DS)
-        +'" fill="'+cl.bar+'" opacity="0.75"/>';
+    /* start diamond */
+    var ds=4;
+    S+='<polygon points="'+bx+','+(by+BAR_H/2)+' '+(bx+ds)+','+(by+BAR_H/2-ds)+' '
+      +(bx+ds*2)+','+(by+BAR_H/2)+' '+(bx+ds)+','+(by+BAR_H/2+ds)
+      +'" fill="'+cl.b+'" opacity="0.7"/>';
 
-    /* ── overdue animated ring ── */
+    /* overdue pulse */
     if(t.status==='متأخر'){
-      S += '<circle cx="'+(bx+bw-8)+'" cy="'+(by+7)+'" r="5" fill="#ef4444" opacity="0.9"/>';
-      S += '<circle cx="'+(bx+bw-8)+'" cy="'+(by+7)+'" r="5" fill="none"'
-          +' stroke="#ef4444" stroke-width="2" opacity="0.4">'
-          +'<animate attributeName="r" values="5;11;5" dur="2.2s" repeatCount="indefinite"/>'
-          +'<animate attributeName="opacity" values="0.9;0;0.9" dur="2.2s" repeatCount="indefinite"/>'
-          +'</circle>';
+      S+='<circle cx="'+(bx+bw-7)+'" cy="'+(by+6)+'" r="4" fill="#ef4444"/>';
+      S+='<circle cx="'+(bx+bw-7)+'" cy="'+(by+6)+'" r="4" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.3">'
+        +'<animate attributeName="r" values="4;9;4" dur="2s" repeatCount="indefinite"/>'
+        +'<animate attributeName="opacity" values="0.8;0;0.8" dur="2s" repeatCount="indefinite"/>'
+        +'</circle>';
     }
 
-    /* ── escalated dashed border ── */
-    if(t.escalated){
-      S += '<rect x="'+(bx-3)+'" y="'+(by-3)+'" width="'+(bw+6)+'" height="'+(BAR_H+6)+'"'
-          +' rx="8" fill="none" stroke="#ef4444" stroke-width="1.8"'
-          +' stroke-dasharray="5,3" opacity="0.65"/>';
-    }
-  });
+    /* escalated dashed */
+    if(t.escalated) S+='<rect x="'+(bx-2)+'" y="'+(by-2)+'" width="'+(bw+4)+'" height="'+(BAR_H+4)+'"'
+                   +' rx="6" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.6"/>';
 
-  /* ══ TODAY LINE ══ */
-  var tx0=xOf(today);
-  if(tx0>=LW && tx0<=SVG_W){
-    /* wide glow band */
-    S += '<rect x="'+(tx0-5)+'" y="'+HDR+'" width="10" height="'+(SVG_H-HDR)+'"'
-        +' fill="rgba(239,68,68,.08)"/>';
-    /* main dashed line */
-    S += '<line x1="'+tx0+'" y1="'+HDR+'" x2="'+tx0+'" y2="'+SVG_H+'"'
-        +' stroke="#ef4444" stroke-width="2.2" stroke-dasharray="6,3"'
-        +' filter="url(#f_today)"/>';
-    /* top badge */
-    S += '<rect x="'+(tx0-20)+'" y="'+(HDR+2)+'" width="40" height="20"'
-        +' rx="10" fill="#ef4444"/>';
-    S += '<text x="'+tx0+'" y="'+(HDR+15)+'"'
-        +' text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">اليوم</text>';
-    /* bottom arrow */
-    S += '<polygon points="'+tx0+','+(SVG_H-2)+' '
-        +(tx0-6)+','+(SVG_H-11)+' '+(tx0+6)+','+(SVG_H-11)+'"'
-        +' fill="#ef4444" opacity="0.7"/>';
+    /* today line */
+    if(tx>=0&&tx<=GW) S+='<line x1="'+tx+'" y1="0" x2="'+tx+'" y2="'+rowH+'"'
+                     +' stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.65"/>';
+
+    S+='</svg>';
+    return S;
   }
 
-  /* ══ LABEL COLUMN (drawn over grid — always on top) ══ */
-  S += '<rect x="0" y="'+HDR+'" width="'+LW+'" height="'+(SVG_H-HDR)+'" fill="url(#g_lbl)"/>';
-  S += '<line x1="'+LW+'" y1="0" x2="'+LW+'" y2="'+SVG_H+'"'
-      +' stroke="#cbd5e1" stroke-width="1.5"/>';
+  /* ════ BUILD HTML ════ */
+  /* scoped CSS */
+  var CSS=(
+    '<style id="s4GCSS">'
+    +'#s4GScroll{width:100%;height:100%;overflow:auto;-webkit-overflow-scrolling:touch;direction:rtl}'
+    +'#s4GT{border-collapse:collapse;direction:rtl;font-family:Tahoma,Arial;width:'+TOTAL+'px}'
+    /* sticky columns */
+    +'#s4GT .c1{position:sticky;right:0;z-index:12;width:'+CW1+'px;min-width:'+CW1+'px}'
+    +'#s4GT .c2{position:sticky;right:'+CW1+'px;z-index:12;width:'+CW2+'px;min-width:'+CW2+'px}'
+    +'#s4GT .c3{position:sticky;right:'+(CW1+CW2)+'px;z-index:12;width:'+CW3+'px;min-width:'+CW3+'px}'
+    /* shadow on leftmost sticky */
+    +'#s4GT .c3{border-left:2px solid #c8d5e5;box-shadow:-4px 0 10px rgba(0,0,0,.07)}'
+    /* header */
+    +'#s4GT thead th{height:'+TH+'px;padding:0 10px;vertical-align:middle;'
+    +'background:linear-gradient(105deg,#1e3a5f 0%,#2a6a8f 45%,#1d8a6e 100%);'
+    +'color:#fff;font-size:11px;font-weight:700;border:none;white-space:nowrap}'
+    +'#s4GT thead th.c1,#s4GT thead th.c2,#s4GT thead th.c3{'
+    +'background:linear-gradient(105deg,#1e3a5f 0%,#2a6a8f 45%,#1d8a6e 100%);z-index:15}'
+    +'#s4GT thead th.c-chart{padding:0;vertical-align:bottom}'
+    /* body cells */
+    +'#s4GT tbody td{padding:0;border-bottom:1px solid #e8eef6;vertical-align:top}'
+    +'#s4GT tbody td.c-chart{padding:0;vertical-align:middle}'
+    /* alternating rows */
+    +'#s4GT tbody tr:nth-child(even) .c1,'
+    +'#s4GT tbody tr:nth-child(even) .c2,'
+    +'#s4GT tbody tr:nth-child(even) .c3{background:#f8fafc}'
+    +'#s4GT tbody tr:nth-child(even) .c-chart{background:#f8fafc}'
+    +'#s4GT tbody tr:nth-child(odd) .c1,'
+    +'#s4GT tbody tr:nth-child(odd) .c2,'
+    +'#s4GT tbody tr:nth-child(odd) .c3{background:#ffffff}'
+    +'#s4GT tbody tr:nth-child(odd) .c-chart{background:#ffffff}'
+    +'#s4GT tbody tr:hover .c1,'
+    +'#s4GT tbody tr:hover .c2,'
+    +'#s4GT tbody tr:hover .c3,'
+    +'#s4GT tbody tr:hover .c-chart{background:#f0f7ff!important}'
+    /* task cell content */
+    +'.gTN{font-size:11.5px;font-weight:700;color:#0f172a;line-height:1.55;'
+    +'white-space:normal;word-break:break-word;margin-bottom:3px}'
+    +'.gTC{font-size:10px;color:#64748b;line-height:1.45;margin-bottom:2px;'
+    +'white-space:normal;word-break:break-word}'
+    +'.gTD{font-size:9.5px;color:#94a3b8;line-height:1.4}'
+    /* responsible cell */
+    +'.gRC{font-size:10.5px;color:#1e3a8a;line-height:1.55;'
+    +'white-space:normal;word-break:break-word}'
+    /* status badge */
+    +'.gSB{display:inline-block;padding:4px 8px;border-radius:6px;'
+    +'font-size:10px;font-weight:700;line-height:1.3;white-space:nowrap}'
+    +'</style>'
+  );
 
-  tasks.forEach(function(t,ri){
-    var cl  = getC(t.status);
-    var rag = s4GetRAG(t);
-    var ry  = HDR+ri*ROW_H;
-    var bg  = ri%2===0?'#ffffff':'#f8fafc';
+  var H='<div id="s4GScroll">'+CSS+'<table id="s4GT">';
 
-    /* label row bg */
-    S += '<rect x="0" y="'+ry+'" width="'+LW+'" height="'+ROW_H+'" fill="'+bg+'"/>';
+  /* ── thead ── */
+  H+='<thead><tr>';
+  H+='<th class="c1" style="text-align:right;border-left:1px solid rgba(255,255,255,.15)">'
+    +'<div style="padding:4px 0 2px">التكليف / اللجنة</div>'
+    +'<div style="font-size:9px;color:rgba(255,255,255,.55);font-weight:400">الاسم · اللجنة · التواريخ</div>'
+    +'</th>';
+  H+='<th class="c2" style="text-align:right;border-right:1px solid rgba(255,255,255,.12)">مسؤول التنفيذ</th>';
+  H+='<th class="c3" style="text-align:center">الحالة</th>';
+  H+='<th class="c-chart" style="width:'+GW+'px;min-width:'+GW+'px">'+hdrSVG()+'</th>';
+  H+='</tr></thead>';
 
-    /* status accent left bar */
-    S += '<rect x="0" y="'+ry+'" width="4" height="'+ROW_H+'" fill="'+cl.bar+'"/>';
+  /* ── tbody ── */
+  H+='<tbody>';
+  var ri; /* accessible to barSVG closure */
+  for(ri=0;ri<tasks.length;ri++){
+    var t=tasks[ri];
+    var cl=gc(t.status);
+    var rag=s4GetRAG(t);
+    var sd2=pd(t.dateFrom), ed2=pd(t.dateTo);
 
-    /* row number */
-    S += '<text x="15" y="'+(ry+ROW_H/2+4)+'"'
-        +' text-anchor="middle" font-size="9" fill="#94a3b8">'+(ri+1)+'</text>';
+    /* compute auto row height */
+    var tLen=(t.task||'').length, cLen=(t.committee||'').length, rLen=(t.responsible||'').length;
+    var tLines=Math.max(1,Math.ceil(tLen/28));
+    var cLines=Math.max(1,Math.ceil(cLen/32));
+    var rLines=Math.max(1,Math.ceil(rLen/16));
+    var RH=Math.max(ROW_MIN,(tLines+cLines+(sd2||ed2?1:0))*17+20, rLines*17+22);
 
-    /* task name */
-    S += '<text x="24" y="'+(ry+ROW_H/2-8)+'"'
-        +' text-anchor="start" font-size="11.5" font-weight="700" fill="#0f172a">'
-        +esc(cut(t.task||'—',26))+'</text>';
+    H+='<tr data-ri="'+ri+'">';
 
-    /* committee */
-    S += '<text x="24" y="'+(ry+ROW_H/2+7)+'"'
-        +' text-anchor="start" font-size="9.5" fill="#64748b">'
-        +esc(cut(t.committee||'',28))+'</text>';
+    /* ── cell 1: task ── */
+    H+='<td class="c1" style="position:relative">'
+      +'<div style="display:flex;flex-direction:column;justify-content:center;'
+      +'padding:10px 10px 10px 6px;min-height:'+RH+'px;direction:rtl;text-align:right">'
+      /* status accent bar */
+      +'<div style="position:absolute;right:0;top:0;width:4px;height:100%;background:'+cl.b+';border-radius:0 3px 3px 0"></div>'
+      /* row number */
+      +'<div style="font-size:8.5px;color:#94a3b8;margin-bottom:3px">#'+(ri+1)+'</div>'
+      +'<div class="gTN">'+xe(t.task||'—')+'</div>'
+      +(t.committee?'<div class="gTC">🏛 '+xe(t.committee)+'</div>':'')
+      +((sd2||ed2)?'<div class="gTD">📅 '+(sd2?fd(sd2):'')+(sd2&&ed2?' ← ':'')+( ed2?fd(ed2):'')+'</div>':'')
+      +(t.escalated?'<div style="margin-top:3px;font-size:9px;font-weight:700;color:#ea580c">⚡ مُصعَّد</div>':'')
+      +(t.notes?'<div style="margin-top:3px;font-size:9px;color:#94a3b8;white-space:normal;word-break:break-word">'+xe(t.notes.substring(0,80))+'</div>':'')
+      +'</div></td>';
 
-    /* responsible */
-    if(t.responsible){
-      S += '<text x="24" y="'+(ry+ROW_H/2+19)+'"'
-          +' text-anchor="start" font-size="9" fill="#3b82f6">'
-          +esc(cut(t.responsible,26))+'</text>';
-    }
+    /* ── cell 2: responsible ── */
+    H+='<td class="c2" style="border-right:1px solid #e8eef6">'
+      +'<div style="display:flex;align-items:center;padding:8px 8px;min-height:'+RH+'px;'
+      +'direction:rtl;text-align:right">'
+      +'<span class="gRC">'+xe(t.responsible||'—')+'</span>'
+      +'</div></td>';
 
-    /* status badge right-side */
-    S += '<text x="'+(LW-8)+'" y="'+(ry+ROW_H/2+4)+'"'
-        +' text-anchor="end" font-size="9" font-weight="700" fill="'+cl.bar+'">'
-        +esc(rag.dot+' '+rag.label)+'</text>';
+    /* ── cell 3: status ── */
+    H+='<td class="c3" style="border-right:1px solid #e8eef6">'
+      +'<div style="display:flex;align-items:center;justify-content:center;min-height:'+RH+'px">'
+      +'<span class="gSB" style="background:'+cl.l+';color:'+cl.t+';border:1px solid '+cl.br+'">'+xe(t.status||'—')+'</span>'
+      +'</div></td>';
 
-    /* escalated tag */
-    if(t.escalated){
-      S += '<text x="'+(LW-8)+'" y="'+(ry+ROW_H/2+17)+'"'
-          +' text-anchor="end" font-size="8.5" fill="#ea580c">⚡ مُصعَّد</text>';
-    }
+    /* ── cell 4: chart bar ── */
+    H+='<td class="c-chart" style="width:'+GW+'px;min-width:'+GW+'px;height:'+RH+'px">'+barSVG(t,RH)+'</td>';
 
-    /* row separator */
-    S += '<line x1="0" y1="'+(ry+ROW_H)+'" x2="'+LW+'" y2="'+(ry+ROW_H)+'"'
-        +' stroke="#e2e8f0" stroke-width="0.5"/>';
-  });
-
-  /* ══ HEADER (month + sub — drawn last → always topmost) ══ */
-  S += '<rect x="0" y="0" width="'+SVG_W+'" height="'+HDR+'" fill="url(#g_hdr)"/>';
-
-  /* Month bands */
-  var mc=new Date(minD.getFullYear(),minD.getMonth(),1);
-  while(+mc<=+maxD){
-    var ms=new Date(Math.max(+mc,+minD));
-    var me=new Date(mc.getFullYear(),mc.getMonth()+1,0);
-    me=new Date(Math.min(+me,+maxD));
-    var mx1=xOf(ms), mx2=xOf(me)+DW, mw=mx2-mx1;
-    if(mw>0){
-      var isCur = mc.getMonth()===today.getMonth()&&mc.getFullYear()===today.getFullYear();
-      if(isCur){
-        S += '<rect x="'+mx1+'" y="0" width="'+mw+'" height="'+H1
-            +'" fill="rgba(255,255,255,.14)"/>';
-      }
-      S += '<line x1="'+mx1+'" y1="0" x2="'+mx1+'" y2="'+H1
-          +'" stroke="rgba(255,255,255,.2)" stroke-width="1"/>';
-      var mLbl=mc.toLocaleDateString('ar-SA',{month:'long'})+' '+mc.getFullYear();
-      if(mw>60){
-        S += '<text x="'+(mx1+mw/2)+'" y="'+(H1/2+5)+'"'
-            +' text-anchor="middle" font-size="11" font-weight="700"'
-            +' fill="'+(isCur?'#fff':'rgba(255,255,255,.82)')+'">'
-            +esc(mLbl)+'</text>';
-      }
-    }
-    mc.setMonth(mc.getMonth()+1); mc.setDate(1);
+    H+='</tr>';
   }
+  H+='</tbody></table></div>';
 
-  /* Sub-header: days/weeks */
-  var sc2=new Date(minD);
-  while(+sc2<=+maxD){
-    var sx=xOf(sc2);
-    var isMS=sc2.getDate()===1;
-    var isWS=sc2.getDay()===0;
-    var isWE2=isWE(sc2);
+  body.innerHTML=H;
 
-    /* weekend tint in sub-header */
-    if(isWE2){
-      S += '<rect x="'+sx+'" y="'+H1+'" width="'+DW+'" height="'+H2
-          +'" fill="rgba(0,0,0,.12)"/>';
-    }
-    /* separator */
-    if(isMS||isWS){
-      S += '<line x1="'+sx+'" y1="'+H1+'" x2="'+sx+'" y2="'+HDR
-          +'" stroke="rgba(255,255,255,'+(isMS?'.28':'.12')+')" stroke-width="1"/>';
-    }
-    /* day number */
-    var showLbl = isMS||(isWS&&DW>=10)||(DW>=22);
-    if(showLbl){
-      S += '<text x="'+(sx+DW/2)+'" y="'+(H1+H2/2+4)+'"'
-          +' text-anchor="middle" font-size="8.5" fill="rgba(255,255,255,.72)">'
-          +sc2.getDate()+'/'+(sc2.getMonth()+1)+'</text>';
-    }
-    sc2.setDate(sc2.getDate()+(DW<7?7:1));
-  }
-
-  /* ── Sub-header left corner (label zone) ── */
-  S += '<rect x="0" y="'+H1+'" width="'+LW+'" height="'+H2+'" fill="url(#g_hdr)"/>';
-
-  /* ── Label column header title ── */
-  S += '<rect x="0" y="0" width="'+LW+'" height="'+HDR+'" fill="url(#g_hdr)"/>';
-  S += '<line x1="'+LW+'" y1="0" x2="'+LW+'" y2="'+HDR
-      +'" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>';
-  S += '<text x="'+(LW/2)+'" y="'+(HDR/2+5)+'"'
-      +' text-anchor="middle" font-size="12" font-weight="700" fill="#fff">التكليف / اللجنة</text>';
-
-  S = '<svg xmlns="http://www.w3.org/2000/svg" id="s4GSVG"'
-    + ' width="'+SVG_W+'" height="'+SVG_H+'"'
-    + ' style="display:block;font-family:Tahoma,Arial;direction:ltr">'+S+'</svg>';
-
-  /* ══ Inject ══ */
-  body.innerHTML =
-    '<div id="s4GScrollWrap" style="width:100%;height:100%;overflow:auto;'
-    +'-webkit-overflow-scrolling:touch;position:relative">'
-    +'<div style="min-width:'+SVG_W+'px">'+S+'</div>'
-    +'</div>';
-
-  /* Tooltip */
-  _s4GanttBindTooltip(tasks, HDR, ROW_H, LW, DW, minD, parseD, fmtD, s4GetRAG);
-
-  /* Scroll to today */
+  /* scroll to today */
   requestAnimationFrame(function(){
-    var sc=document.getElementById('s4GScrollWrap');
+    var sc=document.getElementById('s4GScroll');
     if(!sc) return;
     var off=Math.round((today-minD)/86400000);
-    sc.scrollLeft=Math.max(0, LW+off*DW - sc.clientWidth/2);
+    sc.scrollLeft=Math.max(0, STICKY+off*DW - sc.clientWidth/2);
+    _s4GTip(tasks,pd,fd,s4GetRAG);
   });
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   TOOLTIP ENGINE
-   ══════════════════════════════════════════════════════════════════ */
-function _s4GanttBindTooltip(tasks,HDR,ROW_H,LW,DW,minD,parseD,fmtD,getRAG){
-  var sc  = document.getElementById('s4GScrollWrap');
+/* ════════════════════════════════════════════════════════════════════
+   TOOLTIP
+   ════════════════════════════════════════════════════════════════════ */
+function _s4GTip(tasks,pd,fd,getRAG){
+  var sc  = document.getElementById('s4GScroll');
   var tip = document.getElementById('s4GTip');
   if(!sc||!tip) return;
-
-  var CMAP = {
-    'منجز':'#16a34a','جارٍ':'#2563eb','متأخر':'#dc2626',
-    'قيد الانتظار':'#d97706','معلق':'#7c3aed'
-  };
-
-  sc.addEventListener('mousemove', function(ev){
-    var rect = sc.getBoundingClientRect();
-    var my   = ev.clientY - rect.top + sc.scrollTop;
-    if(my < HDR){ tip.style.display='none'; return; }
-    var ri = Math.floor((my-HDR)/ROW_H);
-    if(ri<0||ri>=tasks.length){ tip.style.display='none'; return; }
-    var t   = tasks[ri];
-    var rag = getRAG(t);
-    var sd  = parseD(t.dateFrom);
-    var ed  = parseD(t.dateTo);
-    var dur = (sd&&ed) ? Math.round((ed-sd)/86400000) : null;
-    var bc  = CMAP[t.status]||'#64748b';
-    var pct = t.status==='منجز'?100:(t.status==='جارٍ'?60:(t.status==='متأخر'?75:0));
-
-    tip.innerHTML =
-      '<div style="font-weight:700;font-size:13px;color:#0f172a;'
-      +'border-bottom:2.5px solid '+bc+';padding-bottom:8px;margin-bottom:9px">'
+  var CM={'منجز':'#16a34a','جارٍ':'#2563eb','متأخر':'#dc2626','قيد الانتظار':'#d97706','معلق':'#7c3aed'};
+  sc.addEventListener('mousemove',function(ev){
+    var tr=ev.target.closest('tr[data-ri]');
+    if(!tr){tip.style.display='none';return;}
+    var ri=parseInt(tr.getAttribute('data-ri'));
+    if(isNaN(ri)||ri<0||ri>=tasks.length){tip.style.display='none';return;}
+    var t=tasks[ri],rag=getRAG(t),sd=pd(t.dateFrom),ed=pd(t.dateTo);
+    var dur=(sd&&ed)?Math.round((ed-sd)/86400000):null;
+    var bc=CM[t.status]||'#64748b';
+    var pct=t.status==='منجز'?100:(t.status==='جارٍ'?60:(t.status==='متأخر'?75:0));
+    tip.innerHTML='<div style="font-weight:700;font-size:12.5px;color:#0f172a;'
+      +'border-bottom:2px solid '+bc+';padding-bottom:7px;margin-bottom:8px">'
       +rag.dot+' '+(t.task||'—')+'</div>'
       +'<table style="width:100%;border-collapse:collapse;font-size:11px">'
-      +'<tr><td style="color:#94a3b8;padding:2px 0;padding-left:6px;width:70px;white-space:nowrap">اللجنة</td>'
+      +'<tr><td style="color:#94a3b8;padding:2px 0;width:70px">🏛 اللجنة</td>'
       +'<td style="font-weight:600;color:#334155">'+(t.committee||'—')+'</td></tr>'
-      +'<tr><td style="color:#94a3b8;padding:2px 0;padding-left:6px">المسؤول</td>'
-      +'<td style="font-weight:600;color:#2563eb">'+(t.responsible||'—')+'</td></tr>'
-      +(sd?'<tr><td style="color:#94a3b8;padding:2px 0;padding-left:6px">البداية</td>'
-          +'<td>'+fmtD(sd)+'</td></tr>':'')
-      +(ed?'<tr><td style="color:#94a3b8;padding:2px 0;padding-left:6px">الانتهاء</td>'
-          +'<td>'+fmtD(ed)+'</td></tr>':'')
-      +(dur!==null?'<tr><td style="color:#94a3b8;padding:2px 0;padding-left:6px">المدة</td>'
-          +'<td>'+dur+' يوم</td></tr>':'')
+      +'<tr><td style="color:#94a3b8;padding:2px 0">👤 المسؤول</td>'
+      +'<td style="font-weight:600;color:#1e3a8a">'+(t.responsible||'—')+'</td></tr>'
+      +(sd?'<tr><td style="color:#94a3b8;padding:2px 0">📅 البداية</td><td>'+fd(sd)+'</td></tr>':'')
+      +(ed?'<tr><td style="color:#94a3b8;padding:2px 0">🏁 الانتهاء</td><td>'+fd(ed)+'</td></tr>':'')
+      +(dur!==null?'<tr><td style="color:#94a3b8;padding:2px 0">⏱ المدة</td><td>'+dur+' يوم</td></tr>':'')
       +'</table>'
-      +'<div style="margin-top:9px;display:flex;align-items:center;gap:8px">'
-      +'<span style="background:'+bc+'1a;color:'+bc+';border-radius:6px;padding:3px 10px;'
-      +'font-size:10px;font-weight:700;border:1px solid '+bc+'40">'
-      +rag.dot+' '+(t.status||'')+'</span>'
-      +(pct>0?'<div style="flex:1;background:#e2e8f0;border-radius:4px;height:7px;overflow:hidden">'
-             +'<div style="width:'+pct+'%;height:100%;background:'+bc+';border-radius:4px;transition:width .3s"></div>'
-             +'</div><span style="font-size:10px;color:'+bc+';font-weight:700;white-space:nowrap">'+pct+'%</span>':'')
+      +'<div style="margin-top:8px;display:flex;align-items:center;gap:7px">'
+      +'<span style="background:'+bc+'18;color:'+bc+';border-radius:5px;padding:3px 9px;'
+      +'font-size:10px;font-weight:700;border:1px solid '+bc+'30">'+rag.dot+' '+(t.status||'')+'</span>'
+      +(pct>0?'<div style="flex:1;background:#e2e8f0;border-radius:3px;height:6px;overflow:hidden">'
+             +'<div style="width:'+pct+'%;height:100%;background:'+bc+';border-radius:3px"></div>'
+             +'</div><span style="font-size:10px;color:'+bc+';font-weight:700">'+pct+'%</span>':'')
       +'</div>'
-      +(t.escalated?'<div style="margin-top:7px;font-size:10px;color:#ea580c;font-weight:700">⚡ مُصعَّد / مهمة حرجة</div>':'')
-      +(t.notes?'<div style="margin-top:7px;font-size:10px;color:#64748b;'
-               +'border-top:1px solid #f1f5f9;padding-top:6px">'+(t.notes||'')+'</div>':'')
-      +(t.update?'<div style="margin-top:4px;font-size:9px;color:#94a3b8">آخر تحديث: '
-                +String(t.update||'').substring(0,55)+'</div>':'');
-
+      +(t.escalated?'<div style="margin-top:6px;font-size:10px;color:#ea580c;font-weight:700">⚡ مُصعَّد</div>':'')
+      +(t.notes?'<div style="margin-top:6px;font-size:10px;color:#64748b;border-top:1px solid #f1f5f9;padding-top:5px">'+(t.notes||'').substring(0,80)+'</div>':'');
     tip.style.display='block';
-    var tipW=318, tipH=260;
-    var tx=ev.clientX+16, ty=ev.clientY-12;
-    if(tx+tipW>window.innerWidth)  tx=ev.clientX-tipW-8;
-    if(ty+tipH>window.innerHeight) ty=ev.clientY-tipH;
-    tip.style.left=tx+'px';
-    tip.style.top=Math.max(6,ty)+'px';
+    var tw=310,th2=260,tx=ev.clientX+16,ty=ev.clientY-14;
+    if(tx+tw>window.innerWidth) tx=ev.clientX-tw-8;
+    if(ty+th2>window.innerHeight) ty=ev.clientY-th2;
+    tip.style.left=tx+'px'; tip.style.top=Math.max(6,ty)+'px';
   });
-  sc.addEventListener('mouseleave', function(){ tip.style.display='none'; });
-  sc.addEventListener('touchstart', function(){ tip.style.display='none'; },{passive:true});
+  sc.addEventListener('mouseleave',function(){tip.style.display='none';});
+  sc.addEventListener('touchstart',function(){tip.style.display='none';},{passive:true});
 }
 
-/* ══════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════
    CONTROLS
-   ══════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════ */
 function s4GanttSetView(v){
   window._s4GanttView=v;
   ['day','week','month','quarter'].forEach(function(n){
-    var b=document.getElementById('s4GV_'+n);
-    if(!b) return;
-    var act=n===v;
-    b.style.background=act?'rgba(255,255,255,.28)':'transparent';
-    b.style.color=act?'#fff':'rgba(255,255,255,.7)';
+    var b=document.getElementById('s4GV_'+n); if(!b)return;
+    var a=n===v;
+    b.style.background=a?'rgba(255,255,255,.3)':'transparent';
+    b.style.color=a?'#fff':'rgba(255,255,255,.6)';
   });
   s4DrawGanttSVG();
 }
 
 function s4GanttZoom(dir){
   var z=window._s4GanttZoom||1;
-  if(dir===0)      z=1;
+  if(dir===0) z=1;
   else if(dir===1) z=Math.min(5,+(z*1.4).toFixed(2));
-  else             z=Math.max(0.25,+(z/1.4).toFixed(2));
+  else z=Math.max(0.25,+(z/1.4).toFixed(2));
   window._s4GanttZoom=z;
-  var lb=document.getElementById('s4GZoomLbl');
+  var lb=document.getElementById('s4GZlbl');
   if(lb) lb.textContent=Math.round(z*100)+'%';
   s4DrawGanttSVG();
 }
 
 function s4GanttGoToday(){
-  var sc=document.getElementById('s4GScrollWrap');
-  if(!sc) return;
-  var tasks=window._s4GanttTasks||[]; if(!tasks.length) return;
-  var view=window._s4GanttView||'month';
-  var zoom=window._s4GanttZoom||1;
+  var sc=document.getElementById('s4GScroll'); if(!sc)return;
+  var tasks=window._s4GanttTasks||[]; if(!tasks.length)return;
+  var view=window._s4GanttView||'month', zoom=window._s4GanttZoom||1;
   var DW=Math.max(2,Math.round(({day:46,week:22,month:12,quarter:7}[view]||12)*zoom));
-  var LW=270;
+  var CW1=300,CW2=120,CW3=90,ST=CW1+CW2+CW3;
   var allD=[new Date()];
   tasks.forEach(function(t){if(t.dateFrom)allD.push(new Date(t.dateFrom));if(t.dateTo)allD.push(new Date(t.dateTo));});
   var minD=new Date(Math.min.apply(null,allD));
@@ -7357,16 +7267,14 @@ function s4GanttGoToday(){
   minD.setDate(minD.getDate()-pad);
   var today=new Date(); today.setHours(0,0,0,0);
   var off=Math.round((today-minD)/86400000);
-  sc.scrollTo({left:Math.max(0,LW+off*DW-sc.clientWidth/2),behavior:'smooth'});
+  sc.scrollTo({left:Math.max(0,ST+off*DW-sc.clientWidth/2),behavior:'smooth'});
 }
 
 function s4GanttExportPDF(){
-  var svgEl=document.getElementById('s4GSVG');
+  var sc=document.getElementById('s4GScroll');
   var tasks=window._s4GanttTasks||[];
-  if(!svgEl) return;
-  var svgData=new XMLSerializer().serializeToString(svgEl);
-  var svgUrl=URL.createObjectURL(new Blob([svgData],{type:'image/svg+xml;charset=utf-8'}));
-  var today=new Date().toLocaleDateString('ar-SA');
+  if(!sc) return;
+  var today2=new Date().toLocaleDateString('ar-SA');
   var w=window.open('','_blank','width=1300,height=750,scrollbars=yes');
   if(!w) return;
   w.document.write(
@@ -7376,27 +7284,28 @@ function s4GanttExportPDF(){
     +'display:flex;align-items:center;justify-content:space-between}'
     +'@media print{.np{display:none!important}'
     +'@page{margin:5mm;size:A3 landscape}'
-    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}'
-    +'</style></head><body>'
-    +'<div class="ph np"><div style="color:#fff;font-size:16px;font-weight:700"> مخطط جانت — التكليفات</div>'
+    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}</style>'
+    +'</head><body>'
+    +'<div class="ph np">'
+    +'<div style="color:#fff;font-size:16px;font-weight:700"> مخطط جانت — التكليفات</div>'
     +'<div style="display:flex;gap:12px;align-items:center">'
-    +'<span style="color:rgba(255,255,255,.7);font-size:11px">'+today+' | '+tasks.length+' تكليف</span>'
-    +'<button onclick="window.print()" class="np" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 18px;border-radius:7px;font-size:11px;cursor:pointer;font-family:Tahoma">🖨 طباعة / PDF</button>'
-    +'</div></div>'
-    +'<div style="overflow:auto;padding:10px"><img src="'+svgUrl+'" style="max-width:100%;display:block"/></div>'
+    +'<span style="color:rgba(255,255,255,.7);font-size:11px">'+today2+' | '+tasks.length+' تكليف</span>'
+    +'<button onclick="window.print()" class="np" style="background:rgba(255,255,255,.18);'
+    +'border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 18px;border-radius:7px;'
+    +'font-size:11px;cursor:pointer;font-family:Tahoma">🖨 طباعة / PDF</button></div></div>'
+    +'<div style="overflow:auto;padding:10px">'+sc.innerHTML+'</div>'
     +'</body></html>'
   );
   w.document.close();
 }
 
-/* ══ resize hook ══ */
+/* ══ resize ══ */
 (function(){
-  var _rt;
+  var _r;
   window.addEventListener('resize',function(){
-    clearTimeout(_rt);
-    _rt=setTimeout(function(){
-      if(window._s4GanttTasks&&document.getElementById('s4GBody'))
-        s4DrawGanttSVG();
+    clearTimeout(_r);
+    _r=setTimeout(function(){
+      if(window._s4GanttTasks&&document.getElementById('s4GBody')) s4DrawGanttSVG();
     },200);
   });
 })();
