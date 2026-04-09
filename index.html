@@ -1316,6 +1316,226 @@ body {
 }
 /* ╚══ END iOS Fix v4 ═══════════════════════════════════╝ */
 
+/* ══ LEFT SIDEBAR NAV ════════════════════════════════════╗ */
+#appScreen {
+  flex-direction: row !important;
+}
+#appMainArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+#leftSidebar {
+  width: 210px;
+  min-width: 210px;
+  max-width: 210px;
+  background: linear-gradient(160deg, #2d6e9e 0%, #2e8090 40%, #2d9070 75%, #3aaa82 100%);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 200;
+  transition: width 0.25s ease, min-width 0.25s ease, transform 0.25s ease;
+  position: relative;
+}
+#leftSidebar.collapsed {
+  width: 52px;
+  min-width: 52px;
+}
+.lsb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.lsb-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.lsb-logo img {
+  height: 28px;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+.lsb-logo-text {
+  font-size: 10px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 700;
+  font-family: Tahoma, Arial;
+  line-height: 1.4;
+  transition: opacity 0.2s;
+}
+#leftSidebar.collapsed .lsb-logo-text,
+#leftSidebar.collapsed .lsb-nav-label {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+#leftSidebar.collapsed .lsb-logo img {
+  margin: 0 auto;
+}
+.lsb-toggle {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.8);
+  transition: background 0.2s;
+}
+.lsb-toggle:hover { background: rgba(255,255,255,0.18); }
+.lsb-nav {
+  flex: 1;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.lsb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background 0.15s, border-right 0.15s;
+  border-right: 3px solid transparent;
+  color: rgba(255,255,255,0.80);
+  font-size: 12px;
+  font-family: Tahoma, Arial;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-decoration: none;
+  user-select: none;
+}
+.lsb-item:hover {
+  background: rgba(255,255,255,0.14);
+  color: #ffffff;
+}
+.lsb-item.active {
+  background: rgba(255,255,255,0.18);
+  border-right: 3px solid #ffffff;
+  color: #ffffff;
+}
+.lsb-item svg {
+  flex-shrink: 0;
+}
+.lsb-nav-label {
+  transition: opacity 0.2s, width 0.25s;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.lsb-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 6px 14px;
+  flex-shrink: 0;
+}
+.lsb-footer {
+  padding: 10px 14px 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.lsb-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+.lsb-user-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+.lsb-user-name {
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.7);
+  font-family: Tahoma, Arial;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+#leftSidebar.collapsed .lsb-user-name { opacity: 0; width: 0; }
+#leftSidebar.collapsed .lsb-footer { padding: 10px 8px 14px; }
+#leftSidebar.collapsed .lsb-item { padding: 10px 0; justify-content: center; }
+#leftSidebar.collapsed .lsb-item svg { margin: 0 auto; }
+#leftSidebar.collapsed .lsb-header { justify-content: center; padding: 14px 8px 10px; }
+#leftSidebar.collapsed .lsb-toggle { display: flex; }
+#leftSidebar.collapsed .lsb-logo { justify-content: center; }
+
+/* mobile overlay sidebar */
+@media (max-width: 768px) {
+  #leftSidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 220px !important;
+    min-width: 220px !important;
+    z-index: 1000;
+    transform: translateX(100%);
+    box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+  }
+  #leftSidebar.mobile-open {
+    transform: translateX(0) !important;
+  }
+  #leftSidebar.collapsed {
+    width: 220px !important;
+    min-width: 220px !important;
+  }
+  #leftSidebar.collapsed .lsb-logo-text,
+  #leftSidebar.collapsed .lsb-nav-label,
+  #leftSidebar.collapsed .lsb-user-name {
+    opacity: 1;
+    width: auto;
+    overflow: visible;
+    pointer-events: auto;
+  }
+  #leftSidebar.collapsed .lsb-item { padding: 10px 14px; justify-content: flex-start; }
+  #leftSidebar.collapsed .lsb-header { justify-content: space-between; padding: 14px 12px 10px; }
+  #leftSidebar.collapsed .lsb-toggle { display: flex; }
+  #leftSidebar.collapsed .lsb-footer { padding: 10px 14px 14px; }
+  #sidebarOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 999;
+  }
+  #sidebarOverlay.visible { display: block; }
+  #sidebarMenuBtn { display: flex !important; }
+}
+@media (min-width: 769px) {
+  #sidebarMenuBtn { display: none !important; }
+  #sidebarOverlay { display: none !important; }
+}
+/* ╚══ END LEFT SIDEBAR NAV ═══════════════════════════════╝ */
+
 </style>
 </head>
 <body>
@@ -1448,8 +1668,53 @@ body {
 </div>
 
 <div id="appScreen">
+  <!-- Mobile overlay for sidebar -->
+  <div id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+  <!-- Fixed Left Sidebar -->
+  <div id="leftSidebar">
+    <div class="lsb-header">
+      <div class="lsb-logo">
+        <img id="navLogo" src="" alt="وزارة التعليم" />
+        <div class="lsb-logo-text">وكالة التعاون<br>الدولي</div>
+      </div>
+      <button class="lsb-toggle" id="sidebarCollapseBtn" onclick="toggleSidebarCollapse()" title="تصغير">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+    <nav class="lsb-nav">
+      <div class="lsb-item" id="lsb-s1" onclick="goTo('s1');closeMobileSidebar()" title="المجالس واللجان">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+        <span class="lsb-nav-label">بيانات المجالس واللجان</span>
+      </div>
+      <div class="lsb-item" id="lsb-s3" onclick="goTo('s3');closeMobileSidebar()" title="الاجتماعات">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>
+        <span class="lsb-nav-label">التحضير للاجتماعات</span>
+      </div>
+      <div class="lsb-item" id="lsb-s2" onclick="goTo('s2');closeMobileSidebar()" title="الإحصاءات">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span class="lsb-nav-label">لوحة الإحصاءات والتحليل</span>
+      </div>
+      <div class="lsb-item" id="lsb-s4" onclick="goTo('s4');closeMobileSidebar()" title="التكليفات">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="lsb-nav-label">لوحة متابعة التكليفات</span>
+      </div>
+    </nav>
+    <div class="lsb-footer">
+      <div class="lsb-user">
+        <div class="lsb-user-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <span class="lsb-user-name" id="lsbUserName">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content area -->
+  <div id="appMainArea">
   <div class="topbar">
-    <button class="topbar-back" id="btnBack"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> الرئيسية</button>
+    <button id="sidebarMenuBtn" onclick="openMobileSidebar()" style="display:none;background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:6px 9px;cursor:pointer;color:#fff;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <button class="topbar-back" id="btnBack" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> الرئيسية</button>
     <div style="background:none;padding:0;display:flex;align-items:center;flex-shrink:0"><img id="homeLogo" src="" alt="وزارة التعليم" class="adaptive-logo" style="height:30px"></div>
     <div class="topbar-info">
       <h1 id="appTitle">نظام إدارة المجالس واللجان</h1>
@@ -3078,6 +3343,7 @@ function goTo(sec){
   document.getElementById('homeScreen').style.display='none';
   var app=document.getElementById('appScreen');
   app.style.display='flex';
+  updateSidebarActive(sec);
   var m=secMeta[sec];
   document.getElementById('appTitle').innerHTML=m.title.replace(/<svg[^>]*>[\s\S]*?<\/svg>\s*/g,'');
   setSecbar(sec);
@@ -3093,7 +3359,7 @@ function goTo(sec){
 }
 
 document.querySelectorAll('.hcard').forEach(function(c){c.addEventListener('click',function(){goTo(c.getAttribute('data-sec'));});});
-document.getElementById('btnBack').addEventListener('click',function(){document.getElementById('appScreen').style.display='none';document.getElementById('homeScreen').style.display='flex';updateHomeStats();});
+document.getElementById('btnBack').addEventListener('click',function(){goToHome();});
 
 /* S1 */
 function updateSelBar(){
@@ -5908,7 +6174,8 @@ function doLogin(){
     if(ls){ls.style.opacity='0';ls.style.transition='opacity .4s';setTimeout(function(){ls.style.display='none';},400);}
     btn.disabled=false;btn.style.opacity='1';btn.textContent='دخول ←';
     applyRoleUI();
-    document.getElementById('homeScreen').style.display='flex';
+    /* دخول مباشر للتطبيق بدلاً من الشاشة الرئيسية */
+    goTo('s1');
     updateHomeStats();
     var hl=document.getElementById('homeUserLbl');
     if(hl){var rl={'admin':'مدير','editor':'محرر','viewer':'مشاهد'};hl.textContent=currentUser.name+' ('+rl[role]+')';}
@@ -7855,10 +8122,10 @@ function wrapRenCards(){
         var _sue=AUTH_USERS.find(function(u){return u.email.toLowerCase()===sess.email.toLowerCase();});
         currentUser={email:sess.email,role:sess.role,name:sess.name,permissions:(_sue&&_sue.permissions)||{}};
         applyRoleUI();
-        /* إخفاء شاشة تسجيل الدخول وإظهار الشاشة الرئيسية */
+        /* إخفاء شاشة تسجيل الدخول والدخول المباشر للتطبيق */
         var lsEl=document.getElementById('loginScreen');
         if(lsEl)lsEl.style.display='none';
-        document.getElementById('homeScreen').style.display='flex';
+        setTimeout(function(){goTo('s1');},50);
         updateHomeStats();
         addUserBadge();
         clearSessionTimers();
@@ -9884,6 +10151,59 @@ else init();
   });
   obs.observe(document.body||document.documentElement,{childList:true,subtree:true});
 })();
+
+/* ══ SIDEBAR FUNCTIONS ════════════════════════════════════ */
+function updateSidebarActive(sec){
+  document.querySelectorAll('#leftSidebar .lsb-item').forEach(function(i){i.classList.remove('active');});
+  var map={s1:'lsb-s1',s2:'lsb-s2',s3:'lsb-s3',s4:'lsb-s4'};
+  if(map[sec]){
+    var el=document.getElementById(map[sec]);
+    if(el) el.classList.add('active');
+  }
+  /* update username in sidebar footer */
+  try{
+    if(typeof currentUser!=='undefined'&&currentUser){
+      var unEl=document.getElementById('lsbUserName');
+      if(unEl) unEl.textContent=currentUser.name||currentUser.username||'—';
+    }
+  }catch(e){}
+}
+function toggleSidebarCollapse(){
+  var sb=document.getElementById('leftSidebar');
+  if(!sb) return;
+  sb.classList.toggle('collapsed');
+  /* store preference */
+  try{localStorage.setItem('lsbCollapsed',sb.classList.contains('collapsed')?'1':'0');}catch(e){}
+}
+function closeMobileSidebar(){
+  var sb=document.getElementById('leftSidebar');
+  var ov=document.getElementById('sidebarOverlay');
+  if(sb) sb.classList.remove('mobile-open');
+  if(ov) ov.classList.remove('visible');
+}
+function openMobileSidebar(){
+  var sb=document.getElementById('leftSidebar');
+  var ov=document.getElementById('sidebarOverlay');
+  if(sb) sb.classList.add('mobile-open');
+  if(ov) ov.classList.add('visible');
+}
+function goToHome(){
+  closeMobileSidebar();
+  /* الرئيسية = صفحة المجالس واللجان */
+  goTo('s1');
+}
+/* restore collapse state on load - default is OPEN */
+(function(){
+  try{
+    var saved=localStorage.getItem('lsbCollapsed');
+    if(saved==='1'){
+      var sb=document.getElementById('leftSidebar');
+      if(sb) sb.classList.add('collapsed');
+    }
+    /* إذا لم يكن محفوظاً — الشريط مفتوح افتراضياً */
+  }catch(e){}
+})();
+/* ╚══ END SIDEBAR FUNCTIONS ═══════════════════════════════ */
 </script>
 
 <!-- ADMIN PANEL MODAL -->
@@ -9936,7 +10256,8 @@ else init();
       </div>
     </div>
   </div>
-</div>
+  </div><!-- /#appMainArea -->
+</div><!-- /#appScreen -->
 
 <!-- EXECUTIVE SUMMARY MODAL -->
 <div id="execSumModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:7000;align-items:center;justify-content:center;padding:16px">
