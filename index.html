@@ -5440,7 +5440,7 @@ function printAll(di){
   if(!_pW){var _a=document.createElement('a');_a.href=_pU;_a.target='_blank';document.body.appendChild(_a);_a.click();document.body.removeChild(_a);}
 }
 function printRow(fi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var d=flt[fi];function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:7px 9px;width:33%;font-size:11px">'+l+'</td><td style="padding:7px 9px;font-size:11px">'+e(v)+'</td></tr>':'';}blobDL(d.n,'<table style="border-collapse:collapse">'+row('ممثل الوكالة',d.r)+row('الممثل البديل',d.ar)+row('الدور',d.ro)+row('النوع',d.ty)+row('الحالة',d.st)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+row('رقم خطاب الترشيح',d.rn)+row('تاريخ الخطاب',d.rd)+row('الهدف',d.go)+row('سند التشكيل',d.ba)+row('ملاحظات',d.no)+'</table>',{rep:d.r,hdr:'بيانات اللجنة'});}
+  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var d=flt[fi];function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:10px 12px;width:33%;font-size:16px">'+l+'</td><td style="padding:10px 12px;font-size:16px">'+e(v)+'</td></tr>':'';}blobDL(d.n,'<table style="border-collapse:collapse">'+row('ممثل الوكالة',d.r)+row('الممثل البديل',d.ar)+row('الدور',d.ro)+row('النوع',d.ty)+row('الحالة',d.st)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+row('رقم خطاب الترشيح',d.rn)+row('تاريخ الخطاب',d.rd)+row('الهدف',d.go)+row('سند التشكيل',d.ba)+row('ملاحظات',d.no)+'</table>',{rep:d.r,hdr:'بيانات اللجنة'});}
 
 
 function buildPrintCharts(fd, allTasks, opts){
