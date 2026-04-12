@@ -446,8 +446,27 @@ html,body{max-width:100vw;overflow-x:hidden}
 .fsel{width:100%;border:1.5px solid var(--s3-border);border-radius:7px;padding:6px 9px;font-size:12px;font-family:inherit;margin-top:3px;outline:none}
 .s3stitle{font-size:11px;font-weight:700;color:var(--s3-mid);border-bottom:2px solid var(--s3-border);padding-bottom:4px;margin:10px 0 7px;display:flex;align-items:center;justify-content:space-between}
 .s3m-at{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
-.s3m-at th{background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;padding:7px 9px;text-align:right;font-size:10px}
-.s3m-at td{padding:4px 6px;border-bottom:1px solid #eee8ff;vertical-align:top}
+.s3m-at th{background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;padding:8px 9px;text-align:right;font-size:11px}
+.s3m-at td{padding:5px 6px;border-bottom:1px solid #eee8ff;vertical-align:middle}
+.s3m-at td textarea.finp,.s3m-at td input.finp{border:1.5px solid #c9b8f0!important;background:#faf8ff!important;border-radius:7px!important;padding:6px 8px!important;font-size:12px!important;transition:border-color .2s,box-shadow .2s;min-height:36px}
+.s3m-at td textarea.finp:focus,.s3m-at td input.finp:focus{border-color:var(--s3-sky)!important;box-shadow:0 0 0 3px rgba(56,182,232,.15)!important;outline:none!important;background:#fff!important}
+.s3m-at td textarea.finp:hover,.s3m-at td input.finp:hover{border-color:#9b59b6!important}
+.s3m-at td select.fsel{border:1.5px solid #c9b8f0!important;background:#faf8ff!important;border-radius:7px!important;padding:6px 8px!important;font-size:12px!important;transition:border-color .2s;min-height:34px;cursor:pointer}
+.s3m-at td select.fsel:focus{border-color:var(--s3-sky)!important;box-shadow:0 0 0 3px rgba(56,182,232,.15)!important;outline:none!important}
+.s3m-at td select.fsel:hover{border-color:#9b59b6!important}
+.s3m-at td input[type="date"].finp{font-size:12px!important;padding:5px 8px!important;min-width:130px}
+/* Task table scroll container — professional horizontal scroll */
+.s3m-at-wrap{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;width:100%;border-radius:9px;border:1.5px solid #e0d5f5;box-shadow:inset 0 1px 4px rgba(44,22,84,.06)}
+.s3m-at-wrap::-webkit-scrollbar{height:7px}
+.s3m-at-wrap::-webkit-scrollbar-track{background:#f4f0ff;border-radius:4px}
+.s3m-at-wrap::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#9b59b6,#38b6e8);border-radius:4px}
+.s3m-at-wrap::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#7c3aed,#1a8fbf)}
+/* Sticky thead on horizontal scroll */
+.s3m-at thead th{position:sticky;top:0;z-index:2}
+/* Task column textarea auto-grow horizontally */
+.s3m-at td:nth-child(2){min-width:220px}
+/* smModal mbody — allow tall content to scroll vertically inside modal */
+#smModal .mbody{padding:16px 20px;overflow-y:auto;max-height:calc(90vh - 60px)}
 .confirm-box{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:flex;align-items:center;justify-content:center}
 .confirm-inner{background:#fff;border-radius:14px;padding:20px 22px;max-width:340px;width:90%;text-align:center}
 .confirm-inner p{font-size:13px;color:#1a1a2e;margin-bottom:14px;line-height:1.6}
@@ -544,6 +563,52 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
 /* غانت */
 .gantt-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 240px)}
 .gantt-table{min-width:900px;border-collapse:collapse}
+/* ── Gantt scroll professional enhancements ── */
+#s4GScroll{
+  width:100%;height:100%;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  direction:rtl;
+  position:relative;
+  scroll-behavior:smooth;
+  /* vertical scrollbar */
+  scrollbar-width:thin;
+  scrollbar-color:#2a6a8f #e8eef6;
+}
+#s4GScroll::-webkit-scrollbar{height:10px;width:8px}
+#s4GScroll::-webkit-scrollbar-track{background:#e8eef6;border-radius:6px}
+#s4GScroll::-webkit-scrollbar-thumb{
+  background:linear-gradient(135deg,#2a6a8f,#1d8a6e);
+  border-radius:6px;
+  border:2px solid #e8eef6;
+  min-width:40px;min-height:40px
+}
+#s4GScroll::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#1e3a5f,#2a6a8f)}
+#s4GScroll::-webkit-scrollbar-corner{background:#e8eef6}
+/* fade edge indicators — left/right scroll hints */
+#s4GBody::before,#s4GBody::after{
+  content:'';
+  position:absolute;
+  top:0;bottom:10px;
+  width:40px;
+  pointer-events:none;
+  z-index:20;
+  transition:opacity .25s;
+  opacity:0;
+}
+#s4GBody::before{
+  right:0;
+  background:linear-gradient(to left,rgba(30,58,95,.14),transparent);
+}
+#s4GBody::after{
+  left:0;
+  background:linear-gradient(to right,rgba(30,58,95,.10),transparent);
+}
+#s4GBody.can-scroll-left::after{opacity:1}
+#s4GBody.can-scroll-right::before{opacity:1}
+/* keyboard focus ring on scroll area */
+#s4GScroll:focus{outline:2px solid rgba(56,182,232,.4);outline-offset:-2px}
+#s4GScroll:focus:not(:focus-visible){outline:none}
 .gantt-table th{background:linear-gradient(135deg,#2c1654,#4a2080);color:#fff;padding:6px 10px;font-size:11px;font-family:Tahoma,Arial;font-weight:700;white-space:nowrap;text-align:right;position:sticky;top:0;z-index:2}
 .gantt-table td{padding:5px 8px;border-bottom:1px solid #f0e8ff;font-size:11px;font-family:Tahoma,Arial;vertical-align:middle}
 .gantt-row:hover td{background:#faf5ff}
@@ -562,7 +627,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
 .mail-body{padding:18px 20px;overflow-y:auto;flex:1}
 .mail-field{margin-bottom:12px}
 .mail-field label{display:block;font-size:11px;font-weight:700;color:#1a3a5c;margin-bottom:4px;font-family:Tahoma,Arial}
-.mail-field input,.mail-field textarea{width:100%;border:1.5px solid #d0dde8;border-radius:8px;padding:8px 12px;font-size:12px;font-family:Tahoma,Arial;direction:rtl;outline:none;resize:vertical}
+.mail-field input,.mail-field textarea{width:100%;border:1.5px solid #d0dde8;border-radius:8px;padding:8px 12px;font-size:16px!important;font-family:Sakkal Majalla,Tahoma,Arial;direction:rtl;outline:none;resize:vertical;line-height:1.7}
 .mail-field input:focus,.mail-field textarea:focus{border-color:#2980b9}
 .mail-footer{padding:12px 20px;border-top:1px solid #f0e8ff;display:flex;gap:8px;flex-shrink:0;justify-content:flex-end}
 
@@ -659,6 +724,8 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
 @media(min-width:1024px){
   .mbg{padding:14px;align-items:center!important}
   .modal{border-radius:14px!important;max-width:680px!important;width:auto!important}
+  /* smModal wider on desktop */
+  #smModal .modal{max-width:min(1080px,96vw)!important;width:96vw!important}
 }
 
 /* 10. S3 main content */
@@ -982,11 +1049,13 @@ body {
   right: 0;
   z-index: 2;
 }
-/* Gantt scroll container doesn't overflow the viewport */
-#s4GanttBody {
+/* Gantt body — flex fill with vertical scroll */
+#s4GBody {
   overflow: hidden;
   position: relative;
   width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ── 4. Secbar — wrap actions on small screens ──────── */
@@ -1067,7 +1136,7 @@ body {
     -webkit-overflow-scrolling: touch;
   }
   .s3m-at {
-    min-width: 520px;
+    min-width: 860px;
   }
   /* Agenda items */
   #smModal .mhdr,
@@ -5131,8 +5200,8 @@ function openPickModal(){
 /* MEETING MODAL */
 function openSM(di,mi){
   if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التعديل',true);return;}var m=mi===-1?NM():GM(di)[mi];var isNew=mi===-1;var wt=m.tasks.map(function(t){return Object.assign({},t);});var wA=m.agendaItems&&m.agendaItems.length?m.agendaItems.map(function(x){return{text:x.text||x||''};}):(m.agenda?[{text:m.agenda}]:[]);document.getElementById('smTitle').innerHTML=(isNew?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> اجتماع جديد — ':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل — ')+D[di].n.substring(0,38);function aH(){var el=document.getElementById('agendaList');if(!el)return;if(!wA.length){el.innerHTML='<div style="text-align:center;padding:7px;color:#b0a8c8;font-size:10px">لا توجد بنود</div>';return;}el.innerHTML=wA.map(function(a,ai){return'<div style="display:flex;gap:5px;margin-bottom:4px"><span style="background:linear-gradient(135deg,#2c1654,#38b6e8);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">'+(ai+1)+'</span><input class="finp ai-inp" style="flex:1;padding:5px 8px;font-size:11px" data-ai="'+ai+'" value="'+e(a.text||'')+'"><button class="ab abr ai-del" data-ai="'+ai+'" style="padding:2px 6px;font-size:9px;flex-shrink:0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>';}).join('');el.querySelectorAll('.ai-inp').forEach(function(inp){inp.oninput=function(){wA[parseInt(this.getAttribute('data-ai'))].text=this.value;};});el.querySelectorAll('.ai-del').forEach(function(btn){btn.onclick=function(){wA.splice(parseInt(this.getAttribute('data-ai')),1);aH();};});}
-function tH(){autoUpdateOverdueTasks();if(!wt.length)return'<div id="tarea" style="text-align:center;padding:9px;color:#b0a8c8;font-size:10px">لا توجد تكليفات</div>';return'<table id="tarea" class="s3m-at"><thead><tr><th style="width:24px">#</th><th>التكليف</th><th style="width:120px">المسؤول</th><th style="width:110px">من</th><th style="width:110px">إلى</th><th style="width:65px">الأولوية</th><th style="width:80px">الحالة</th><th style="width:120px">آخر تحديث</th><th style="width:30px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></th></tr></thead><tbody>'+wt.map(function(t,ti){return'<tr><td style="text-align:center;color:#bbb;font-size:9px">'+(ti+1)+'</td><td><textarea class="finp ti" rows="2" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%;resize:vertical;min-height:38px;line-height:1.4;vertical-align:top" data-ti="'+ti+'" data-f="task">'+e(t.task||'')+'</textarea></td><td><textarea class="finp ti" rows="2" style="border:none;background:transparent;padding:2px;font-size:10.5px;width:100%;resize:vertical;min-height:38px;line-height:1.4;vertical-align:top" data-ti="'+ti+'" data-f="responsible">'+e(t.responsible||'')+'</textarea></td><td><input type="date" lang="en" class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateFrom" value="'+e(t.dateFrom||'')+'"></td><td><input type="date" lang="en" class="finp ti" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateTo" value="'+e(t.dateTo||'')+'"></td><td><select class="fsel ts" style="border:none;background:transparent;padding:2px;font-size:10px;width:100%" data-ti="'+ti+'">'+['معلق','قيد الانتظار','جارٍ','منجز','متأخر'].map(function(s){return'<option'+(s===t.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></td><td><input class="finp ti" style="border:none;background:#fffde7;padding:3px 5px;font-size:10.5px;width:100%;border-radius:4px" data-ti="'+ti+'" data-f="update" placeholder="التحديث..." value="'+e(t.update||'')+'"></td><td><button class="ab abr tdl" data-ti="'+ti+'" style="padding:1px 4px;font-size:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td></tr>';}).join('')+'</tbody></table>';}
-function rfT(){var old=document.getElementById('tarea');var tmp=document.createElement('div');tmp.innerHTML=tH();old.parentNode.replaceChild(tmp.firstChild,old);wireT();}
+function tH(){autoUpdateOverdueTasks();if(!wt.length)return'<div id="tarea" style="text-align:center;padding:9px;color:#b0a8c8;font-size:10px">لا توجد تكليفات</div>';return'<div class="s3m-at-wrap"><table id="tarea" class="s3m-at"><thead><tr><th style="width:26px">#</th><th style="min-width:220px">التكليف</th><th style="width:140px">المسؤول</th><th style="width:140px">من</th><th style="width:140px">إلى</th><th style="width:115px">الأولوية</th><th style="width:115px">الحالة</th><th style="width:140px">آخر تحديث</th><th style="width:34px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></th></tr></thead><tbody>'+wt.map(function(t,ti){return'<tr><td style="text-align:center;color:#bbb;font-size:9px">'+(ti+1)+'</td><td><textarea class="finp ti" rows="2" style="width:100%;resize:vertical;min-height:44px;line-height:1.5;vertical-align:top" data-ti="'+ti+'" data-f="task">'+e(t.task||'')+'</textarea></td><td><textarea class="finp ti" rows="2" style="width:100%;resize:vertical;min-height:44px;line-height:1.5;vertical-align:top" data-ti="'+ti+'" data-f="responsible">'+e(t.responsible||'')+'</textarea></td><td><input type="date" lang="en" class="finp ti" style="width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateFrom" value="'+e(t.dateFrom||'')+'"></td><td><input type="date" lang="en" class="finp ti" style="width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateTo" value="'+e(t.dateTo||'')+'"></td><td><select class="fsel ts" style="width:100%" data-ti="'+ti+'">'+['معلق','قيد الانتظار','جارٍ','منجز','متأخر'].map(function(s){return'<option'+(s===t.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></td><td><input class="finp ti" style="width:100%" data-ti="'+ti+'" data-f="update" placeholder="التحديث..." value="'+e(t.update||'')+'"></td><td><button class="ab abr tdl" data-ti="'+ti+'" style="padding:1px 4px;font-size:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td></tr>';}).join('')+'</tbody></table></div>';}
+function rfT(){var old=document.getElementById('tarea');if(!old)return;var tmp=document.createElement('div');tmp.innerHTML=tH();var wrap=old.closest('.s3m-at-wrap');var target=wrap||old;target.parentNode.replaceChild(tmp.firstChild,target);wireT();}
 function attachRespAC(inp){inp.setAttribute('autocomplete','off');var drop=document.createElement('div');drop.style.cssText='position:absolute;z-index:9999;background:#fff;border:1.5px solid #c0a8e8;border-radius:9px;box-shadow:0 4px 18px rgba(44,22,84,.18);max-height:180px;overflow-y:auto;min-width:220px;display:none;font-size:11px;font-family:Tahoma,Arial;direction:rtl';document.body.appendChild(drop);function show(q2){var filtered=RESP_LIST.filter(function(r){return r.includes(q2);});if(!filtered.length||!q2){drop.style.display='none';return;}drop.innerHTML=filtered.map(function(r){return'<div class="ac-item" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid #f0ecff;color:#2c1654;font-weight:600">'+r+'</div>';}).join('');drop.querySelectorAll('.ac-item').forEach(function(item){item.onmousedown=function(ev2){ev2.preventDefault();inp.value=item.textContent;var ti2=parseInt(inp.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=item.textContent;drop.style.display='none';};item.onmouseover=function(){this.style.background='#ede8ff';};item.onmouseout=function(){this.style.background='';};});var rect=inp.getBoundingClientRect();drop.style.top=(rect.bottom+window.scrollY+2)+'px';drop.style.right=(window.innerWidth-rect.right)+'px';drop.style.display='block';}inp.addEventListener('input',function(){show(this.value);var ti2=parseInt(this.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=this.value;});inp.addEventListener('focus',function(){show(this.value||'');});inp.addEventListener('blur',function(){setTimeout(function(){drop.style.display='none';},150);});inp._acDrop=drop;}
 function wireT(){document.querySelectorAll('.ti').forEach(function(el){if(el.getAttribute('data-f')==='responsible'){attachRespAC(el);}else{el.oninput=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value;};}});document.querySelectorAll('.ts').forEach(function(el){el.onchange=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i].status=el.value;};});document.querySelectorAll('.tdl').forEach(function(el){el.onclick=function(){var ti2=parseInt(el.getAttribute('data-ti'));var _t=wt[ti2];var _di2=parseInt(document.getElementById('smModal').getAttribute('data-di')||'-1');var _mi2=parseInt(document.getElementById('smModal').getAttribute('data-mi')||'-1');var _comm=(_di2>=0&&D[_di2])?D[_di2].n:'لجنة';var _label=_comm+' — تكليف: '+(_t?(_t.task||'').substring(0,40):'');moveToTrash('task',{task:JSON.parse(JSON.stringify(_t||{})),di:_di2,mi:_mi2,committee_name:_comm},_label);wt.splice(ti2,1);rfT();};});}
 document.getElementById('smBody').innerHTML='<div style="background:linear-gradient(135deg,#ede8ff,#ddf0fb);border-radius:9px;padding:8px 12px;margin-bottom:11px;border-right:4px solid var(--s3-mid)"><div style="font-size:11px;font-weight:700">'+e(D[di].n)+'</div><div style="font-size:9.5px;color:var(--s3-accent);margin-top:1px">'+e(D[di].r)+' • '+D[di].ty+'</div></div><div class="mg2"><div class="mi"><div class="flbl">رقم الاجتماع</div><input id="smnum" class="finp" type="number" min="1" value="'+(m.meetNum||'')+'"></div><div class="mi"><div class="flbl">تاريخ الاجتماع</div><input id="smd" class="finp" type="date" lang="en" style="direction:ltr;text-align:left" value="'+e(m.date||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl">مكان الاجتماع</div><input id="sml" class="finp" value="'+e(m.loc||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl" style="display:flex;align-items:center;justify-content:space-between">جدول الأعمال <button id="btnAA" style="background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;border:none;border-radius:6px;padding:2px 9px;font-size:10px;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة بند</button></div><div id="agendaList" style="margin-top:4px"></div></div><div class="mi" style="grid-column:1/-1"><div class="flbl">ملاحظات</div><textarea id="smn" class="finp" rows="3" style="resize:vertical">'+e(m.notes||'')+'</textarea></div>'+'<div class="mi" style="grid-column:1/-1">'+'<div class="flbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg> المرئيات على عرض الاجتماع</div>'+'<textarea id="smrv" class="finp" rows="4" style="resize:vertical" placeholder="أدخل المرئيات والتوصيات على عرض الاجتماع...">'+e(m.remarks||'')+'</textarea></div>'+'<div class="mi" style="grid-column:1/-1">'      +'<div class="flbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> محضر الاجتماع (PDF)</div>'      +'<div style="display:flex;align-items:center;gap:10px;margin-top:4px">'        +'<label style="display:inline-flex;align-items:center;gap:7px;background:#f0f8ff;border:1.5px dashed #1a5276;border-radius:10px;padding:9px 16px;cursor:pointer;font-size:12px;color:#1a5276;font-family:Tahoma;white-space:nowrap;flex-shrink:0">'          +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> اختر ملف PDF <input type="file" id="smm_file" accept=".pdf,application/pdf" style="display:none">'        +'</label>'        +'<span id="smm_file_name" style="font-size:11px;color:#555;font-family:Tahoma">لم يُختر ملف</span>'        +'<button type="button" id="smm_view_btn" style="display:none;background:#27ae60;color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:Tahoma"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> عرض</button>'        +'<button type="button" id="smm_clear" data-clear="smm" style="display:none;background:#e74c3c;color:#fff;border:none;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:Tahoma">✕ حذف</button>'      +'</div>'      +'<input type="hidden" id="smm" value="'+e(m.minutes_pdf||'')+'">'    +'</div>'  +'</div><div class="s3stitle"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> التكليفات</span><button id="btnAT" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة تكليف</button></div>'+tH()+'<div style="display:flex;gap:7px;margin-top:12px"><button id="btnSaveSM" style="flex:1;background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;border:none;border-radius:9px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> '+(isNew?'إضافة':'حفظ')+'</button><button id="btnCancelSM" style="background:#e9ecef;color:#555;border:none;border-radius:9px;padding:8px 13px;font-size:12px;cursor:pointer;font-family:inherit">إلغاء</button></div>';
@@ -5835,8 +5904,119 @@ function exportS3Excel(){
 /* ===== END EXCEL EXPORT ===== */
 
 /* MODALS */
-function shM(id){document.getElementById(id).style.display='flex';document.body.style.overflow='hidden';}
-function clM(id){document.getElementById(id).style.display='none';document.body.style.overflow='';}
+/* ═══════════════════════════════════════════════════
+   DRAGGABLE MODALS — نوافذ قابلة للسحب
+   ═══════════════════════════════════════════════════ */
+function makeDraggable(overlay, inner, handle) {
+  /* overlay = الـ backdrop (.mbg أو div.position:fixed)
+     inner   = الـ modal نفسه (white box)
+     handle  = مقبض السحب (header element) */
+  if (!inner || !handle) return;
+  if (inner._draggable) return; /* لا تُطبق مرتين */
+  inner._draggable = true;
+
+  /* cursor hint */
+  handle.style.cursor = 'move';
+  handle.style.userSelect = 'none';
+
+  var startX, startY, startL, startT, dragging = false;
+
+  /* عند فتح النافذة نضع position:fixed وتمركزها */
+  function initPosition() {
+    if (inner.style.position === 'fixed') return;
+    var rect = inner.getBoundingClientRect();
+    inner.style.position = 'fixed';
+    inner.style.left     = rect.left + 'px';
+    inner.style.top      = rect.top  + 'px';
+    inner.style.margin   = '0';
+    inner.style.transform = 'none';
+    /* الـ overlay يصبح pointer-events:none للسحب */
+  }
+
+  function onDown(e) {
+    /* تجاهل النقر على الأزرار داخل الـ header */
+    if (e.target.closest('button')) return;
+    initPosition();
+    dragging = true;
+    var cl = e.touches ? e.touches[0] : e;
+    startX = cl.clientX;
+    startY = cl.clientY;
+    startL = parseFloat(inner.style.left) || 0;
+    startT = parseFloat(inner.style.top)  || 0;
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('touchend',  onUp);
+    e.preventDefault();
+  }
+
+  function onMove(e) {
+    if (!dragging) return;
+    var cl = e.touches ? e.touches[0] : e;
+    var dx = cl.clientX - startX;
+    var dy = cl.clientY - startY;
+    /* قيود: لا تخرج عن حدود الشاشة */
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var w  = inner.offsetWidth,  h  = inner.offsetHeight;
+    var nx = Math.min(Math.max(0, startL + dx), vw - w);
+    var ny = Math.min(Math.max(0, startT + dy), vh - 40);
+    inner.style.left = nx + 'px';
+    inner.style.top  = ny + 'px';
+    if (e.cancelable) e.preventDefault();
+  }
+
+  function onUp() {
+    dragging = false;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup',   onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend',  onUp);
+  }
+
+  handle.addEventListener('mousedown',  onDown);
+  handle.addEventListener('touchstart', onDown, {passive:false});
+
+  /* إعادة التمركز عند الإغلاق لأجل الفتحة التالية */
+  inner._resetDrag = function() {
+    inner.style.position  = '';
+    inner.style.left      = '';
+    inner.style.top       = '';
+    inner.style.margin    = '';
+    inner.style.transform = '';
+  };
+}
+
+/* تطبيق على النوافذ الديناميكية */
+function applyDraggable(overlay) {
+  requestAnimationFrame(function() {
+    var inner  = overlay.firstElementChild;
+    var handle = inner && (inner.querySelector('.mail-hdr') ||
+                           inner.querySelector('[style*="gradient"][style*="flex"]') ||
+                           inner.querySelector('[style*="gradient"]'));
+    if (inner && handle) makeDraggable(overlay, inner, handle);
+  });
+}
+
+/* تطبيق على النوافذ الثابتة عند الفتح */
+function shM(id) {
+  var overlay = document.getElementById(id);
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  /* ابحث عن الـ inner modal وأول header */
+  var inner  = overlay.querySelector('.modal') || overlay.firstElementChild;
+  var handle = inner  && (inner.querySelector('.mhdr') || inner.querySelector('[style*="gradient"]'));
+  if (inner && handle) makeDraggable(overlay, inner, handle);
+}
+function clM(id){
+  var overlay=document.getElementById(id);
+  if(!overlay)return;
+  overlay.style.display='none';
+  document.body.style.overflow='';
+  /* إعادة تمركز للفتحة التالية */
+  var inner=overlay.querySelector('.modal')||overlay.firstElementChild;
+  if(inner&&inner._resetDrag)inner._resetDrag();
+}
 function clAll(){['addModal','viewModal','editModal','smModal','pickModal'].forEach(function(id){document.getElementById(id).style.display='none';});document.body.style.overflow='';}
 function confirmDel(msg,cb){var box=document.createElement('div');box.className='confirm-box';box.innerHTML='<div class="confirm-inner"><p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> هل تريد حذف:<span class="ci-name">'+e(msg)+'</span></p><div class="confirm-btns"><button class="cb-yes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> نعم</button><button class="cb-no">إلغاء</button></div></div>';document.body.appendChild(box);box.querySelector('.cb-yes').onclick=function(){document.body.removeChild(box);cb(true);};box.querySelector('.cb-no').onclick=function(){document.body.removeChild(box);cb(false);};box.onclick=function(ev){if(ev.target===box){document.body.removeChild(box);cb(false);}}}
 
@@ -6079,6 +6259,7 @@ async function openTrashModal(){
     html+='</div></div>';
     box.innerHTML=html;
     document.body.appendChild(box);
+    applyDraggable(box);
     /* wire restore buttons */
     box.querySelectorAll('.trash-restore-btn').forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -6205,6 +6386,7 @@ async function openAuditModal(){
     html+='</div></div>';
     box.innerHTML=html;
     document.body.appendChild(box);
+  applyDraggable(box);
   }catch(err){alert('خطأ في تحميل السجل: '+err.message);}
 }
 
@@ -6413,6 +6595,7 @@ function showLogoutModal(){
     +'</div>';
   box.appendChild(inner);
   document.body.appendChild(box);
+  applyDraggable(box);
   document.getElementById('loBtnYes').onclick=function(){box.remove();doLogout();};
   document.getElementById('loBtnNo').onclick=function(){box.remove();};
 }
@@ -7049,8 +7232,8 @@ function s4RenKanban(tasks){
           +(t.mailLog&&t.mailLog.length?'<span style="color:#1a5276;font-size:9.5px;background:#e8f4fd;border-radius:4px;padding:1px 6px"> '+t.mailLog.length+' مراسلة</span>':'')
           +'</div>'
           +'<div class="kanban-card-btns">'
-          +'<button class="k-btn k-btn-mail" onclick="s4OpenMail('+JSON.stringify(t).replace(/"/g,"&quot;")+')"> إرسال</button>'
-          +'<button class="k-btn k-btn-remind" onclick="s4OpenRemind('+JSON.stringify(t).replace(/"/g,"&quot;")+')"> تذكير</button>'
+          +(t.status!=='منجز'?'<button class="k-btn k-btn-mail" onclick="s4OpenMail('+JSON.stringify(t).replace(/"/g,"&quot;")+')"> إرسال</button>':'')
+          +(t.status!=='منجز'?'<button class="k-btn k-btn-remind" onclick="s4OpenRemind('+JSON.stringify(t).replace(/"/g,"&quot;")+')"> تذكير</button>':'')
           +'<button class="k-btn" style="background:#e8f0fe;color:#1a5276" onclick="s4ShowMailLog('+JSON.stringify(t).replace(/"/g,"&quot;")+')"> سجل</button>'
           +(t.status!=='منجز'?'<button class="k-btn" style="background:'+(t.escalated?'#fff3e0':'#fce4ec')+';color:'+(t.escalated?'#e65100':'#c62828')+';border:1px solid '+(t.escalated?'#ffcc02':'#ef9a9a')+'" onclick="s4ToggleEscalate('+t.di+','+t.mi+','+t.ti+')">'+(t.escalated?' مُصعَّد':' تصعيد')+'</button>':'')
           +'</div>'
@@ -7403,7 +7586,7 @@ function s4DrawGanttSVG(){
   /* scoped CSS */
   var CSS=(
     '<style id="s4GCSS">'
-    +'#s4GScroll{width:100%;height:100%;overflow:auto;-webkit-overflow-scrolling:touch;direction:rtl}'
+    +'#s4GScroll{width:100%;height:100%;overflow:auto;-webkit-overflow-scrolling:touch;direction:rtl;position:relative}'+'#s4GScroll::-webkit-scrollbar{height:10px;width:10px}'+'#s4GScroll::-webkit-scrollbar-track{background:#e8eef6;border-radius:6px}'+'#s4GScroll::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#2a6a8f,#1d8a6e);border-radius:6px;border:2px solid #e8eef6;min-width:40px}'+'#s4GScroll::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#1e3a5f,#2a6a8f)}'+'#s4GScroll::-webkit-scrollbar-corner{background:#e8eef6}'+'#s4GScroll{scrollbar-width:thin;scrollbar-color:#2a6a8f #e8eef6}'+'#s4GScrollWrap{position:relative}'+'#s4GScrollWrap::before,#s4GScrollWrap::after{content:"";position:absolute;top:0;bottom:10px;width:32px;pointer-events:none;z-index:20;transition:opacity .3s}'+'#s4GScrollWrap::before{right:'+STICKY+'px;background:linear-gradient(to left,rgba(30,58,95,.12),transparent)}'+'#s4GScrollWrap::after{left:0;background:linear-gradient(to right,rgba(30,58,95,.12),transparent)}'
     +'#s4GT{border-collapse:collapse;direction:rtl;font-family:Tahoma,Arial;width:'+TOTAL+'px}'
     /* sticky columns */
     +'#s4GT .c1{position:sticky;right:0;z-index:12;width:'+CW1+'px;min-width:'+CW1+'px}'
@@ -7517,14 +7700,139 @@ function s4DrawGanttSVG(){
 
   body.innerHTML=H;
 
-  /* scroll to today */
+  /* scroll to today + attach scroll progress bar */
   requestAnimationFrame(function(){
     var sc=document.getElementById('s4GScroll');
     if(!sc) return;
+    /* store metadata for progress bar */
+    sc._ganttMinD = minD.toISOString();
+    sc._ganttDW   = DW;
     var off=Math.round((today-minD)/86400000);
     sc.scrollLeft=Math.max(0, STICKY+off*DW - sc.clientWidth/2);
     _s4GTip(tasks,pd,fd,s4GetRAG);
+    _s4GScrollBar(sc, STICKY, TOTAL);
+    /* keyboard scroll support */
+    sc.setAttribute('tabindex','0');
+    sc.focus({preventScroll:true});
+    /* fade edge indicators */
+    var gbody=document.getElementById('s4GBody');
+    function updateEdges(){
+      if(!gbody||!sc)return;
+      var atLeft=sc.scrollLeft<=2;
+      /* RTL: scrollLeft is negative in some browsers */
+      var maxScroll=sc.scrollWidth-sc.clientWidth;
+      var atRight=Math.abs(sc.scrollLeft)>=maxScroll-2;
+      gbody.classList.toggle('can-scroll-left', !atLeft);
+      gbody.classList.toggle('can-scroll-right', !atRight);
+    }
+    sc.addEventListener('scroll', updateEdges, {passive:true});
+    window.addEventListener('resize', updateEdges);
+    updateEdges();
+    /* keyboard arrow scroll */
+    sc.addEventListener('keydown',function(e){
+      var step=80;
+      if(e.key==='ArrowLeft'){sc.scrollLeft+=step;e.preventDefault();}
+      else if(e.key==='ArrowRight'){sc.scrollLeft-=step;e.preventDefault();}
+      else if(e.key==='ArrowUp'){sc.scrollTop-=step;e.preventDefault();}
+      else if(e.key==='ArrowDown'){sc.scrollTop+=step;e.preventDefault();}
+      else if(e.key==='Home'){sc.scrollLeft=0;e.preventDefault();}
+      else if(e.key==='End'){sc.scrollLeft=sc.scrollWidth;e.preventDefault();}
+    });
   });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SCROLL PROGRESS BAR  — شريط تقدم الـ scroll الأفقي
+   ════════════════════════════════════════════════════════════════════ */
+function _s4GScrollBar(sc, sticky, total){
+  /* إنشاء حاوية الـ scroll bar إن لم تكن موجودة */
+  var body = document.getElementById('s4GBody');
+  if(!body) return;
+
+  var BAR_ID = 's4GProgBar';
+  var old = document.getElementById(BAR_ID);
+  if(old) old.parentNode.removeChild(old);
+
+  /* الحاوية الخارجية */
+  var wrap = document.createElement('div');
+  wrap.id = BAR_ID;
+  wrap.style.cssText = [
+    'position:absolute',
+    'bottom:0',
+    'left:0',
+    'right:0',
+    'height:6px',
+    'background:rgba(30,58,95,.1)',
+    'z-index:25',
+    'border-radius:0 0 4px 4px',
+    'overflow:hidden',
+    'cursor:pointer',
+    'direction:ltr'
+  ].join(';');
+
+  /* الـ thumb */
+  var thumb = document.createElement('div');
+  thumb.style.cssText = [
+    'position:absolute',
+    'top:0',
+    'height:100%',
+    'background:linear-gradient(90deg,#2a6a8f,#1d8a6e)',
+    'border-radius:3px',
+    'transition:left .05s linear,width .05s linear',
+    'min-width:40px'
+  ].join(';');
+  wrap.appendChild(thumb);
+
+  /* نقطة "اليوم" */
+  var todayDot = document.createElement('div');
+  todayDot.style.cssText = [
+    'position:absolute',
+    'top:1px',
+    'width:4px',
+    'height:4px',
+    'background:#ef4444',
+    'border-radius:50%',
+    'transform:translateX(-50%)',
+    'transition:left .05s linear'
+  ].join(';');
+  wrap.appendChild(todayDot);
+
+  body.appendChild(wrap);
+
+  function updateBar(){
+    var maxScroll = sc.scrollWidth - sc.clientWidth;
+    if(maxScroll <= 0){ wrap.style.opacity='0'; return; }
+    wrap.style.opacity='1';
+    var pct = sc.scrollLeft / maxScroll;
+    var trackW = wrap.clientWidth;
+    var thumbW = Math.max(40, Math.round(sc.clientWidth / sc.scrollWidth * trackW));
+    var thumbX = Math.round(pct * (trackW - thumbW));
+    thumb.style.width  = thumbW + 'px';
+    thumb.style.left   = thumbX + 'px';
+    /* today dot position */
+    var todayOff = sticky + Math.round((new Date() - new Date(sc._ganttMinD||Date.now())) / 86400000) * (sc._ganttDW||12);
+    var dotPct = Math.min(1, Math.max(0, todayOff / (sc.scrollWidth||1)));
+    todayDot.style.left = Math.round(dotPct * trackW) + 'px';
+  }
+
+  /* click/drag على الـ bar للـ scroll المباشر */
+  function scrubTo(ev){
+    var rect = wrap.getBoundingClientRect();
+    var cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+    var pct = Math.min(1, Math.max(0, cx / rect.width));
+    sc.scrollLeft = pct * (sc.scrollWidth - sc.clientWidth);
+  }
+  var dragging = false;
+  wrap.addEventListener('mousedown',  function(e){ dragging=true; scrubTo(e); e.preventDefault(); });
+  wrap.addEventListener('touchstart', function(e){ dragging=true; scrubTo(e); },{passive:true});
+  document.addEventListener('mousemove',  function(e){ if(dragging) scrubTo(e); });
+  document.addEventListener('touchmove',  function(e){ if(dragging) scrubTo(e); },{passive:true});
+  document.addEventListener('mouseup',    function(){ dragging=false; });
+  document.addEventListener('touchend',   function(){ dragging=false; });
+
+  sc.addEventListener('scroll', updateBar, {passive:true});
+  window.addEventListener('resize', updateBar);
+  updateBar();
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -7689,19 +7997,20 @@ function s4ShowTab(tab){
 function s4OpenMail(t){
   s4MailTask=t;
   var subject='متابعة التكليف: '+t.task.substring(0,60);
-  var bodyText='السلام عليكم ورحمة الله،\n\nنود إشعاركم بالتكليف التالي المسند إليكم:\n\n'
-    +'التكليف: '+t.task+'\nاللجنة: '+t.committee+'\nالحالة الحالية: '+t.status
-    +(t.dateTo?'\nتاريخ الاستحقاق: '+t.dateTo:'')+'\n\nنرجو التكرم بتحديث حالة التنفيذ.\n\nوكالة التعاون الدولي — وزارة التعليم';
-  s4ShowMailModal('إرسال التكليف بالبريد الإلكتروني', t.rep||'', subject, bodyText, false);
+  /* نص الرسالة — فقط تفاصيل التكليف، بدون تحية (تُضاف في s4SendMail) */
+  var taskDetails='تجدون سعادتكم أدناه بيانات التكليف المسند...\n\n'
+    +'التكليف: '+t.task+'\nاللجنة: '+t.committee+'\nالحالة الحالية: '+t.status+(t.dateTo?'\nتاريخ الاستحقاق: '+t.dateTo:'')+'\n\nنأمل تلطف سعادتكم بالاطلاع وإكمال ما يلزم والإفادة بما يتم.';
+  s4ShowMailModal('إرسال التكليف بالبريد الإلكتروني', '', subject, taskDetails, false);
 }
 
 function s4OpenRemind(t){
   s4MailTask=t;
   var subject='تذكير: '+t.task.substring(0,50);
-  var bodyText='السلام عليكم،\n\nهذا تذكير بشأن التكليف المسند إليكم:\n\n'
+  /* نص الرسالة — بدون تحية (تُضاف كحقل ثابت في النافذة) */
+  var taskDetails='تجدون سعادتكم أدناه بيانات التكليف المسند...\n\n'
     +'التكليف: '+t.task+'\nاللجنة: '+t.committee+'\nالحالة: '+t.status
-    +(t.dateTo?'\nالاستحقاق: '+t.dateTo:'')+'\n\nيُرجى المتابعة والتحديث.\n\nوكالة التعاون الدولي';
-  s4ShowMailModal('تذكير بالتكليف', t.rep||'', subject, bodyText, true);
+    +(t.dateTo?'\nالاستحقاق: '+t.dateTo:'')+'\n\nنأمل تلطف سعادتكم بالاطلاع وتحديث حالة التكليف والإفادة بما يتم.';
+  s4ShowMailModal('تذكير بالتكليف', '', subject, taskDetails, true);
 }
 
 
@@ -7940,11 +8249,37 @@ function s4ShowMailLog(t){
   var countEl=document.createElement('span');
   countEl.style.cssText='font-size:11px;color:#888;font-family:Tahoma';
   countEl.textContent='إجمالي المراسلات: '+log.length;
+  /* أزرار اليمين */
+  var btnWrap=document.createElement('div');
+  btnWrap.style.cssText='display:flex;gap:8px;align-items:center';
+  /* زر إعادة التعيين */
+  var resetBtn=document.createElement('button');
+  resetBtn.textContent='🗑 مسح السجل';
+  resetBtn.style.cssText='background:#fde8e8;color:#922b21;border:1px solid #f5c6cb;border-radius:8px;padding:6px 14px;font-size:11px;cursor:pointer;font-family:Tahoma;font-weight:700';
+  resetBtn.onclick=function(){
+    /* تأكيد قبل الحذف */
+    if(!confirm('هل تريد مسح جميع سجلات المراسلات لهذا التكليف؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    /* حذف السجل من البيانات المباشرة */
+    if(t.di!==undefined&&t.mi!==undefined&&t.ti!==undefined){
+      var _m=GM(t.di)[t.mi];
+      if(_m&&_m.tasks[t.ti]){
+        _m.tasks[t.ti].mailLog=[];
+        _m.tasks[t.ti].update='';
+        scheduleSave();
+      }
+    }
+    /* أيضاً من كائن t المحلي */
+    t.mailLog=[];
+    showToast('تم مسح سجل المراسلات');
+    box.remove();
+    renS4();
+  };
   var closeBtn=document.createElement('button');
   closeBtn.textContent='إغلاق';
   closeBtn.style.cssText='background:#e9ecef;color:#555;border:none;border-radius:8px;padding:6px 16px;font-size:11px;cursor:pointer;font-family:Tahoma';
   closeBtn.onclick=function(){box.remove();};
-  ftr.appendChild(countEl); ftr.appendChild(closeBtn);
+  btnWrap.appendChild(resetBtn); btnWrap.appendChild(closeBtn);
+  ftr.appendChild(countEl); ftr.appendChild(btnWrap);
   inner.appendChild(ftr);
 
   box.appendChild(inner);
@@ -7959,59 +8294,146 @@ function s4ShowMailModal(title, toEmail, subject, bodyText, isRemind){
   box.id='s4MailModal';
   box.onclick=function(ev){if(ev.target===box)box.remove();};
   window._s4MailIsRemind=isRemind;
+
   var inner=document.createElement('div');
   inner.className='mail-inner';
-  /* header */
+  inner.style.maxWidth='600px';
+
+  /* ── HEADER ── */
   var hdr=document.createElement('div');
   hdr.className='mail-hdr';
-  hdr.innerHTML='<div style="color:#fff;font-size:14px;font-weight:700;font-family:Tahoma">'+e(title)+'</div>';
+  hdr.innerHTML='<div style="color:#fff;font-size:14px;font-weight:700;font-family:Sakkal Majalla,Tahoma">'+e(title)+'</div>';
   var btnX=document.createElement('button');
   btnX.textContent='× إغلاق';
   btnX.style.cssText='background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:4px 12px;cursor:pointer;font-family:Tahoma;font-size:12px';
   btnX.onclick=function(){box.remove();};
   hdr.appendChild(btnX);
   inner.appendChild(hdr);
-  /* body */
+
+  /* ── BODY ── */
   var body2=document.createElement('div');
   body2.className='mail-body';
-  body2.innerHTML=''
-    +'<div class="mail-field"><label>إلى (البريد الإلكتروني)</label>'
-    +'<input type="email" id="mailTo" value="'+e(toEmail)+'" placeholder="example@moe.gov.sa" dir="ltr"></div>'
-    +'<div class="mail-field"><label>الموضوع</label>'
-    +'<input type="text" id="mailSubj" value="'+e(subject)+'"></div>'
-    +'<div class="mail-field"><label>نص الرسالة</label>'
-    +'<textarea id="mailBody" rows="8" style="min-height:160px">'+e(bodyText)+'</textarea></div>';
+
+  var RECIPIENTS=[
+    'سعادة المدير العام للإدارة العامة للعلاقات الدولية               وفقه الله',
+    'سعادة المدير العام للإدارة العامة للمنظمات الدولية               وفقه الله',
+    'سعادة الأمين للملحقيات الثقافية               وفقه الله',
+    'سعادة مدير إدارة الارتباط الدولي               وفقه الله',
+    'سعادة مدير إدارة الارتباط الثقافي               وفقه الله'
+  ];
+
+  var recOpts=RECIPIENTS.map(function(r){return'<option value="'+e(r)+'">'+e(r)+'</option>';}).join('');
+  recOpts+='<option value="__manual__">✏️ إدخال يدوي...</option>';
+
+  /* نص الرسالة الكامل يُبنى ديناميكياً */
+  function buildBody(recipientName){
+    /* التحية تظهر كحقل ثابت منفصل — هنا فقط تفاصيل التكليف */
+    return bodyText;
+  }
+
+  body2.innerHTML=
+    /* ── حقل المرسل إليه ── */
+    '<div class="mail-field">'+
+      '<label style="font-family:Sakkal Majalla,Tahoma;font-size:15px">المرسل إليه</label>'+
+      '<select id="mailRecipientSel" style="width:100%;border:1.5px solid #d0dde8;border-radius:8px;padding:9px 12px;font-size:15px;font-family:Sakkal Majalla,Tahoma;direction:rtl;outline:none;background:#fff;cursor:pointer">'+
+        recOpts+
+      '</select>'+
+      '<input type="text" id="mailRecipientManual" placeholder="اكتب اسم المرسل إليه..." '+
+        'style="display:none;margin-top:6px;width:100%;border:1.5px solid #3188a8;border-radius:8px;padding:9px 12px;font-size:15px;font-family:Sakkal Majalla,Tahoma;direction:rtl;outline:none">'+
+    '</div>'+
+    /* ── البريد الإلكتروني (اختياري) ── */
+    '<div class="mail-field">'+
+      '<label style="font-family:Sakkal Majalla,Tahoma;font-size:15px">البريد الإلكتروني <span style="font-size:12px;color:#888;font-weight:400">(اختياري — يُضاف تلقائياً في حقل To)</span></label>'+
+      '<input type="email" id="mailTo" value="'+e(toEmail)+'" placeholder="example@moe.gov.sa" dir="ltr" '+
+        'style="font-family:monospace,Tahoma;font-size:13px">'+
+    '</div>'+
+    /* ── الموضوع ── */
+    '<div class="mail-field">'+
+      '<label style="font-family:Sakkal Majalla,Tahoma;font-size:15px">الموضوع</label>'+
+      '<input type="text" id="mailSubj" value="'+e(subject)+'" '+
+        'style="font-family:Sakkal Majalla,Tahoma;font-size:16px">'+
+    '</div>'+
+    /* ── التحية الثابتة ── */
+    '<div style="background:linear-gradient(135deg,#f0f7ff,#e8f4fd);border-right:4px solid #2980b9;border-radius:0 8px 8px 0;padding:9px 14px;margin-bottom:12px;font-family:Sakkal Majalla,Tahoma;font-size:16px;color:#1a3a5c;font-weight:700">'+
+      'السلام عليكم ورحمة الله وبركاته'+
+    '</div>'+
+    /* ── نص الرسالة ── */
+    '<div class="mail-field">'+
+      '<label style="font-family:Sakkal Majalla,Tahoma;font-size:15px">نص الرسالة</label>'+
+      '<textarea id="mailBody" rows="7" style="min-height:150px;font-family:Sakkal Majalla,Tahoma;font-size:16px!important;line-height:1.8">'+e(buildBody(''))+'</textarea>'+
+    '</div>';
+
   inner.appendChild(body2);
-  /* footer */
+
+  /* ── FOOTER ── */
   var ftr=document.createElement('div');
   ftr.className='mail-footer';
   var btn1=document.createElement('button');
-  btn1.style.cssText='background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;border:none;border-radius:9px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer;font-family:Tahoma';
-  btn1.textContent=' فتح في البريد';
+  btn1.style.cssText='background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;border:none;border-radius:9px;padding:9px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:Sakkal Majalla,Tahoma';
+  btn1.innerHTML='📤 فتح في البريد';
   btn1.onclick=s4SendMail;
   var btn2=document.createElement('button');
-  btn2.style.cssText='background:#e9ecef;color:#333;border:none;border-radius:9px;padding:8px 16px;font-size:12px;cursor:pointer;font-family:Tahoma';
-  btn2.textContent=' نسخ النص';
+  btn2.style.cssText='background:#e9ecef;color:#333;border:none;border-radius:9px;padding:9px 16px;font-size:14px;cursor:pointer;font-family:Sakkal Majalla,Tahoma';
+  btn2.innerHTML='📋 نسخ النص';
   btn2.onclick=s4CopyMail;
   var btn3=document.createElement('button');
-  btn3.style.cssText='background:#f8d7da;color:#721c24;border:none;border-radius:9px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:Tahoma';
+  btn3.style.cssText='background:#f8d7da;color:#721c24;border:none;border-radius:9px;padding:9px 14px;font-size:14px;cursor:pointer;font-family:Sakkal Majalla,Tahoma';
   btn3.textContent='إلغاء';
   btn3.onclick=function(){box.remove();};
   ftr.appendChild(btn1); ftr.appendChild(btn2); ftr.appendChild(btn3);
   inner.appendChild(ftr);
   box.appendChild(inner);
   document.body.appendChild(box);
+  applyDraggable(box);
+
+  /* ── منطق القائمة المنسدلة ── */
+  var sel=document.getElementById('mailRecipientSel');
+  var manInp=document.getElementById('mailRecipientManual');
+  sel.addEventListener('change',function(){
+    if(sel.value==='__manual__'){
+      manInp.style.display='block';
+      manInp.focus();
+    } else {
+      manInp.style.display='none';
+    }
+  });
 }
 
 function s4SendMail(){
-  var toVal=document.getElementById('mailTo').value.trim();
-  var subjVal=document.getElementById('mailSubj').value.trim();
-  var bodyVal=document.getElementById('mailBody').value.trim();
+  /* اسم المرسل إليه */
+  var sel=document.getElementById('mailRecipientSel');
+  var manInp=document.getElementById('mailRecipientManual');
+  var recipientName='';
+  if(sel){
+    recipientName=(sel.value==='__manual__')
+      ?(manInp?manInp.value.trim():'')
+      :sel.value;
+  }
+
+  var toVal=(document.getElementById('mailTo')||{value:''}).value.trim();
+  var subjVal=(document.getElementById('mailSubj')||{value:''}).value.trim();
+  var bodyVal=(document.getElementById('mailBody')||{value:''}).value.trim();
+
+  /* بناء نص البريد الكامل بالترتيب الصحيح:
+     السطر 1: اسم المرسل إليه
+     سطر فارغ
+     السطر 2: السلام عليكم ورحمة الله وبركاته
+     سطر فارغ
+     السطر 3: نص الرسالة */
+  var NL='\n';
+  var fullBody=(recipientName?recipientName+NL+NL:'')
+    +'السلام عليكم ورحمة الله وبركاته'+NL+NL
+    +bodyVal;
+
   /* حفظ سجل المراسلة */
   var isRemind=window._s4MailIsRemind||false;
-  s4LogMail(toVal,subjVal,isRemind?'تذكير':'إرسال');
-  window.location.href='mailto:'+encodeURIComponent(toVal)+'?subject='+encodeURIComponent(subjVal)+'&body='+encodeURIComponent(bodyVal);
-  /* إغلاق النافذة بعد لحظة */
+  s4LogMail(toVal||recipientName,subjVal,isRemind?'تذكير':'إرسال');
+
+  /* فتح تطبيق البريد */
+  window.location.href='mailto:'+encodeURIComponent(toVal)
+    +'?subject='+encodeURIComponent(subjVal)
+    +'&body='+encodeURIComponent(fullBody);
+
   setTimeout(function(){var m=document.getElementById('s4MailModal');if(m)m.remove();},800);
 }
 
@@ -8040,16 +8462,28 @@ function s4LogMail(toEmail,subject,type){
 }
 
 function s4CopyMail(){
-  var txt=document.getElementById('mailBody').value;
-  navigator.clipboard.writeText(txt).then(function(){
-    showToast('تم نسخ نص الرسالة');
+  var sel=document.getElementById('mailRecipientSel');
+  var manInp=document.getElementById('mailRecipientManual');
+  var recipientName='';
+  if(sel){
+    recipientName=(sel.value==='__manual__')
+      ?(manInp?manInp.value.trim():'')
+      :sel.value;
+  }
+  var bodyVal=(document.getElementById('mailBody')||{value:''}).value;
+  var NL='\n';
+  var fullTxt=(recipientName?recipientName+NL+NL:'')
+    +'السلام عليكم ورحمة الله وبركاته'+NL+NL
+    +bodyVal;
+  navigator.clipboard.writeText(fullTxt).then(function(){
+    showToast('تم نسخ نص الرسالة كاملاً');
   }).catch(function(){
     showToast('تعذّر النسخ',true);
   });
 }
 
 function openAdminPanel(){
-  document.getElementById('adminModal').style.display='flex';
+  var _am=document.getElementById('adminModal');_am.style.display='flex';(function(){var inner=_am.firstElementChild;var handle=inner&&inner.querySelector('[style*="gradient"]');if(inner&&handle)makeDraggable(_am,inner,handle);})();
   document.getElementById('usersList').innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-family:Tahoma"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-left:3px"><path d="M5 3h14"/><path d="m17 3-5 7-5-7"/><path d="M5 21h14"/><path d="m17 21-5-7-5 7"/></svg> جاري التحميل...</div>';
   loadAuthUsers().then(function(){renderUsersList();}).catch(function(){renderUsersList();});
 }
@@ -8250,7 +8684,7 @@ function openExecSum(di,mi){
   /* Restore saved values if any */
   document.getElementById('esSummary').value=m.execSummary||'';
   document.getElementById('esDirectives').value=m.directives||'';
-  document.getElementById('execSumModal').style.display='flex';
+  var _esm=document.getElementById('execSumModal');_esm.style.display='flex';(function(){var inner=_esm.firstElementChild;var handle=inner&&inner.querySelector('[style*="gradient"]');if(inner&&handle)makeDraggable(_esm,inner,handle);})();
 }
 
 function saveExecSumFields(){
@@ -8944,6 +9378,7 @@ function importOpenModal(){
       '</div>'+
     '</div>';
   document.body.appendChild(modal);
+  applyDraggable(modal);
   importResetState();
 }
 
@@ -9691,6 +10126,7 @@ async function openChangelogModal(){
     +'</div>'
     +'</div>';
   document.body.appendChild(box);
+  applyDraggable(box);
   box.addEventListener('click',function(ev){if(ev.target===box)box.remove();});
   try{
     var rows=await sbFetch('lajan_audit?select=*&order=created_at.desc&limit=20');
