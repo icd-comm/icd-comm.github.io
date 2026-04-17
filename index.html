@@ -1800,32 +1800,6 @@ body {
 /* ── بنية لوحة التكليفات ── */
 </style>
 </head>
-<script>
-/* ── إظهار فوري لشاشة الدخول — يمنع الشاشة السوداء ── */
-(function(){
-  try{
-    var sessKey = null;
-    try{
-      if(localStorage.getItem('intl_session')) sessKey='intl_session';
-      else if(localStorage.getItem('lajan_session')) sessKey='lajan_session';
-    }catch(e){}
-    
-    if(sessKey){
-      var sess = JSON.parse(localStorage.getItem(sessKey));
-      var elapsed = Date.now() - sess.loginTime;
-      /* إذا الجلسة صالحة — لا تفعل شيئاً، الكود الرئيسي سيتولى */
-      if(elapsed < 28800000 && sess.email) return;
-      /* الجلسة منتهية — احذفها */
-      localStorage.removeItem(sessKey);
-    }
-    /* لا جلسة أو جلسة منتهية — أظهر شاشة الدخول فوراً */
-    document.addEventListener('DOMContentLoaded', function(){
-      var ls = document.getElementById('loginScreen');
-      if(ls) ls.style.display = 'flex';
-    });
-  }catch(e){}
-})();
-</script>
 <body>
 
 <div id="loginScreen" style="display:flex">
@@ -11287,29 +11261,18 @@ document.addEventListener('input', function(ev){
         var _sue=AUTH_USERS.find(function(u){return u.email.toLowerCase()===sess.email.toLowerCase();});
         currentUser={email:sess.email,role:sess.role,name:sess.name,permissions:(_sue&&_sue.permissions)||{}};
         applyRoleUI();
-        /* أظهر شاشة تحميل بدل الشاشة السوداء */
+        /* إخفاء شاشة تسجيل الدخول والدخول المباشر للتطبيق */
         var lsEl=document.getElementById('loginScreen');
-        if(lsEl){lsEl.style.display='flex';lsEl.style.opacity='1';}
-        /* إظهار مؤشر تحميل */
-        var loginBtn=document.getElementById('loginBtn');
-        if(loginBtn){loginBtn.disabled=true;loginBtn.textContent='جاري التحميل...';}
-        var loginErr=document.getElementById('loginErr');
-        if(loginErr){loginErr.style.display='none';}
+        if(lsEl)lsEl.style.display='none';
         /* تطبيق النظام الصحيح قبل الانتقال */
         updateSystemUI();
         setTimeout(function(){
           /* إعادة تطبيق UI بعد اكتمال DOM */
           updateSystemUI();
-          /* تحميل البيانات أولاً ثم الانتقال */
-          /* الانتقال للنظام مباشرة — init تعمل في الخلفية */
-          if(lsEl){lsEl.style.opacity='0';lsEl.style.transition='opacity .3s';setTimeout(function(){lsEl.style.display='none';},400);}
-          if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='دخول ←';}
           goTo('s1');
           if(typeof buildFilters==='function') buildFilters();
           if(typeof buildS2Filters==='function') buildS2Filters();
-          /* تحميل أحدث البيانات في الخلفية */
-          setTimeout(function(){ try{ init(); }catch(e){} }, 500);
-        },300);
+        },100);
         updateHomeStats();
         addUserBadge();
         clearSessionTimers();
@@ -11325,12 +11288,6 @@ document.addEventListener('input', function(ev){
       localStorage.removeItem(_sessKey);
     }
   }catch(e){}
-
-  /* ── إظهار شاشة الدخول إذا لا توجد جلسة نشطة ── */
-  if(!currentUser){
-    var lsEl=document.getElementById('loginScreen');
-    if(lsEl)lsEl.style.display='flex';
-  }
 
   setTimeout(function(){var em=document.getElementById('loginEmail');if(em)em.focus();},300);
   setTimeout(wrapRenCards,100);
