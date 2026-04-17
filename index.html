@@ -11287,18 +11287,31 @@ document.addEventListener('input', function(ev){
         var _sue=AUTH_USERS.find(function(u){return u.email.toLowerCase()===sess.email.toLowerCase();});
         currentUser={email:sess.email,role:sess.role,name:sess.name,permissions:(_sue&&_sue.permissions)||{}};
         applyRoleUI();
-        /* إخفاء شاشة تسجيل الدخول والدخول المباشر للتطبيق */
+        /* أظهر شاشة تحميل بدل الشاشة السوداء */
         var lsEl=document.getElementById('loginScreen');
-        if(lsEl)lsEl.style.display='none';
+        if(lsEl){lsEl.style.display='flex';lsEl.style.opacity='1';}
+        /* إظهار مؤشر تحميل */
+        var loginBtn=document.getElementById('loginBtn');
+        if(loginBtn){loginBtn.disabled=true;loginBtn.textContent='جاري التحميل...';}
+        var loginErr=document.getElementById('loginErr');
+        if(loginErr){loginErr.style.display='none';}
         /* تطبيق النظام الصحيح قبل الانتقال */
         updateSystemUI();
         setTimeout(function(){
           /* إعادة تطبيق UI بعد اكتمال DOM */
           updateSystemUI();
-          goTo('s1');
-          if(typeof buildFilters==='function') buildFilters();
-          if(typeof buildS2Filters==='function') buildS2Filters();
-        },100);
+          /* تحميل البيانات أولاً ثم الانتقال */
+          init().then(function(){
+            if(lsEl){lsEl.style.opacity='0';lsEl.style.transition='opacity .3s';setTimeout(function(){lsEl.style.display='none';},300);}
+            goTo('s1');
+            if(typeof buildFilters==='function') buildFilters();
+            if(typeof buildS2Filters==='function') buildS2Filters();
+          }).catch(function(){
+            /* إذا فشل التحميل — أظهر شاشة الدخول */
+            if(lsEl){lsEl.style.display='flex';lsEl.style.opacity='1';}
+            if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='دخول ←';}
+          });
+        },300);
         updateHomeStats();
         addUserBadge();
         clearSessionTimers();
