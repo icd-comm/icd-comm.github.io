@@ -1800,6 +1800,32 @@ body {
 /* ── بنية لوحة التكليفات ── */
 </style>
 </head>
+<script>
+/* ── إظهار فوري لشاشة الدخول — يمنع الشاشة السوداء ── */
+(function(){
+  try{
+    var sessKey = null;
+    try{
+      if(localStorage.getItem('intl_session')) sessKey='intl_session';
+      else if(localStorage.getItem('lajan_session')) sessKey='lajan_session';
+    }catch(e){}
+    
+    if(sessKey){
+      var sess = JSON.parse(localStorage.getItem(sessKey));
+      var elapsed = Date.now() - sess.loginTime;
+      /* إذا الجلسة صالحة — لا تفعل شيئاً، الكود الرئيسي سيتولى */
+      if(elapsed < 28800000 && sess.email) return;
+      /* الجلسة منتهية — احذفها */
+      localStorage.removeItem(sessKey);
+    }
+    /* لا جلسة أو جلسة منتهية — أظهر شاشة الدخول فوراً */
+    document.addEventListener('DOMContentLoaded', function(){
+      var ls = document.getElementById('loginScreen');
+      if(ls) ls.style.display = 'flex';
+    });
+  }catch(e){}
+})();
+</script>
 <body>
 
 <div id="loginScreen" style="display:flex">
