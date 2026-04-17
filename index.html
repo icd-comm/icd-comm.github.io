@@ -11301,17 +11301,14 @@ document.addEventListener('input', function(ev){
           /* إعادة تطبيق UI بعد اكتمال DOM */
           updateSystemUI();
           /* تحميل البيانات أولاً ثم الانتقال */
-          /* تشغيل init ثم الانتقال بعد اكتمالها */
-          (async function(){
-            try{
-              await init();
-            }catch(e){}
-            if(lsEl){lsEl.style.opacity='0';lsEl.style.transition='opacity .3s';setTimeout(function(){lsEl.style.display='none';},300);}
-            if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='دخول ←';}
-            goTo('s1');
-            if(typeof buildFilters==='function') buildFilters();
-            if(typeof buildS2Filters==='function') buildS2Filters();
-          })();
+          /* الانتقال للنظام مباشرة — init تعمل في الخلفية */
+          if(lsEl){lsEl.style.opacity='0';lsEl.style.transition='opacity .3s';setTimeout(function(){lsEl.style.display='none';},400);}
+          if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='دخول ←';}
+          goTo('s1');
+          if(typeof buildFilters==='function') buildFilters();
+          if(typeof buildS2Filters==='function') buildS2Filters();
+          /* تحميل أحدث البيانات في الخلفية */
+          setTimeout(function(){ try{ init(); }catch(e){} }, 500);
         },300);
         updateHomeStats();
         addUserBadge();
