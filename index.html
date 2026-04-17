@@ -11289,6 +11289,12 @@ document.addEventListener('input', function(ev){
     }
   }catch(e){}
 
+  /* ── إظهار شاشة الدخول إذا لا توجد جلسة نشطة ── */
+  if(!currentUser){
+    var lsEl=document.getElementById('loginScreen');
+    if(lsEl)lsEl.style.display='flex';
+  }
+
   setTimeout(function(){var em=document.getElementById('loginEmail');if(em)em.focus();},300);
   setTimeout(wrapRenCards,100);
 })();
@@ -12608,7 +12614,7 @@ function importExecute(){
     if (report.length > 0) {
       console.warn('[iOS Fix] عناصر تتجاوز الشاشة:', report);
     } else {
-      console.info('[iOS Fix] ✓ جميع العناصر المرئية داخل حدود الشاشة');
+      
     }
     return report;
   }
