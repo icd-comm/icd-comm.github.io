@@ -11301,16 +11301,17 @@ document.addEventListener('input', function(ev){
           /* إعادة تطبيق UI بعد اكتمال DOM */
           updateSystemUI();
           /* تحميل البيانات أولاً ثم الانتقال */
-          init().then(function(){
+          /* تشغيل init ثم الانتقال بعد اكتمالها */
+          (async function(){
+            try{
+              await init();
+            }catch(e){}
             if(lsEl){lsEl.style.opacity='0';lsEl.style.transition='opacity .3s';setTimeout(function(){lsEl.style.display='none';},300);}
+            if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='دخول ←';}
             goTo('s1');
             if(typeof buildFilters==='function') buildFilters();
             if(typeof buildS2Filters==='function') buildS2Filters();
-          }).catch(function(){
-            /* إذا فشل التحميل — أظهر شاشة الدخول */
-            if(lsEl){lsEl.style.display='flex';lsEl.style.opacity='1';}
-            if(loginBtn){loginBtn.disabled=false;loginBtn.textContent='دخول ←';}
-          });
+          })();
         },300);
         updateHomeStats();
         addUserBadge();
