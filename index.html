@@ -6169,7 +6169,7 @@ function getAllPendingTasks(d,di,currentMiTasks){
       if(t.status!=='منجز'){
         /* avoid duplicating tasks already in current meeting */
         var alreadyIn=currentMiTasks.some(function(ct){return ct.task===t.task&&ct.responsible===t.responsible;});
-        if(!alreadyIn)pending.push({task:t.task,responsible:t.responsible,status:t.status,dateFrom:t.dateFrom,dateTo:t.dateTo,notes:t.notes,fromMeet:mi+1});
+        if(!alreadyIn)pending.push({task:t.task,responsible:t.responsible,status:t.status,dateFrom:t.dateFrom,dateTo:t.dateTo,notes:t.notes,update:t.update,fromMeet:mi+1});
       }
     });
   });
