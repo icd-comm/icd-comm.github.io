@@ -70,6 +70,20 @@ html body #appScreen[style*="flex"] + #homeScreen{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
+@keyframes slideUpPending {
+  from{transform:translateY(20px);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+#pendingChangesBadge:hover{
+  box-shadow:0 8px 28px rgba(230,126,34,.55) !important;
+  transform:translateY(-2px);
+  transition:all .2s ease;
+}
+#globalSaveBtn:hover{
+  background:#fff8f0 !important;
+  transform:scale(1.05);
+  transition:all .15s ease;
+}
 @font-face {
   font-family: 'Helvetica Neue W23 for SKY Bd';
   src: local('Helvetica Neue W23 for SKY Bd'),
@@ -5810,6 +5824,8 @@ function updateLoginUI(){
 /* ══════════════════════════════════════════════════════
    تحديث واجهة التطبيق الكاملة عند تبديل النظام
    ══════════════════════════════════════════════════════ */
+/* تعريف مبكر لـ MSF — تستخدمه updateSystemUI وقد تُستدعى قبل التعريف الأصلي في buildMS */
+if(typeof MSF === 'undefined') var MSF = {};
 function updateSystemUI(){
   var isIntl=(activeSystem==='intl');
 
@@ -5986,11 +6002,13 @@ function updateSystemUI(){
         +'<input type="checkbox" value="'+v+'" style="accent-color:#6c3483"> '+v+'</label>';
     }).join('');
   }
-  /* مسح فلاتر الفئات الممسوحة عند التبديل */
-  if(MSF['fSc']) MSF['fSc']=MSF['fSc'].filter(function(v){return isIntl?v==='خارجية دولية':v!=='خارجية دولية';});
-  if(MSF['fTy']) MSF['fTy']=MSF['fTy'].filter(function(v){return isIntl?['مجلس تنسيقي دولي','لجنة دولية مشتركة'].indexOf(v)>=0:['لجنة','مجلس','فرق عمل'].indexOf(v)>=0;});
-  if(MSF['df_sc']) MSF['df_sc']=MSF['df_sc'].filter(function(v){return isIntl?v==='خارجية دولية':v!=='خارجية دولية';});
-  if(MSF['df_ty']) MSF['df_ty']=MSF['df_ty'].filter(function(v){return isIntl?['مجلس تنسيقي دولي','لجنة دولية مشتركة'].indexOf(v)>=0:['لجنة','مجلس','فرق عمل'].indexOf(v)>=0;});
+  /* مسح فلاتر الفئات الممسوحة عند التبديل — مع حماية من MSF undefined (قبل تهيئة script الرئيسي) */
+  if(typeof MSF !== 'undefined' && MSF){
+    if(MSF['fSc']) MSF['fSc']=MSF['fSc'].filter(function(v){return isIntl?v==='خارجية دولية':v!=='خارجية دولية';});
+    if(MSF['fTy']) MSF['fTy']=MSF['fTy'].filter(function(v){return isIntl?['مجلس تنسيقي دولي','لجنة دولية مشتركة'].indexOf(v)>=0:['لجنة','مجلس','فرق عمل'].indexOf(v)>=0;});
+    if(MSF['df_sc']) MSF['df_sc']=MSF['df_sc'].filter(function(v){return isIntl?v==='خارجية دولية':v!=='خارجية دولية';});
+    if(MSF['df_ty']) MSF['df_ty']=MSF['df_ty'].filter(function(v){return isIntl?['مجلس تنسيقي دولي','لجنة دولية مشتركة'].indexOf(v)>=0:['لجنة','مجلس','فرق عمل'].indexOf(v)>=0;});
+  }
   /* إعادة بناء فلاتر s1 و s2 الكاملة */
   if(typeof buildFilters==='function') buildFilters();
   if(typeof buildS2Filters==='function') buildS2Filters();
@@ -6009,30 +6027,105 @@ async function sbFetch(path,method,body){
   if(method==='POST')headers['Prefer']='return=representation';
   if(method==='PATCH')headers['Prefer']='return=representation';
   if(method==='DELETE')headers['Prefer']='return=representation';
-  var res=await fetch(SB_URL+'/rest/v1/'+path,{
+  /* حماية من تعلّق الشبكة: timeout 10 ثوانٍ باستخدام Promise.race
+     (نتجنب AbortController لأنه يسبب DataCloneError في بعض البيئات) */
+  var fetchPromise = fetch(SB_URL+'/rest/v1/'+path,{
     method:method||'GET',
     headers:headers,
     body:(body&&method!=='DELETE')?JSON.stringify(body):undefined
   });
+  var timeoutPromise = new Promise(function(_, reject){
+    setTimeout(function(){ reject(new Error('Supabase timeout: الاتصال بطيء أو محجوب')); }, 10000);
+  });
+  var res = await Promise.race([fetchPromise, timeoutPromise]);
   if(!res.ok){var t=await res.text();throw new Error('Supabase '+res.status+': '+t);}
   var txt=await res.text();return txt?JSON.parse(txt):null;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   وضع الحفظ اليدوي (Manual Save Mode)
+   ═══════════════════════════════════════════════════════════════
+   بدلاً من المزامنة الفورية مع Supabase عند كل تغيير (التي كانت
+   تسبب تعارضات)، الآن التغييرات تُخزَّن محلياً ويُعرض للمستخدم
+   عداد "تغييرات معلقة" + زر حفظ عام.
+   ══════════════════════════════════════════════════════════════ */
+var _pendingChangesCount = 0;
 function scheduleSave(){
-  if(syncTimer)clearTimeout(syncTimer);
-  setSyncUI('syncing','في انتظار الحفظ...');
-  _pendingSave=true;
-  syncTimer=setTimeout(function(){doSave().then(function(){_pendingSave=false;});},800);
+  /* بدلاً من الحفظ التلقائي: نزيد عداد التغييرات ونُحدِّث الشارة */
+  _pendingChangesCount++;
+  _pendingSave = true;
+  updatePendingBadge();
+}
+/* الحفظ الفعلي — يُستدعى عند الضغط على زر الحفظ فقط */
+function saveNow(){
+  if(!_pendingSave){ showToast('لا توجد تغييرات غير محفوظة'); return; }
+  if(!currentUser){ showToast('يجب تسجيل الدخول أولاً', true); return; }
+  var btn = document.getElementById('globalSaveBtn');
+  if(btn){ btn.disabled = true; btn.style.opacity = '0.6'; }
+  doSave().then(function(){
+    _pendingSave = false;
+    _pendingChangesCount = 0;
+    updatePendingBadge();
+    if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+    showToast('تم الحفظ بنجاح ✓');
+  }).catch(function(err){
+    if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+    showToast('خطأ في الحفظ: ' + (err.message || err), true);
+  });
+}
+/* تحديث شارة التغييرات المعلقة */
+function updatePendingBadge(){
+  var badge = document.getElementById('pendingChangesBadge');
+  if(!badge){
+    /* أنشئ الشارة أول مرة */
+    badge = document.createElement('div');
+    badge.id = 'pendingChangesBadge';
+    badge.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:11400;'
+      +'background:linear-gradient(135deg,#d68910,#e67e22);color:#fff;'
+      +'border-radius:12px;padding:10px 16px;font-family:inherit;font-size:12px;'
+      +'font-weight:700;box-shadow:0 6px 20px rgba(230,126,34,.4);'
+      +'display:none;align-items:center;gap:10px;cursor:default;'
+      +'animation:slideUpPending .3s ease';
+    badge.innerHTML = '<span style="display:flex;align-items:center;gap:6px">'
+      +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+      +'<path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/>'
+      +'<line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      +'<span id="pendingChangesText">تغييرات غير محفوظة</span></span>'
+      +'<button id="globalSaveBtn" onclick="saveNow()" style="background:#fff;color:#c0392b;'
+      +'border:none;border-radius:8px;padding:6px 14px;font-weight:800;cursor:pointer;'
+      +'font-family:inherit;font-size:11.5px;display:flex;align-items:center;gap:5px">'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+      +'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>'
+      +'<polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>'
+      +'حفظ الكل</button>';
+    document.body.appendChild(badge);
+  }
+  var txt = document.getElementById('pendingChangesText');
+  if(_pendingChangesCount > 0){
+    badge.style.display = 'flex';
+    if(txt) txt.textContent = 'لديك ' + _pendingChangesCount + ' تغيير' + (_pendingChangesCount > 10 ? 'اً' : '') + ' غير محفوظ';
+  } else {
+    badge.style.display = 'none';
+  }
 }
 var _pendingSave=false;
+/* ─── حفظ فوري (يُستدعى فقط عند الحذف — لأن الحذف له تأكيد مسبق) ─── */
+function saveImmediately(){
+  if(!currentUser) return;
+  doSave().then(function(){
+    /* الحذف تم حفظه — لا نُعيد تعيين _pendingChangesCount إلا إذا كان 0
+       لأن قد يكون هناك تغييرات أخرى معلقة */
+  }).catch(function(err){
+    console.error('فشل الحفظ الفوري للحذف:', err);
+    showToast('فشل حفظ الحذف: ' + (err.message||err), true);
+  });
+}
 /* حفظ فوري عند إغلاق أو تحديث الصفحة */
 window.addEventListener('beforeunload',function(ev){
   if(_pendingSave&&currentUser){
-    /* حفظ فوري متزامن قدر الإمكان */
-    if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
-    doSave();
+    /* تحذير المستخدم من التغييرات غير المحفوظة */
     ev.preventDefault();
-    ev.returnValue='هناك تغييرات غير محفوظة. هل تريد المغادرة؟';
+    ev.returnValue='لديك تغييرات غير محفوظة. اضغط "حفظ الكل" قبل المغادرة.';
     return ev.returnValue;
   }
 });
@@ -6487,7 +6580,7 @@ document.getElementById('s1Grid').addEventListener('click',function(ev){
     openCF(fi);
     showToast('لا توجد صورة قرار — يمكنك إضافتها هنا');
   }
-}else if(a==='del'){if(currentUser&&currentUser.role==='viewer')return;confirmDel(d.n,function(ok){if(!ok)return;var delItem=Object.assign({},d);var delMeet=M[di]?JSON.parse(JSON.stringify(M[di])):[];moveToTrash('committee',{committee:delItem,meetings:delMeet},d.n);D.splice(di,1);var nm={};Object.keys(M).forEach(function(k){var ki=parseInt(k);if(ki<di)nm[ki]=M[k];else if(ki>di)nm[ki-1]=M[k];});M=nm;refRep();applyF();upTop();scheduleSave();});}});
+}else if(a==='del'){if(currentUser&&currentUser.role==='viewer')return;confirmDel(d.n,function(ok){if(!ok)return;var delItem=Object.assign({},d);var delMeet=M[di]?JSON.parse(JSON.stringify(M[di])):[];moveToTrash('committee',{committee:delItem,meetings:delMeet},d.n);D.splice(di,1);var nm={};Object.keys(M).forEach(function(k){var ki=parseInt(k);if(ki<di)nm[ki]=M[k];else if(ki>di)nm[ki-1]=M[k];});M=nm;refRep();applyF();upTop();saveImmediately();});}});
 
 document.getElementById('srch').addEventListener('input',applyF);
 
@@ -8425,7 +8518,7 @@ function renS3Main(){
   if(currentUser&&currentUser.role==='viewer'){
     content.querySelectorAll('[data-ma="e"],[data-ma="d"]').forEach(function(b){b.style.display='none';});
   }
-  content.querySelectorAll('[data-ma]').forEach(function(btn){btn.addEventListener('click',function(ev){ev.stopPropagation();var a=btn.getAttribute('data-ma'),bdi=parseInt(btn.getAttribute('data-di')),bmi=parseInt(btn.getAttribute('data-mi'));if(a==='e')openSM(bdi,bmi);else if(a==='p')printPrepSummary(bdi,bmi);else if(a==='exec')openExecSum(bdi,bmi);else if(a==='xl')exportMeetingExcel(bdi,bmi);else if(a==='d'){confirmDel('هذا الاجتماع',function(ok2){if(!ok2)return;var _m=GM(bdi)[bmi];var _d=D[bdi];var _label=(_d?_d.n:'لجنة')+' — اجتماع '+((_m&&_m.meetNum)||bmi+1);moveToTrash('meeting',{meeting:JSON.parse(JSON.stringify(_m)),di:bdi,committee_name:_d?_d.n:''},_label);GM(bdi).splice(bmi,1);renS3Sidebar();renS3Main();renderS3Cal();upTop();scheduleSave();});}});});
+  content.querySelectorAll('[data-ma]').forEach(function(btn){btn.addEventListener('click',function(ev){ev.stopPropagation();var a=btn.getAttribute('data-ma'),bdi=parseInt(btn.getAttribute('data-di')),bmi=parseInt(btn.getAttribute('data-mi'));if(a==='e')openSM(bdi,bmi);else if(a==='p')printPrepSummary(bdi,bmi);else if(a==='exec')openExecSum(bdi,bmi);else if(a==='xl')exportMeetingExcel(bdi,bmi);else if(a==='d'){confirmDel('هذا الاجتماع',function(ok2){if(!ok2)return;var _m=GM(bdi)[bmi];var _d=D[bdi];var _label=(_d?_d.n:'لجنة')+' — اجتماع '+((_m&&_m.meetNum)||bmi+1);moveToTrash('meeting',{meeting:JSON.parse(JSON.stringify(_m)),di:bdi,committee_name:_d?_d.n:''},_label);GM(bdi).splice(bmi,1);renS3Sidebar();renS3Main();renderS3Cal();upTop();saveImmediately();});}});});
 }
 
 function bindS3Toolbar(){
@@ -9917,12 +10010,12 @@ function doLogin(){
   if(!pass){showErr('يرجى إدخال كلمة المرور');return;}
   setBusy();
 
-  /* timeout احتياطي — لو علق الاتصال بـ Supabase 20 ثانية، نرجع الزر للوضع العادي */
+  /* timeout احتياطي — لو علق الاتصال بـ Supabase 12 ثانية، نرجع الزر للوضع العادي */
   var _loginTimeout = setTimeout(function(){
     if(btn.disabled){
       showErr('تعذّر الاتصال بالخادم — تحقق من الاتصال بالإنترنت ثم حاول مجدداً');
     }
-  }, 20000);
+  }, 12000);
 
   /* تحقق من المستخدم وكلمة المرور عبر Supabase */
   hashPassword(pass).then(function(hashedPass){
@@ -11587,75 +11680,254 @@ function s4ExportTasksReport(){
   var tasks=s4FilterTasks();
   if(!tasks.length){showToast('لا توجد تكليفات لطباعتها',true);return;}
 
-  var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#fde8e8'};
-  var sco={'قيد الانتظار':'#856404','جارٍ':'#1565c0','منجز':'#2e7d32','متأخر':'#c62828'};
+  /* ألوان هوية وزارة التعليم */
+  var MOE_GREEN='#006B3F';
+  var MOE_GREEN_DARK='#004D2E';
+  var MOE_GOLD='#C9A961';
 
+  /* ألوان الحالات — متناسقة مع الهوية الرسمية */
+  var sbg={'قيد الانتظار':'#FFF8E1','جارٍ':'#E3F2FD','منجز':'#E8F5E9','متأخر':'#FFEBEE'};
+  var sco={'قيد الانتظار':'#795548','جارٍ':'#0D47A1','منجز':'#1B5E20','متأخر':'#B71C1C'};
+
+  /* حساب الإحصائيات */
+  var stats={total:tasks.length,done:0,doing:0,late:0,pending:0};
+  tasks.forEach(function(t){
+    if(t.status==='منجز')stats.done++;
+    else if(t.status==='جارٍ')stats.doing++;
+    else if(t.status==='متأخر')stats.late++;
+    else stats.pending++;
+  });
+  var donePct=stats.total>0?Math.round((stats.done/stats.total)*100):0;
+
+  /* تجميع حسب اللجنة */
   var byComm={};
   tasks.forEach(function(t){
     if(!byComm[t.committee]) byComm[t.committee]=[];
     byComm[t.committee].push(t);
   });
 
+  /* تاريخ التقرير */
+  var today=new Date();
+  var reportDate=today.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  var reportDateEN=today.toLocaleDateString('en-GB');
+
+  /* === بناء جدول اللجان === */
   var rows='';
-  Object.keys(byComm).forEach(function(comm){
-    rows+='<h3 style="font-size:13px;font-weight:700;color:#1a5276;margin:18px 0 7px;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;border-right:4px solid #4a2080;padding-right:8px">'+e(comm)+'</h3>';
-    rows+='<table style="width:100%;border-collapse:collapse;margin-bottom:10px">';
-    rows+='<thead><tr>';
-    rows+='<th style="background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;padding:8px 10px;text-align:right;font-family:inherit;font-size:11px">#</th>';
-    rows+='<th style="background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;padding:8px 10px;text-align:right;font-family:inherit;font-size:11px">التكليف</th>';
-    rows+='<th style="background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;padding:8px 10px;text-align:right;font-family:inherit;font-size:11px">المسؤول</th>';
-    rows+='<th style="background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;padding:8px 10px;text-align:right;font-family:inherit;font-size:11px">من</th>';
-    rows+='<th style="background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;padding:8px 10px;text-align:right;font-family:inherit;font-size:11px">إلى</th>';
-    rows+='<th style="background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;padding:8px 10px;text-align:right;font-family:inherit;font-size:11px">الحالة</th>';
-    rows+='</tr></thead><tbody>';
-    byComm[comm].forEach(function(t,ti){
+  Object.keys(byComm).forEach(function(comm,ci){
+    var commTasks=byComm[comm];
+    /* إحصائيات هذه اللجنة */
+    var cStats={total:commTasks.length,done:0};
+    commTasks.forEach(function(t){if(t.status==='منجز')cStats.done++;});
+    var cPct=cStats.total>0?Math.round((cStats.done/cStats.total)*100):0;
+
+    rows+='<div class="committee-block">'
+      +'<div class="committee-header">'
+      +'<div class="committee-title">'
+      +'<span class="committee-num">'+(ci+1)+'</span>'
+      +'<span class="committee-name">'+e(comm)+'</span>'
+      +'</div>'
+      +'<div class="committee-stats">'
+      +'<span class="stat-pill">إجمالي: <strong>'+cStats.total+'</strong></span>'
+      +'<span class="stat-pill stat-done">منجز: <strong>'+cStats.done+'</strong></span>'
+      +'<span class="stat-pill stat-pct">الإنجاز: <strong>'+cPct+'%</strong></span>'
+      +'</div>'
+      +'</div>';
+
+    rows+='<table class="tasks-table">'
+      +'<thead><tr>'
+      +'<th style="width:40px">#</th>'
+      +'<th>التكليف</th>'
+      +'<th style="width:160px">المسؤول</th>'
+      +'<th style="width:90px">من</th>'
+      +'<th style="width:90px">إلى</th>'
+      +'<th style="width:90px">الحالة</th>'
+      +'</tr></thead><tbody>';
+
+    commTasks.forEach(function(t,ti){
       var sc=sco[t.status]||'#555';
       var bg=sbg[t.status]||'#fff';
-      rows+='<tr style="background:'+bg+'">';
-      rows+='<td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;text-align:center;color:#888;font-size:11px">'+(ti+1)+'</td>';
-      rows+='<td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:11px">'+e(t.task||'')+'</td>';
-      rows+='<td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:11px;font-weight:700">'+e(t.responsible||'\u2014')+'</td>';
-      rows+='<td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:10px;direction:ltr">'+e(t.dateFrom||'\u2014')+'</td>';
-      rows+='<td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:10px;direction:ltr">'+e(t.dateTo||'\u2014')+'</td>';
-      rows+='<td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:10px;font-weight:700;color:'+sc+'">'+e(t.status||'')+'</td>';
-      rows+='</tr>';
+      rows+='<tr>'
+        +'<td class="td-num">'+(ti+1)+'</td>'
+        +'<td class="td-task">'+e(t.task||'—')+'</td>'
+        +'<td class="td-resp">'+e(t.responsible||'—')+'</td>'
+        +'<td class="td-date">'+e(t.dateFrom||'—')+'</td>'
+        +'<td class="td-date">'+e(t.dateTo||'—')+'</td>'
+        +'<td class="td-status" style="background:'+bg+';color:'+sc+'">'+e(t.status||'—')+'</td>'
+        +'</tr>';
     });
-    rows+='</tbody></table>';
+    rows+='</tbody></table></div>';
   });
 
-  var printCSS='@media print{'
-    +'@page{margin:10mm 12mm;size:A4 landscape}'
-    +'.no-print{display:none!important}'
-    +'body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
-    +'table{page-break-inside:auto}'
-    +'thead{display:table-header-group}'
+  /* === CSS احترافي بهوية وزارة التعليم === */
+  var css=''
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2","Traditional Arabic",serif;direction:rtl;'
+    +'color:#1a1a1a;background:#f5f5f5;font-size:15pt;line-height:1.6}'
+    +'.report-wrapper{max-width:297mm;margin:0 auto;background:#fff;padding:0;box-shadow:0 0 20px rgba(0,0,0,.08)}'
+    /* الترويسة الرسمية */
+    +'.official-header{background:linear-gradient(135deg,'+MOE_GREEN+' 0%,'+MOE_GREEN_DARK+' 100%);'
+    +'color:#fff;padding:24px 32px;border-bottom:4px solid '+MOE_GOLD+';}'
+    +'.official-header-inner{display:flex;align-items:center;justify-content:space-between;gap:20px}'
+    +'.moe-logo-block{display:flex;align-items:center;gap:14px;flex:1}'
+    +'.moe-logo-block img{height:72px;width:auto;filter:brightness(0) invert(1)}'
+    +'.moe-text-block{display:flex;flex-direction:column;gap:3px}'
+    +'.kingdom-name{font-size:13pt;font-weight:700;opacity:.95;letter-spacing:.3px}'
+    +'.ministry-name{font-size:18pt;font-weight:800;letter-spacing:.5px}'
+    +'.agency-name{font-size:12pt;font-weight:600;opacity:.9}'
+    +'.report-date-badge{text-align:left;font-size:11pt;opacity:.95;line-height:1.7}'
+    +'.report-date-badge .label{font-size:10pt;opacity:.85;display:block}'
+    +'.report-date-badge .val{font-weight:700;font-size:12pt}'
+    /* عنوان التقرير */
+    +'.report-title-block{padding:32px;text-align:center;background:linear-gradient(180deg,#fafafa 0%,#fff 100%);border-bottom:1px solid #e8e8e8}'
+    +'.report-title{font-size:26pt;font-weight:800;color:'+MOE_GREEN+';margin-bottom:8px;letter-spacing:.5px}'
+    +'.report-subtitle{font-size:14pt;color:#555;font-weight:500}'
+    +'.report-meta{margin-top:14px;display:flex;justify-content:center;gap:24px;font-size:11pt;color:#666}'
+    +'.report-meta span strong{color:'+MOE_GREEN+';font-weight:700}'
+    /* صندوق الإحصائيات */
+    +'.stats-dashboard{padding:24px 32px;background:#fafafa;border-bottom:1px solid #e8e8e8}'
+    +'.stats-dashboard-title{font-size:16pt;font-weight:700;color:'+MOE_GREEN+';margin-bottom:14px;'
+    +'padding-right:12px;border-right:4px solid '+MOE_GOLD+'}'
+    +'.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}'
+    +'.stat-card{background:#fff;border:1.5px solid #e5e5e5;border-radius:8px;padding:14px 10px;text-align:center}'
+    +'.stat-card.primary{background:linear-gradient(135deg,'+MOE_GREEN+' 0%,'+MOE_GREEN_DARK+' 100%);color:#fff;border-color:'+MOE_GREEN+'}'
+    +'.stat-card .num{font-size:22pt;font-weight:800;line-height:1;margin-bottom:4px}'
+    +'.stat-card .lbl{font-size:11pt;font-weight:600;opacity:.85}'
+    +'.stat-card.s-done .num{color:#1B5E20}'
+    +'.stat-card.s-doing .num{color:#0D47A1}'
+    +'.stat-card.s-pending .num{color:#795548}'
+    +'.stat-card.s-late .num{color:#B71C1C}'
+    /* محتوى التقرير */
+    +'.report-body{padding:28px 32px}'
+    /* كل لجنة */
+    +'.committee-block{margin-bottom:32px;page-break-inside:auto}'
+    +'.committee-header{background:linear-gradient(135deg,'+MOE_GREEN+' 0%,'+MOE_GREEN_DARK+' 100%);'
+    +'color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center;gap:16px}'
+    +'.committee-title{display:flex;align-items:center;gap:12px;font-size:14pt;font-weight:700;flex:1}'
+    +'.committee-num{background:'+MOE_GOLD+';color:#fff;width:32px;height:32px;border-radius:50%;'
+    +'display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13pt;flex-shrink:0}'
+    +'.committee-name{flex:1}'
+    +'.committee-stats{display:flex;gap:6px;flex-shrink:0}'
+    +'.stat-pill{background:rgba(255,255,255,.18);color:#fff;padding:4px 10px;border-radius:12px;font-size:10pt;font-weight:500}'
+    +'.stat-pill strong{font-weight:800;margin-right:4px}'
+    +'.stat-pill.stat-done{background:rgba(255,255,255,.28)}'
+    +'.stat-pill.stat-pct{background:'+MOE_GOLD+';color:#fff}'
+    /* جدول المهام */
+    +'.tasks-table{width:100%;border-collapse:collapse;border:1.5px solid '+MOE_GREEN+';border-top:none;background:#fff}'
+    +'.tasks-table thead th{background:#fafafa;color:'+MOE_GREEN_DARK+';padding:10px 12px;font-weight:700;'
+    +'font-size:13pt;text-align:right;border-bottom:2px solid '+MOE_GREEN+';border-left:1px solid #e8e8e8}'
+    +'.tasks-table thead th:last-child{border-left:none}'
+    +'.tasks-table tbody td{padding:10px 12px;border-bottom:1px solid #eee;border-left:1px solid #f0f0f0;'
+    +'font-size:12pt;vertical-align:top}'
+    +'.tasks-table tbody td:last-child{border-left:none}'
+    +'.tasks-table tbody tr:nth-child(even){background:#fafafa}'
+    +'.tasks-table tbody tr:hover{background:#f0f7f3}'
+    +'.td-num{text-align:center;color:#888;font-weight:600;width:40px}'
+    +'.td-task{line-height:1.7}'
+    +'.td-resp{font-weight:600;color:#333}'
+    +'.td-date{text-align:center;font-size:11pt;color:#555;direction:ltr;font-family:Arial,sans-serif}'
+    +'.td-status{text-align:center;font-weight:700;font-size:11pt;border-radius:0}'
+    /* التذييل */
+    +'.report-footer{background:#fafafa;border-top:2px solid '+MOE_GREEN+';padding:16px 32px;'
+    +'display:flex;justify-content:space-between;align-items:center;font-size:10pt;color:#666}'
+    +'.footer-left{display:flex;flex-direction:column;gap:2px}'
+    +'.footer-left strong{color:'+MOE_GREEN_DARK+'}'
+    +'.footer-gold-line{height:3px;background:linear-gradient(90deg,'+MOE_GREEN+' 0%,'+MOE_GOLD+' 50%,'+MOE_GREEN+' 100%)}'
+    /* أزرار الواجهة (لا تُطبع) */
+    +'.toolbar{position:sticky;top:0;z-index:100;background:#fff;padding:12px 32px;border-bottom:1px solid #ddd;'
+    +'box-shadow:0 2px 4px rgba(0,0,0,.04);display:flex;gap:10px;justify-content:flex-start}'
+    +'.btn-print{background:linear-gradient(135deg,'+MOE_GREEN+' 0%,'+MOE_GREEN_DARK+' 100%);color:#fff;border:none;'
+    +'border-radius:8px;padding:10px 26px;font-size:13pt;font-weight:700;cursor:pointer;font-family:inherit;'
+    +'display:inline-flex;align-items:center;gap:8px}'
+    +'.btn-print:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,107,63,.3)}'
+    +'.btn-close{background:#e8e8e8;color:#333;border:none;border-radius:8px;padding:10px 20px;'
+    +'font-size:12pt;cursor:pointer;font-family:inherit}'
+    /* الطباعة */
+    +'@media print{'
+    +'@page{size:A4 landscape;margin:10mm 12mm}'
+    +'.no-print,.toolbar{display:none!important}'
+    +'body{background:#fff!important;font-size:12pt}'
+    +'.report-wrapper{box-shadow:none;max-width:none}'
+    +'.official-header,.committee-header,.stat-card.primary{-webkit-print-color-adjust:exact!important;'
+    +'print-color-adjust:exact!important;color-adjust:exact!important}'
+    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+    +'.committee-block{page-break-inside:auto}'
+    +'.committee-header{page-break-after:avoid}'
     +'tr{page-break-inside:avoid}'
+    +'thead{display:table-header-group}'
+    +'.report-title-block{page-break-after:avoid}'
     +'}';
 
+  /* === شعار الوزارة === */
+  var logoSrc=(typeof LOGO_SITE_SRC!=='undefined')?LOGO_SITE_SRC:'';
+  var logoImg=logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم">':'';
+
+  /* === HTML النهائي === */
   var html='<!DOCTYPE html>'
-    +'<html dir="rtl"><head><meta charset="UTF-8">'
-    +'<title>\u062a\u0642\u0631\u064a\u0631 \u0627\u0644\u062a\u0643\u0644\u064a\u0641\u0627\u062a</title>'
-    +'<style>'
-    +'*{box-sizing:border-box;margin:0;padding:0;font-family:inherit}body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;font-size:16px}'
-    +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;direction:rtl;padding:20px;color:#1a1a2e;background:#fff;font-size:16px}'
-    +printCSS
-    +'</style></head><body>'
-    +'<div class="no-print" style="margin-bottom:16px;display:flex;gap:8px;align-items:center">'
-    +'<button onclick="window.print()" style="background:linear-gradient(135deg,#3b83b5,#48a883);color:#fff;border:none;border-radius:8px;padding:9px 22px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:700">\u0637\u0628\u0627\u0639\u0629 / PDF</button>'
-    +'<button onclick="window.close()" style="background:#e0e0e0;color:#333;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-family:inherit;cursor:pointer">\u0625\u063a\u0644\u0627\u0642</button>'
+    +'<html dir="rtl" lang="ar"><head><meta charset="UTF-8">'
+    +'<title>تقرير التكليفات الشامل — وزارة التعليم</title>'
+    +'<style>'+css+'</style>'
+    +'</head><body>'
+    /* شريط الأدوات */
+    +'<div class="toolbar no-print">'
+    +'<button class="btn-print" onclick="window.print()">'
+    +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">'
+    +'<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>'
+    +'</svg>طباعة / حفظ PDF</button>'
+    +'<button class="btn-close" onclick="window.close()">إغلاق</button>'
     +'</div>'
-    +'<h2 style="font-size:17px;font-weight:700;color:#2c1654;margin-bottom:18px;font-family:inherit">\u062a\u0642\u0631\u064a\u0631 \u0627\u0644\u062a\u0643\u0644\u064a\u0641\u0627\u062a \u0627\u0644\u0634\u0627\u0645\u0644</h2>'
+    /* الغلاف */
+    +'<div class="report-wrapper">'
+    /* الترويسة الرسمية */
+    +'<header class="official-header">'
+    +'<div class="official-header-inner">'
+    +'<div class="moe-logo-block">'
+    +logoImg
+    +'<div class="moe-text-block">'
+    +'<span class="kingdom-name">المملكة العربية السعودية</span>'
+    +'<span class="ministry-name">وزارة التعليم</span>'
+    +'<span class="agency-name">وكالة التعاون الدولي</span>'
+    +'</div>'
+    +'</div>'
+    +'<div class="report-date-badge">'
+    +'<span class="label">تاريخ إصدار التقرير</span>'
+    +'<span class="val">'+e(reportDate)+'</span>'
+    +'<span class="label" style="margin-top:4px">'+e(reportDateEN)+'</span>'
+    +'</div>'
+    +'</div>'
+    +'</header>'
+    /* عنوان التقرير */
+    +'<div class="report-title-block">'
+    +'<h1 class="report-title">تقرير التكليفات الشامل</h1>'
+    +'<div class="report-subtitle">متابعة وإدارة تكليفات المجالس واللجان</div>'
+    +'<div class="report-meta">'
+    +'<span>إعداد: <strong>وحدة المجالس واللجان — وكالة التعاون الدولي</strong></span>'
+    +'<span>عدد اللجان الصادر عنها تكليفات: <strong>'+Object.keys(byComm).length+'</strong></span>'
+    +'<span>إجمالي التكليفات: <strong>'+stats.total+'</strong></span>'
+    +'</div>'
+    +'</div>'
+    /* محتوى التقرير */
+    +'<main class="report-body">'
     +rows
+    +'</main>'
+    /* التذييل */
+    +'<div class="footer-gold-line"></div>'
+    +'<footer class="report-footer">'
+    +'<div class="footer-left">'
+    +'<strong>وزارة التعليم — وكالة التعاون الدولي</strong>'
+    +'<span>نظام إدارة المجالس واللجان</span>'
+    +'</div>'
+    +'<div>صفحة <span class="page-num"></span></div>'
+    +'</footer>'
+    +'</div>'
     +'</body></html>';
 
-  /* فتح نافذة مباشرة وكتابة المحتوى — الأسلوب الأكثر موثوقية */
-  var w=window.open('','_blank','width=1100,height=820,scrollbars=yes,resizable=yes');
+  /* فتح نافذة — الأسلوب الأكثر موثوقية */
+  var w=window.open('','_blank','width=1100,height=900,scrollbars=yes,resizable=yes');
   if(w){
     w.document.open();
     w.document.write(html);
     w.document.close();
   } else {
-    /* احتياطي: تحميل مباشر */
     var blob=new Blob([html],{type:'text/html;charset=utf-8'});
     var u=URL.createObjectURL(blob);
     var a=document.createElement('a');
@@ -11824,7 +12096,9 @@ function s4ShowMailModal(title, toEmail, subject, bodyText, isRemind){
     'سعادة مدير إدارة الارتباط الثقافي               وفقه الله'
   ];
 
-  var recOpts=RECIPIENTS.map(function(r){return'<option value="'+e(r)+'">'+e(r)+'</option>';}).join('');
+  /* خيار فارغ في البداية (افتراضي) — المستخدم يختار من القائمة */
+  var recOpts='<option value="" selected>-- اختر المرسل إليه --</option>';
+  recOpts+=RECIPIENTS.map(function(r){return'<option value="'+e(r)+'">'+e(r)+'</option>';}).join('');
   recOpts+='<option value="__manual__">✏️ إدخال يدوي...</option>';
 
   /* نص الرسالة الكامل يُبنى ديناميكياً */
@@ -11910,6 +12184,12 @@ function s4SendMail(){
     recipientName=(sel.value==='__manual__')
       ?(manInp?manInp.value.trim():'')
       :sel.value;
+  }
+  /* تحقق: يجب اختيار المرسل إليه */
+  if(!recipientName){
+    showToast('يرجى اختيار المرسل إليه من القائمة أو إدخاله يدوياً',true);
+    if(sel){ sel.focus(); sel.style.border='1.5px solid #c0392b'; }
+    return;
   }
 
   var toVal=(document.getElementById('mailTo')||{value:''}).value.trim();
@@ -14051,37 +14331,40 @@ document.addEventListener('input', function(ev){
         var _lb=document.getElementById('loginBtn');
         if(_lb){_lb.disabled=true;_lb.textContent='جاري الدخول...';}
         updateSystemUI();
-        /* حل: timeout احتياطي — لو تعلق init لأكثر من 15 ثانية، ننهيه قسراً */
+        /* حل: timeout احتياطي — لو تعلق init لأكثر من 8 ثوانٍ، ننهيه قسراً */
         var _restoreTimeout = setTimeout(function(){
           if(lsEl && lsEl.style.display !== 'none'){
-            console.warn('استعادة الجلسة أخذت وقتاً طويلاً — انتقال قسري');
+            console.warn('استعادة الجلسة أخذت وقتاً طويلاً — انتقال قسري إلى التطبيق مع البيانات المحلية');
             lsEl.style.display='none';
             lsEl.style.visibility='hidden';
             if(_lb){_lb.disabled=false;_lb.textContent='دخول ←';}
             try{ goTo('s1'); }catch(e){ console.error(e); }
             try{ if(typeof buildFilters==='function') buildFilters(); }catch(e){}
             try{ if(typeof buildS2Filters==='function') buildS2Filters(); }catch(e){}
+            try{ if(typeof setSyncUI==='function') setSyncUI('err','تعذّر الاتصال بـ Supabase — البيانات المحلية فقط'); }catch(e){}
           }
-        }, 15000);
-        init().then(function(){
-          clearTimeout(_restoreTimeout);
-          if(lsEl){lsEl.style.opacity='0';lsEl.style.transition='opacity 0.3s';}
-          setTimeout(function(){
-            if(lsEl){ lsEl.style.display='none'; lsEl.style.visibility='hidden'; }
-            if(_lb){_lb.disabled=false;_lb.textContent='دخول ←';}
-            updateSystemUI();
-            goTo('s1');
-            if(typeof buildFilters==='function') buildFilters();
-            if(typeof buildS2Filters==='function') buildS2Filters();
-          },300);
-        }).catch(function(err){
-          clearTimeout(_restoreTimeout);
-          console.error('خطأ في استعادة الجلسة:', err);
-          /* بدل إرجاع المستخدم لشاشة الدخول، نكمل بالبيانات المحلية */
-          if(lsEl){ lsEl.style.display='none'; lsEl.style.visibility='hidden'; }
+        }, 8000);
+        /* دالة موحدة لإنهاء الاستعادة — تُستخدم في كل من then و catch */
+        var _finishRestore = function(isError, err){
+          try{ clearTimeout(_restoreTimeout); }catch(e){}
+          if(isError){ console.error('خطأ في استعادة الجلسة:', err); }
+          /* إخفاء فوري لشاشة الدخول */
+          if(lsEl){
+            lsEl.style.display='none';
+            lsEl.style.visibility='hidden';
+            lsEl.style.opacity='0';
+          }
           if(_lb){_lb.disabled=false;_lb.textContent='دخول ←';}
-          try{ goTo('s1'); }catch(e){ console.error(e); }
-        });
+          try{ updateSystemUI(); }catch(e){ console.error('updateSystemUI error:', e); }
+          try{ goTo('s1'); }catch(e){ console.error('goTo s1 error:', e); }
+          try{ if(typeof buildFilters==='function') buildFilters(); }catch(e){}
+          try{ if(typeof buildS2Filters==='function') buildS2Filters(); }catch(e){}
+          if(isError){
+            try{ if(typeof setSyncUI==='function') setSyncUI('err','تعذّر الاتصال بـ Supabase — البيانات المحلية فقط'); }catch(e){}
+          }
+        };
+        init().then(function(){ _finishRestore(false); })
+              .catch(function(err){ _finishRestore(true, err); });
         updateHomeStats();
         addUserBadge();
         clearSessionTimers();
@@ -14096,7 +14379,19 @@ document.addEventListener('input', function(ev){
       }
       localStorage.removeItem(_sessKey);
     }
-  }catch(e){}
+  }catch(e){
+    console.error('[restoreSession] خطأ غير ممسوك:', e);
+    /* ضمان أن المستخدم لا يُترك معلقاً — نُخفي شاشة الدخول ونفتح التطبيق */
+    try {
+      var lsEl2 = document.getElementById('loginScreen');
+      var lb2 = document.getElementById('loginBtn');
+      if(lsEl2){ lsEl2.style.display='none'; lsEl2.style.visibility='hidden'; }
+      if(lb2){ lb2.disabled=false; lb2.textContent='دخول ←'; }
+      if(currentUser){
+        try{ goTo('s1'); }catch(e2){ console.error(e2); }
+      }
+    } catch(e3){ console.error(e3); }
+  }
 
   setTimeout(function(){var em=document.getElementById('loginEmail');if(em)em.focus();},300);
   setTimeout(wrapRenCards,100);
@@ -14355,7 +14650,7 @@ function printExecSummary(){
 /* ══════════════════════════════════════════════════════
    MULTI-SELECT FILTER ENGINE
 ══════════════════════════════════════════════════════ */
-var MSF={};  /* stores selected values per filter id */
+if(typeof MSF === 'undefined') var MSF={};  /* stores selected values per filter id — تعريف آمن يحترم التعريف المبكر في updateSystemUI */
 
 function buildMS(containerId, filters, onChangeCallback){
   var bar=document.getElementById(containerId);
@@ -15519,7 +15814,13 @@ function importExecute(){
 /* ═══ END iOS Runtime Fix ══════════════════════════════════ */
 
 
-init();
+/* init() العالمي — يُستدعى عند تحميل الصفحة.
+   إذا المستخدم له جلسة محفوظة، restoreSession أعلاه يستدعي init() بالفعل
+   ويعتني بـ .then/.catch، لذا نتخطى هذا الاستدعاء لتجنب تعارض.
+   أما إذا لا توجد جلسة (تسجيل دخول جديد)، فـ doLogin يستدعي init() بعد النجاح. */
+if(!currentUser){
+  init().catch(function(err){ console.error('Init error (top-level):', err); });
+}
 
 /* ══════════════════════════════════════════════════════
    نظام النسخ الاحتياطي التلقائي
