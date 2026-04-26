@@ -6523,6 +6523,10 @@ function switchSystem(sys){
   dashF='committees';     /* إعادة s2 لافتراضي */
   /* مسح MSF (فلاتر متعددة الاختيار) */
   ['fSt','fSc','fTy','fDu','fRo','fRp','fOr','df_st','df_sc','df_ty','df_du','df_ro','df_rp'].forEach(function(k){MSF[k]=[];});
+  /* مسح بيانات قسم الاجتماعات العامة عند تبديل النظام */
+  window.GM_DATA = { meetings: [] };
+  window.GM_SB_ROW_ID = null;
+  window.GM_LOADED = false;
   /* مسح INITIATIVES عند تبديل للنظام الرئيسي */
   if(sys!=='intl') INITIATIVES=[];
   /* تعيين النظام الجديد */
@@ -7048,6 +7052,13 @@ function _startHealthCheckLoop(){
       if(healthy === true){
         clearInterval(_healthCheckTimer);
         _healthCheckTimer = null;
+        /* فك قفل الحفظ عند عودة الاتصال */
+        if(window._saveLocked){
+          window._saveLocked = false;
+          window._saveLockReason = null;
+          console.log('[HealthCheck] الخادم عاد — تم فك قفل الحفظ تلقائياً');
+          if(typeof setSyncUI === 'function') setSyncUI('ok', 'تم الاتصال بالخادم ✓');
+        }
         /* إذا كان هناك تغييرات معلقة، حاول رفعها الآن */
         if(_pendingChangesCount > 0){
           console.log('[HealthCheck] الخادم عاد — محاولة رفع التغييرات...');
@@ -7741,6 +7752,7 @@ function isValidScope(sc){
 function getDashFiltered(){
   var stF=MSF['df_st']||[],scF=MSF['df_sc']||[],tyF=MSF['df_ty']||[];
   var duF=MSF['df_du']||[],roF=MSF['df_ro']||[],rpF=MSF['df_rp']||[];
+  var orF=MSF['df_or']||[];
   return D.filter(function(d){
     if(!isValidScope(d.sc))return false; /* استبعاد النطاقات غير الصالحة */
     if(stF.length&&stF.indexOf(d.st)<0)return false;
@@ -18081,8 +18093,8 @@ window.fetch = function(url, opts){
    V2.9 — SCHEMA GUARD (التحقق من الجداول والحقول)
    ═══════════════════════════════════════════════════════════ */
 V2.expectedTables = {
-  main: ['lajan_committees', 'lajan_meetings', 'lajan_users', 'lajan_audit', 'lajan_trash'],
-  intl: ['intl_committees', 'intl_meetings', 'intl_users', 'intl_audit', 'intl_trash']
+  main: ['lajan_committees', 'lajan_meetings', 'lajan_users', 'lajan_audit', 'lajan_trash', 'lajan_gm'],
+  intl: ['intl_committees', 'intl_meetings', 'intl_users', 'intl_audit', 'intl_trash', 'intl_gm']
 };
 
 V2.healthCheck = async function(){
@@ -18149,6 +18161,7 @@ document.addEventListener('keydown', function(e){
   if(e.ctrlKey || e.metaKey) key += 'Ctrl+';
   if(e.altKey) key += 'Alt+';
   if(e.shiftKey) key += 'Shift+';
+  if(!e.key) return;
   key += e.key.length === 1 ? e.key.toUpperCase() : e.key;
   if(V2.shortcuts[key]){
     // تجنب الاختصارات عند الكتابة في حقل إدخال
@@ -19200,7 +19213,11 @@ function gmPrintReport(){
   html += '.notes{background:#fff8e1;padding:8px;border-radius:6px;font-size:10.5pt;color:#7a5500;margin-top:6px}';
   html += '.status-منجز{color:#155724;font-weight:700}.status-متأخر{color:#922b21;font-weight:700}';
   html += '.status-جارٍ{color:#7a5500;font-weight:700}.status-معلق{color:#6c757d}';
-  html += '@media print{h2{page-break-before:auto;page-break-after:avoid}table{page-break-inside:avoid}}';
+  html += '.tasks-toggle{cursor:pointer;background:#e8f0fb;border:1px solid #b3c8ee;border-radius:7px;padding:7px 14px;font-size:11pt;font-weight:700;color:#0d47a1;margin-top:8px;display:inline-block;user-select:none}';
+  html += '.tasks-toggle:hover{background:#d0e3f7}';
+  html += '.tasks-section{display:none;margin-top:6px}';
+  html += '.tasks-section.open{display:block}';
+  html += '@media print{h2{page-break-before:auto;page-break-after:avoid}table{page-break-inside:avoid}.tasks-section{display:block!important}}';
   html += '</style></head><body>';
   html += '<h1>تقرير الاجتماعات والتكليفات العامة</h1>';
   html += '<div style="color:#5d6d7e;font-size:11pt;margin-bottom:20px">تاريخ التقرير: '+now+' | إجمالي الاجتماعات: '+meetings.length+'</div>';
@@ -19214,21 +19231,16 @@ function gmPrintReport(){
     if(m.notes){
       html += '<div class="notes"><b>ملاحظات / جدول الأعمال:</b><br>'+gmEsc(m.notes).replace(/\n/g,'<br>')+'</div>';
     }
-    if((m.attendees||[]).length > 0){
-      html += '<div class="sec-lbl">الحضور ('+m.attendees.length+'):</div>';
-      html += '<table><thead><tr><th>#</th><th>الاسم</th><th>المنصب/الجهة</th><th>البريد الإلكتروني</th><th>الحالة</th></tr></thead><tbody>';
-      m.attendees.forEach(function(a, i){
-        html += '<tr><td>'+(i+1)+'</td><td>'+gmEsc(a.name)+'</td><td>'+gmEsc(a.role||'—')+'</td><td>'+gmEsc(a.email||'—')+'</td><td>'+gmEsc(a.status||'—')+'</td></tr>';
-      });
-      html += '</tbody></table>';
-    }
     if((m.tasks||[]).length > 0){
-      html += '<div class="sec-lbl">التكليفات ('+m.tasks.length+'):</div>';
-      html += '<table><thead><tr><th style="width:30px">#</th><th>التكليف</th><th style="width:120px">المسؤول</th><th style="width:100px">الاستحقاق</th><th style="width:80px">الحالة</th><th>ملاحظات</th></tr></thead><tbody>';
+      var tid = 'tasks_'+idx;
+      html += '<div class="tasks-toggle" onclick="var s=document.getElementById(\''+tid+'\');s.classList.toggle(\'open\');this.textContent=s.classList.contains(\'open\')?\'▲ إخفاء التكليفات ('+m.tasks.length+')\':\'▼ التكليفات ('+m.tasks.length+')\'" >▼ التكليفات ('+m.tasks.length+')</div>';
+      html += '<div class="tasks-section" id="'+tid+'">';
+      html += '<table><thead><tr><th style="width:30px">#</th><th>التكليف</th><th style="width:120px">المسؤول</th><th style="width:100px">التاريخ</th><th style="width:80px">الحالة</th><th>ملاحظات</th></tr></thead><tbody>';
       m.tasks.forEach(function(t, i){
         html += '<tr><td>'+(i+1)+'</td><td>'+gmEsc(t.task||'')+'</td><td>'+gmEsc(t.responsible||'—')+'</td><td>'+gmEsc(gmFormatDate(t.dueDate)||'—')+'</td><td class="status-'+gmEsc(t.status||'')+'">'+gmEsc(t.status||'—')+'</td><td>'+gmEsc(t.notes||'—')+'</td></tr>';
       });
       html += '</tbody></table>';
+      html += '</div>';
     }
   });
   html += '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},500);};</scr'+'ipt>';
@@ -19523,7 +19535,6 @@ function gmPrintMeetingPDF(mid){
   html += '</style></head><body>';
   // الغلاف
   html += '<div class="cover">';
-  html += '<div style="color:#1565c0;font-size:13pt;font-weight:700">محضر اجتماع</div>';
   html += '<h1>'+gmEsc(m.name||'(بدون اسم)')+'</h1>';
   html += '<div class="date">تاريخ المحضر: '+now+'</div>';
   html += '</div>';
@@ -19533,7 +19544,6 @@ function gmPrintMeetingPDF(mid){
   if(m.time) html += '<div class="info-item"><b>🕐 الوقت:</b> '+gmEsc(m.time)+'</div>';
   if(m.place) html += '<div class="info-item"><b>📍 المكان:</b> '+gmEsc(m.place)+'</div>';
   if(m.chair) html += '<div class="info-item"><b>👤 رئيس الاجتماع:</b> '+gmEsc(m.chair)+'</div>';
-  html += '<div class="info-item"><b>👥 عدد الحضور من الوكالة:</b> '+((m.attendees||[]).length)+'</div>';
   html += '</div>';
   // جدول الأعمال
   if(m.notes){
@@ -19562,7 +19572,7 @@ function gmPrintMeetingPDF(mid){
   // التكليفات
   if((m.tasks||[]).length > 0){
     html += '<h2>📌 التكليفات الصادرة</h2>';
-    html += '<table><thead><tr><th style="width:30px">#</th><th>التكليف</th><th style="width:110px">المسؤول</th><th style="width:90px">الاستحقاق</th><th style="width:70px">الأولوية</th><th style="width:80px">الحالة</th><th style="width:60px">الإنجاز</th></tr></thead><tbody>';
+    html += '<table><thead><tr><th style="width:30px">#</th><th>التكليف</th><th style="width:110px">المسؤول</th><th style="width:90px">التاريخ</th><th style="width:70px">الأولوية</th><th style="width:80px">الحالة</th><th style="width:60px">الإنجاز</th></tr></thead><tbody>';
     m.tasks.forEach(function(t,i){
       var prio = gmPrioInfo(t.priority||'med');
       var progress = typeof t.progress==='number' ? t.progress : 0;
@@ -19579,11 +19589,6 @@ function gmPrintMeetingPDF(mid){
     });
     html += '</tbody></table>';
   }
-  // مكان التواقيع
-  html += '<div class="sign-area">';
-  html += '<div class="sign-box"><div class="sign-line"></div><div>رئيس الاجتماع</div></div>';
-  html += '<div class="sign-box"><div class="sign-line"></div><div>أمين الاجتماع</div></div>';
-  html += '</div>';
   html += '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},500);};</scr'+'ipt>';
   html += '</body></html>';
   var w = window.open('', '_blank', 'width=1000,height=700');
