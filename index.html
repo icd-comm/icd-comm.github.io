@@ -18536,6 +18536,31 @@ function gmRenderList(container){
     }, 0);
     var prioMap = {1:'low',2:'med',3:'high',4:'crit'};
     var prioInfo = maxPrio ? gmPrioInfo(prioMap[maxPrio]) : null;
+    // بناء جدول التكليفات للـ accordion
+    var tasksHtml = '';
+    if(taskCount > 0){
+      var stColors = {'منجز':'#155724','متأخر':'#922b21','جارٍ':'#7a5500','معلق':'#6c757d','قيد الانتظار':'#1a5276'};
+      tasksHtml += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px">'+
+        '<thead><tr style="background:#e8f0fb">'+
+          '<th style="padding:5px 8px;text-align:right;border:1px solid #c8daf5;font-weight:700;color:#1a5276">#</th>'+
+          '<th style="padding:5px 8px;text-align:right;border:1px solid #c8daf5;font-weight:700;color:#1a5276">التكليف</th>'+
+          '<th style="padding:5px 8px;text-align:right;border:1px solid #c8daf5;font-weight:700;color:#1a5276;width:110px">المسؤول</th>'+
+          '<th style="padding:5px 8px;text-align:right;border:1px solid #c8daf5;font-weight:700;color:#1a5276;width:95px">التاريخ</th>'+
+          '<th style="padding:5px 8px;text-align:right;border:1px solid #c8daf5;font-weight:700;color:#1a5276;width:75px">الحالة</th>'+
+        '</tr></thead><tbody>';
+      (m.tasks||[]).forEach(function(t,ti){
+        var stColor = stColors[t.status||''] || '#555';
+        tasksHtml += '<tr style="'+(ti%2===1?'background:#f7f9ff':'')+'">'+
+          '<td style="padding:5px 8px;border:1px solid #e2eaf2;text-align:center;color:#888">'+(ti+1)+'</td>'+
+          '<td style="padding:5px 8px;border:1px solid #e2eaf2">'+gmEsc(t.task||'—')+'</td>'+
+          '<td style="padding:5px 8px;border:1px solid #e2eaf2;color:#1a5276">'+gmEsc(t.responsible||'—')+'</td>'+
+          '<td style="padding:5px 8px;border:1px solid #e2eaf2;color:#555">'+gmEsc(gmFormatDate(t.dueDate)||'—')+'</td>'+
+          '<td style="padding:5px 8px;border:1px solid #e2eaf2;font-weight:700;color:'+stColor+'">'+gmEsc(t.status||'—')+'</td>'+
+        '</tr>';
+      });
+      tasksHtml += '</tbody></table>';
+    }
+    var tasksId = 'gm_tasks_'+m.id;
     html += '<div class="gm-list-card">'+
       '<div class="gm-list-main">'+
         '<div class="gm-list-title">'+
@@ -18559,9 +18584,18 @@ function gmRenderList(container){
       '</div>'+
       '<div class="gm-list-badges">'+
         '<span class="gm-badge">'+attCount+' حضور</span>'+
-        (taskCount>0 ? '<span class="gm-badge gm-badge-tasks">'+taskCount+' تكليف</span>' : '')+
+        (taskCount>0 ?
+          '<span class="gm-badge gm-badge-tasks" style="cursor:pointer;user-select:none" '+
+            'onclick="(function(id){var el=document.getElementById(id);var open=el.style.display===\'block\';el.style.display=open?\'none\':\'block\';this.textContent=open?\'▼ '+taskCount+' تكليف\':\'▲ '+taskCount+' تكليف\';}).call(this,\''+tasksId+'\');event.stopPropagation()">'+
+            '▼ '+taskCount+' تكليف</span>'
+        : '')+
         (doneCount>0 ? '<span class="gm-badge gm-badge-done">'+doneCount+' منجز</span>' : '')+
       '</div>'+
+      (taskCount>0 ?
+        '<div id="'+tasksId+'" style="display:none;padding:0 4px 10px;border-top:1px dashed #d0e4f7;margin-top:8px">'+
+          tasksHtml+
+        '</div>'
+      : '')+
       '<div class="gm-list-actions">'+
         '<button class="gm-act-btn" onclick="gmOpenMeeting(\''+m.id+'\')" title="تعديل">'+
           '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'+
