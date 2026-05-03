@@ -7112,8 +7112,9 @@ function _loadFromLocalBackup(){
     D.length = 0;
     backup.D.forEach(function(x){ D.push(x); });
     M = backup.M || {};
-    _pendingChangesCount = backup.pendingChanges || 0;
-    if(_pendingChangesCount > 0) _pendingSave = true;
+    /* لا نستعيد _pendingChangesCount — سيُزامَن مع Supabase تلقائياً */
+    _pendingChangesCount = 0;
+    _pendingSave = false;
     return true;
   } catch(e) {
     console.error('فشل استعادة النسخة المحلية:', e);
@@ -11068,7 +11069,11 @@ async function init(){
         /* فك قفل الحفظ — التحميل نجح */
         window._saveLocked = false;
         window._saveLockReason = null;
-        setSyncUI('ok','تمت المزامنة ✓ ('+D.length+' '+(activeSystem==='intl'?'مجلس/لجنة':'لجنة')+')');
+        /* البيانات تحميل طازج من Supabase → صفّر أي عداد تغييرات قديم */
+        _pendingChangesCount = 0;
+        _pendingSave = false;
+        updatePendingBadge();
+        setSyncUI('ok','تمت المزامنة ✓ ('+D.length+' '+(activeSystem==='intl'?'مجلس/لجنة':'لجنة')+')')
       } else {
         /* GUARD: use correct system data only — never upload other system's data */
         var _safeD=D.filter(function(x){return activeSystem==='intl'?(x.sc==='خارجية دولية'):(x.sc!=='خارجية دولية');});
@@ -11136,6 +11141,10 @@ async function init(){
     /* للجان الجديدة التي ليس لها اجتماعات في Supabase */
     applyIMPForNew();
   }
+  /* ── بعد تحميل ناجح من Supabase: صفّر العداد دائماً ── */
+  _pendingChangesCount = 0;
+  _pendingSave = false;
+  if(typeof updatePendingBadge === 'function') updatePendingBadge();
   refRep();applyF();updateHomeStats();
 }
 async function forceReloadEmbedded(){
