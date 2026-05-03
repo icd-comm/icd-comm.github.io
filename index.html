@@ -37,15 +37,25 @@ html body .spanel.active{
 .mbg, .mail-modal, .confirm-box,
 [class*="modal-overlay"],
 #s4MailModal, #s4MailLogModal,
-#logoutModal, #adminModal, #execSumModal,
+#logoutModal, #execSumModal,
 #s3CalTooltip{
   z-index:11500 !important;
 }
+/* adminModal: z-index أعلى لمنع تغطيته من error boxes */
+#adminModal{
+  z-index:12500 !important;
+}
+/* odErrBox: z-index منخفض ليكون تحت أي modal مفتوح */
+#odErrBox{
+  z-index:11000 !important;
+  pointer-events:auto !important;
+  max-width:600px !important;
+}
 /* modals منشأة ديناميكياً بـ inline style — z-index أعلى من appScreen */
-div[style*="position:fixed"][style*="z-index:99999"],
-div[style*="position:fixed"][style*="z-index: 99999"],
-div[style*="position:fixed"][style*="z-index:9999"]:not(.spanel),
-div[style*="position:fixed"][style*="z-index: 9999"]:not(.spanel),
+div[style*="position:fixed"][style*="z-index:99999"]:not(#odErrBox),
+div[style*="position:fixed"][style*="z-index: 99999"]:not(#odErrBox),
+div[style*="position:fixed"][style*="z-index:9999"]:not(.spanel):not(#odErrBox),
+div[style*="position:fixed"][style*="z-index: 9999"]:not(.spanel):not(#odErrBox),
 div[style*="position:fixed"][style*="z-index:9000"],
 div[style*="position:fixed"][style*="z-index: 9000"]{
   z-index:11500 !important;
@@ -116,7 +126,13 @@ body { font-family: var(--font) !important; }
 </style>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sakkal Majalla','Sakkal Majalla 2',serif;background:#232733;color:#1a1a2e;direction:rtl;font-size:13px;overflow-x:hidden}
+body{font-family:'Sakkal Majalla','Sakkal Majalla 2',serif;background:#232733;color:#1a1a2e;direction:rtl;font-size:13px;overflow-x:hidden;font-feature-settings:'lnum' 1, 'tnum' 1;font-variant-numeric:lining-nums tabular-nums}
+
+/* فرض الأرقام اللاتينية (1234567890) بدلاً من الأرقام العربية الهندية (١٢٣٤٥٦٧٨٩٠) في كل النظام */
+*, *::before, *::after {
+  font-feature-settings: 'lnum' 1, 'tnum' 1 !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
+}
 #homeScreen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#3b83b5 0%,#41939f 50%,#48a883 100%);overflow:hidden}
 /* عندما appScreen ظاهر، تأكد أنه فوق كل طبقات الخلفية */
 #appScreen{position:relative;z-index:10002}
@@ -368,7 +384,7 @@ html,body{max-width:100vw;overflow-x:hidden}
 .s1-card-top{padding:12px 14px 10px;display:flex;gap:10px;align-items:flex-start}
 .s1-card-num{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#3188a8,#3fa08a);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 .s1-card-body{flex:1;min-width:0}
-.s1-card-name{font-size:12px;font-weight:700;color:#1a2744;line-height:1.5;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.s1-card-name{font-size:12px;font-weight:700;color:#1a2744;line-height:1.5;margin-bottom:4px;word-wrap:break-word;overflow-wrap:break-word}
 .s1-card-rep{font-size:10.5px;color:#5a7a96;margin-bottom:6px;display:flex;align-items:center;gap:4px}
 .s1-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .s1-card-actions{display:flex;gap:4px;padding:0 14px 10px;border-top:1px solid #f0f4f8;padding-top:8px;flex-wrap:wrap}
@@ -431,7 +447,7 @@ html,body{max-width:100vw;overflow-x:hidden}
 @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.35}}
 .s3-sidebar-item:hover{background:#f8f5ff;border-color:#e0d5f5}
 .s3-sidebar-item.active{background:linear-gradient(135deg,#f0ebff,#e8f4ff);border-color:#7c3aed;box-shadow:0 2px 8px rgba(124,58,237,.12)}
-.s3-sidebar-item-name{font-size:11.5px;font-weight:700;color:#1a1a2e;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.s3-sidebar-item-name{font-size:11.5px;font-weight:700;color:#1a1a2e;line-height:1.4;word-wrap:break-word;overflow-wrap:break-word}
 .s3-sidebar-item-meta{display:flex;gap:5px;margin-top:4px;align-items:center;flex-wrap:wrap}
 .s3-sidebar-item-count{font-size:9px;color:#7c3aed;font-weight:700;background:#ede8ff;border-radius:5px;padding:1px 6px}
 .s3-main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#f5f3fa}
@@ -742,7 +758,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
 .kanban-card:hover{box-shadow:0 3px 12px rgba(74,32,128,.18);transform:translateY(-1px)}
 .kanban-card-title{font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:4px;line-height:1.4;font-family:'Sakkal Majalla','Sakkal Majalla 2',serif}
 .kanban-card-meta{font-size:10px;color:#888;font-family:inherit;display:flex;flex-direction:column;gap:2px}
-.kanban-card-comm{font-size:10px;color:#4a2080;font-weight:700;font-family:'Sakkal Majalla','Sakkal Majalla 2',serif;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kanban-card-comm{font-size:10px;color:#4a2080;font-weight:700;font-family:'Sakkal Majalla','Sakkal Majalla 2',serif;margin-bottom:3px;word-wrap:break-word;overflow-wrap:break-word;line-height:1.5}
 .kanban-card-btns{display:flex;gap:4px;margin-top:6px}
 .k-btn{border:none;border-radius:5px;padding:2px 7px;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
 .k-btn-mail{background:#e8f4fd;color:#1a5276}
@@ -6552,6 +6568,589 @@ function setSyncUI(st,msg){
       - DELETE: true
    3. فعّل RLS من زر "Enable RLS" في كل جدول
    ════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ▓▓▓ ONEDRIVE STORAGE LAYER ▓▓▓
+   طبقة تخزين OneDrive — البديل الكامل لـ Supabase
+   
+   الفلسفة:
+   - File System Access API لقراءة/كتابة الملفات في مجلد OneDrive المحلي
+   - IndexedDB لحفظ FileSystemDirectoryHandle بين الجلسات
+   - بنية مجلدات: data-lajan/ + data-intl/ + backups/
+   - كل جدول = ملف JSON منفصل (committees.json, meetings.json, etc.)
+   
+   آلية التشغيل:
+   1. أول فتح في المنزل: يطلب اختيار مجلد + يرحّل البيانات من Supabase
+   2. الفتحات التالية: يقرأ من OneDrive مباشرة (لا اتصال بـ Supabase)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+var OD_CONFIG = {
+  rootHandleKey: 'committees-system-root-v1',
+  migrationDoneKey: 'committees-system-migration-done',
+  pollInterval: 30000,
+  schemaVersion: 1
+};
+
+var OD_ROOT_HANDLE = null;
+var OD_FILE_CACHE = {};
+var OD_PENDING_WRITES = new Set();
+var OD_MIGRATION_DONE = false; /* هل تم ترحيل البيانات من Supabase؟ */
+var OD_MODE = 'auto'; /* 'auto' = OneDrive إن أمكن، Supabase احتياطياً */
+
+/* ── IndexedDB للـ FileSystemDirectoryHandle ── */
+function _odIDB(){
+  return new Promise(function(resolve,reject){
+    var req=indexedDB.open('odHandlesV1',1);
+    req.onupgradeneeded=function(e){
+      var db=e.target.result;
+      if(!db.objectStoreNames.contains('handles'))db.createObjectStore('handles');
+    };
+    req.onsuccess=function(e){resolve(e.target.result);};
+    req.onerror=function(e){reject(e.target.error);};
+  });
+}
+async function odSaveHandle(key,handle){
+  var db=await _odIDB();
+  return new Promise(function(resolve,reject){
+    var tx=db.transaction(['handles'],'readwrite').objectStore('handles').put(handle,key);
+    tx.onsuccess=function(){resolve();};
+    tx.onerror=function(e){reject(e.target.error);};
+  });
+}
+async function odLoadHandle(key){
+  var db=await _odIDB();
+  return new Promise(function(resolve,reject){
+    var tx=db.transaction(['handles'],'readonly').objectStore('handles').get(key);
+    tx.onsuccess=function(){resolve(tx.result||null);};
+    tx.onerror=function(e){reject(e.target.error);};
+  });
+}
+
+/* ── فحص حالة الإعداد عند بدء النظام ── */
+async function odCheckSetup(){
+  if(!window.showDirectoryPicker){
+    return {status:'unsupported',message:'متصفحك لا يدعم File System Access API'};
+  }
+  try{
+    var saved=await odLoadHandle(OD_CONFIG.rootHandleKey);
+    if(!saved)return {status:'needs-setup'};
+    var perm=await saved.queryPermission({mode:'readwrite'});
+    if(perm==='granted'){
+      OD_ROOT_HANDLE=saved;
+      return {status:'ready',handle:saved};
+    }
+    return {status:'needs-permission',handle:saved};
+  }catch(e){
+    return {status:'error',message:e.message};
+  }
+}
+
+/* ── طلب الإذن المحفوظ ── */
+async function odRequestPermission(){
+  if(!OD_ROOT_HANDLE){
+    var saved=await odLoadHandle(OD_CONFIG.rootHandleKey);
+    if(!saved)throw new Error('لا يوجد إعداد محفوظ');
+    OD_ROOT_HANDLE=saved;
+  }
+  var perm=await OD_ROOT_HANDLE.requestPermission({mode:'readwrite'});
+  if(perm!=='granted')throw new Error('تم رفض الإذن');
+  return true;
+}
+
+/* ── اختيار مجلد جديد ── */
+async function odSelectFolder(){
+  if(!window.showDirectoryPicker)throw new Error('UNSUPPORTED');
+  var handle=await window.showDirectoryPicker({mode:'readwrite',startIn:'documents',id:'committees-system'});
+  OD_ROOT_HANDLE=handle;
+  await odSaveHandle(OD_CONFIG.rootHandleKey,handle);
+  await odEnsureStructure();
+  return handle;
+}
+
+/* ── إنشاء بنية المجلدات ── */
+async function odEnsureStructure(){
+  if(!OD_ROOT_HANDLE)throw new Error('NO_ROOT');
+  await OD_ROOT_HANDLE.getDirectoryHandle('data-lajan',{create:true});
+  await OD_ROOT_HANDLE.getDirectoryHandle('data-intl',{create:true});
+  await OD_ROOT_HANDLE.getDirectoryHandle('backups',{create:true});
+}
+
+/* ── قراءة ملف JSON ── */
+async function odRead(systemKey,fileName){
+  /* محاولة استرجاع الـ handle إن لم يكن جاهزاً */
+  if(!OD_ROOT_HANDLE){
+    try{
+      var saved=await odLoadHandle(OD_CONFIG.rootHandleKey);
+      if(saved){
+        var perm=await saved.queryPermission({mode:'readwrite'});
+        if(perm==='granted'){
+          OD_ROOT_HANDLE=saved;
+        }
+      }
+    }catch(e){}
+    if(!OD_ROOT_HANDLE){
+      /* لا handle - نعرض شاشة إعادة الإذن */
+      if(typeof odScreenReauth==='function')odScreenReauth();
+      throw new Error('يحتاج النظام إعادة منح الإذن للوصول إلى البيانات');
+    }
+  }
+  
+  try{
+    var sysDir=await OD_ROOT_HANDLE.getDirectoryHandle('data-'+systemKey);
+    try{
+      var fh=await sysDir.getFileHandle(fileName+'.json');
+      var f=await fh.getFile();
+      
+      /* ╔══════════════════════════════════════════════════════════════╗
+         ║ 🛡️ ONEDRIVE PLACEHOLDER PROTECTION                          ║
+         ║ كشف ملف "غير نازل بعد" من السحابة                            ║
+         ║ OneDrive يخلق placeholder بحجم صغير جداً قبل التنزيل الفعلي     ║
+         ╚══════════════════════════════════════════════════════════════╝ */
+      if(f.size===0){
+        throw new Error('ONEDRIVE_NOT_DOWNLOADED:الملف '+fileName+'.json لم يكتمل تنزيله من OneDrive بعد. يرجى الانتظار قليلاً وإعادة المحاولة.');
+      }
+      
+      var text=await f.text();
+      
+      /* فحص: هل الملف فارغ نصياً (placeholder) */
+      if(!text || text.trim().length<10){
+        throw new Error('ONEDRIVE_NOT_DOWNLOADED:الملف '+fileName+'.json لم يتم تحميل محتواه من OneDrive. يرجى التأكد من اكتمال المزامنة.');
+      }
+      
+      var data;
+      try{
+        data=JSON.parse(text);
+      }catch(parseErr){
+        throw new Error('FILE_CORRUPT:فشل قراءة '+fileName+'.json - الملف تالف أو غير مكتمل');
+      }
+      /* ════════════════════════════════════════════════════════════════ */
+      
+      var cacheKey=systemKey+':'+fileName;
+      OD_FILE_CACHE[cacheKey]={data:data,mtime:f.lastModified};
+      return data;
+    }catch(e){
+      if(e.name==='NotFoundError')return null; /* ملف غير موجود = بيانات فارغة */
+      throw e;
+    }
+  }catch(e){
+    if(e.name==='NotFoundError')return null;
+    if(e.name==='NotAllowedError'){
+      /* فُقد الإذن - نطلب إعادته */
+      if(typeof odScreenReauth==='function')odScreenReauth();
+      throw new Error('فُقد الإذن - يرجى منحه مجدداً');
+    }
+    /* أخطاء OneDrive المعروفة - مرر بدون تعديل */
+    if(e.message && (e.message.indexOf('ONEDRIVE_NOT_DOWNLOADED')===0 || e.message.indexOf('FILE_CORRUPT')===0)){
+      throw e;
+    }
+    throw e;
+  }
+}
+
+/* ── كتابة ملف JSON ── */
+async function odWrite(systemKey,fileName,data){
+  if(!OD_ROOT_HANDLE)throw new Error('NO_ROOT');
+  var lockKey=systemKey+':'+fileName;
+  if(OD_PENDING_WRITES.has(lockKey)){
+    /* انتظر قليلاً ثم حاول مرة أخرى */
+    await new Promise(function(r){setTimeout(r,200);});
+  }
+  OD_PENDING_WRITES.add(lockKey);
+  try{
+    var sysDir=await OD_ROOT_HANDLE.getDirectoryHandle('data-'+systemKey);
+    
+    /* ╔══════════════════════════════════════════════════════════════════╗
+       ║ 🛡️ DATA LOSS PROTECTION                                         ║
+       ║ منع الكتابة الفارغة التي قد تمحو بيانات حقيقية                    ║
+       ║ هذا الفحص يقارن عدد العناصر الجديدة بالقديمة                      ║
+       ╚══════════════════════════════════════════════════════════════════╝ */
+    var newCount=0;
+    if(data && Array.isArray(data.items))newCount=data.items.length;
+    else if(data && Array.isArray(data))newCount=data.length;
+    
+    /* اقرأ الملف الحالي للمقارنة */
+    var existingCount=0;
+    var hadExisting=false;
+    try{
+      var existingFh=await sysDir.getFileHandle(fileName+'.json',{create:false});
+      var existingFile=await existingFh.getFile();
+      if(existingFile.size>50){
+        var existingText=await existingFile.text();
+        var existingData=JSON.parse(existingText);
+        if(existingData && Array.isArray(existingData.items))existingCount=existingData.items.length;
+        else if(Array.isArray(existingData))existingCount=existingData.length;
+        hadExisting=existingCount>0;
+      }
+    }catch(e){/* الملف غير موجود - أول كتابة */}
+    
+    /* ⛔ حماية: لا تكتب فراغاً فوق بيانات */
+    if(hadExisting && existingCount>0 && newCount===0){
+      console.error('[DATA-LOSS-PROTECTION] رفض كتابة ملف فارغ فوق '+existingCount+' سجل في '+fileName);
+      if(typeof showToast==='function'){
+        showToast('⛔ تم منع كتابة ملف فارغ - بياناتك محمية!',true);
+      }
+      return {success:false,blocked:true,reason:'EMPTY_OVERWRITE_BLOCKED',existing:existingCount,new:newCount};
+    }
+    
+    /* ⚠️ تحذير: انخفاض حاد في عدد السجلات (>50%) */
+    if(hadExisting && existingCount>10 && newCount<existingCount*0.5){
+      console.warn('[DATA-LOSS-PROTECTION] انخفاض حاد: من '+existingCount+' إلى '+newCount+' في '+fileName);
+      /* احفظ نسخة احتياطية تلقائية قبل المتابعة */
+      try{
+        var backupDir;
+        try{ backupDir=await OD_ROOT_HANDLE.getDirectoryHandle('backups',{create:true}); }
+        catch(e){ backupDir=null; }
+        if(backupDir){
+          var ts=new Date().toISOString().replace(/[:.]/g,'-');
+          var backupName='auto-'+systemKey+'-'+fileName+'-'+ts+'.json';
+          var bfh=await backupDir.getFileHandle(backupName,{create:true});
+          var existingFh2=await sysDir.getFileHandle(fileName+'.json',{create:false});
+          var existingFile2=await existingFh2.getFile();
+          var existingText2=await existingFile2.text();
+          var bw=await bfh.createWritable();
+          await bw.write(existingText2);
+          await bw.close();
+          console.log('[AUTO-BACKUP] حُفظت نسخة احتياطية: '+backupName);
+        }
+      }catch(beErr){console.warn('[AUTO-BACKUP] فشل الحفظ الاحتياطي:',beErr);}
+    }
+    /* ════════════════════════════════════════════════════════════════════ */
+    
+    var fh=await sysDir.getFileHandle(fileName+'.json',{create:true});
+    var enriched=Object.assign({},data,{
+      _schemaVersion:OD_CONFIG.schemaVersion,
+      _lastModified:new Date().toISOString(),
+      _lastModifiedBy:(typeof currentUser!=='undefined'&&currentUser)?currentUser.email:'system'
+    });
+    var w=await fh.createWritable();
+    await w.write(JSON.stringify(enriched,null,2));
+    await w.close();
+    var newF=await fh.getFile();
+    OD_FILE_CACHE[lockKey]={data:enriched,mtime:newF.lastModified};
+    return {success:true,mtime:newF.lastModified};
+  }finally{
+    OD_PENDING_WRITES.delete(lockKey);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   odFetch — واجهة متوافقة مع sbFetch (لاستبدال شفّاف)
+   تأخذ نفس parameters وترجع نفس الشكل
+   ═══════════════════════════════════════════════════════════════════ */
+async function odFetch(path,method,body){
+  /* استخراج system + table من path */
+  /* أمثلة: lajan_committees?select=* → system='lajan', table='committees' */
+  /*        lajan_gm?select=id,data → system='lajan', table='gm' */
+  var pathOnly=path.split('?')[0];
+  var match=pathOnly.match(/^(lajan|intl)_(\w+)/);
+  if(!match)throw new Error('OD: مسار غير صالح: '+path);
+  var sys=match[1];
+  var tbl=match[2];
+  
+  method=method||'GET';
+  
+  /* قراءة الملف الحالي */
+  var current=await odRead(sys,tbl);
+  if(!current)current={items:[]};
+  if(!current.items)current.items=[];
+  
+  /* ── Helper: تطبيق كل الفلاتر على array ── */
+  function applyFilters(rows, fullPath){
+    /* استخراج كل أجزاء query string */
+    var qIdx=fullPath.indexOf('?');
+    if(qIdx<0)return rows;
+    var qs=fullPath.substring(qIdx+1);
+    var parts=qs.split('&');
+    
+    parts.forEach(function(part){
+      var eqIdx=part.indexOf('=');
+      if(eqIdx<0)return;
+      var key=part.substring(0,eqIdx);
+      var val=part.substring(eqIdx+1);
+      
+      /* تجاهل المعاملات الخاصة بالعرض */
+      if(key==='select'||key==='order'||key==='limit'||key==='offset')return;
+      
+      /* فلاتر القيم */
+      if(val.indexOf('eq.')===0){
+        /* field=eq.value */
+        var v=decodeURIComponent(val.substring(3));
+        rows=rows.filter(function(r){return String(r[key])===String(v);});
+      }else if(val.indexOf('neq.')===0){
+        /* field=neq.value */
+        var v2=decodeURIComponent(val.substring(4));
+        rows=rows.filter(function(r){return String(r[key])!==String(v2);});
+      }else if(val.indexOf('is.')===0){
+        /* field=is.true|false|null */
+        var iv=val.substring(3).toLowerCase();
+        if(iv==='true'){
+          rows=rows.filter(function(r){return r[key]===true;});
+        }else if(iv==='false'){
+          rows=rows.filter(function(r){return r[key]===false;});
+        }else if(iv==='null'){
+          rows=rows.filter(function(r){return r[key]===null||r[key]===undefined;});
+        }
+      }else if(val.indexOf('not.is.')===0){
+        /* field=not.is.true|false|null */
+        var niv=val.substring(7).toLowerCase();
+        if(niv==='true'){
+          rows=rows.filter(function(r){return r[key]!==true;});
+        }else if(niv==='false'){
+          rows=rows.filter(function(r){return r[key]!==false;});
+        }else if(niv==='null'){
+          rows=rows.filter(function(r){return r[key]!==null&&r[key]!==undefined;});
+        }
+      }else if(val.indexOf('gt.')===0){
+        /* field=gt.value */
+        var gv=decodeURIComponent(val.substring(3));
+        rows=rows.filter(function(r){return r[key]>gv;});
+      }else if(val.indexOf('gte.')===0){
+        var gev=decodeURIComponent(val.substring(4));
+        rows=rows.filter(function(r){return r[key]>=gev;});
+      }else if(val.indexOf('lt.')===0){
+        var lv=decodeURIComponent(val.substring(3));
+        rows=rows.filter(function(r){return r[key]<lv;});
+      }else if(val.indexOf('lte.')===0){
+        var lev=decodeURIComponent(val.substring(4));
+        rows=rows.filter(function(r){return r[key]<=lev;});
+      }else if(val.indexOf('like.')===0||val.indexOf('ilike.')===0){
+        /* field=like.%X% أو ilike.%X% */
+        var pre=val.indexOf('ilike.')===0?6:5;
+        var pat=decodeURIComponent(val.substring(pre)).replace(/%/g,'.*');
+        var re=new RegExp('^'+pat+'$',val.indexOf('ilike.')===0?'i':'');
+        rows=rows.filter(function(r){return re.test(String(r[key]||''));});
+      }else if(val.indexOf('in.')===0){
+        /* field=in.(a,b,c) */
+        var listStr=val.substring(3).replace(/^\(|\)$/g,'');
+        var list=listStr.split(',').map(decodeURIComponent);
+        rows=rows.filter(function(r){return list.indexOf(String(r[key]))>=0;});
+      }
+    });
+    
+    return rows;
+  }
+  
+  /* محاكاة Supabase semantics */
+  if(method==='GET'){
+    var rows=applyFilters(current.items.slice(),path);
+    
+    /* تطبيق order */
+    var orderMatch=path.match(/[?&]order=([^&]+)/);
+    if(orderMatch){
+      /* قد يكون: field.asc أو field.desc */
+      var od=decodeURIComponent(orderMatch[1]).split('.');
+      var ofld=od[0],odir=od[1]||'asc';
+      rows.sort(function(a,b){
+        var av=a[ofld],bv=b[ofld];
+        if(av==null&&bv==null)return 0;
+        if(av==null)return odir==='asc'?-1:1;
+        if(bv==null)return odir==='asc'?1:-1;
+        if(av<bv)return odir==='asc'?-1:1;
+        if(av>bv)return odir==='asc'?1:-1;
+        return 0;
+      });
+    }
+    
+    /* تطبيق offset */
+    var offsetMatch=path.match(/[?&]offset=(\d+)/);
+    if(offsetMatch)rows=rows.slice(parseInt(offsetMatch[1]));
+    
+    /* تطبيق limit */
+    var limitMatch=path.match(/[?&]limit=(\d+)/);
+    if(limitMatch)rows=rows.slice(0,parseInt(limitMatch[1]));
+    
+    /* تطبيق select - اختيار الحقول المطلوبة فقط */
+    var selectMatch=path.match(/[?&]select=([^&]+)/);
+    if(selectMatch){
+      var selectFields=decodeURIComponent(selectMatch[1]);
+      if(selectFields!=='*'){
+        var fields=selectFields.split(',').map(function(f){return f.trim();});
+        rows=rows.map(function(r){
+          var newR={};
+          fields.forEach(function(f){
+            if(r.hasOwnProperty(f))newR[f]=r[f];
+          });
+          return newR;
+        });
+      }
+    }
+    
+    return rows;
+  }
+  
+  if(method==='POST'){
+    var newItems=Array.isArray(body)?body:[body];
+    newItems.forEach(function(item){
+      if(!item.id)item.id=Date.now()+Math.floor(Math.random()*10000);
+      if(!item.created_at)item.created_at=new Date().toISOString();
+      item.updated_at=new Date().toISOString();
+      current.items.push(item);
+    });
+    await odWrite(sys,tbl,current);
+    return newItems;
+  }
+  
+  if(method==='PATCH'){
+    /* PATCH يحتاج فلتر لتحديد الصفوف المراد تحديثها */
+    var matchedRows=applyFilters(current.items.slice(),path);
+    if(matchedRows.length===0)return [];
+    
+    var updated=[];
+    /* تحديث في place */
+    current.items.forEach(function(r,i){
+      var isMatch=matchedRows.some(function(m){
+        return (r.id&&m.id&&r.id===m.id) || r===m;
+      });
+      if(isMatch){
+        Object.assign(current.items[i],body,{updated_at:new Date().toISOString()});
+        updated.push(current.items[i]);
+      }
+    });
+    await odWrite(sys,tbl,current);
+    return updated;
+  }
+  
+  if(method==='DELETE'){
+    var toDelete=applyFilters(current.items.slice(),path);
+    if(toDelete.length===0)return [];
+    
+    var deletedIds=toDelete.map(function(r){return r.id;});
+    var deleted=[];
+    current.items=current.items.filter(function(r){
+      var matches=toDelete.some(function(d){
+        return (r.id&&d.id&&r.id===d.id) || r===d;
+      });
+      if(matches){deleted.push(r);return false;}
+      return true;
+    });
+    await odWrite(sys,tbl,current);
+    return deleted;
+  }
+  
+  throw new Error('OD: method غير مدعوم: '+method);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   آلية الترحيل التلقائي من Supabase إلى OneDrive
+   ═══════════════════════════════════════════════════════════════════ */
+async function odMigrateFromSupabase(progressCallback){
+  var systems=[{key:'lajan',sb:'main'},{key:'intl',sb:'intl'}];
+  var tables=['committees','meetings','users','audit','trash'];
+  /* جداول إضافية لا تستخدم SB_TABLES (gm = الاجتماعات والتكليفات العامة) */
+  var extraTables=[
+    {sysKey:'lajan',table:'gm',sbTable:'lajan_gm'},
+    {sysKey:'intl',table:'gm',sbTable:'intl_gm'}
+  ];
+  var report={tables:{},errors:[],totalRows:0};
+  
+  function rep(msg){
+    if(progressCallback)progressCallback(msg);
+    console.log('[Migration]',msg);
+  }
+  
+  rep('🔄 بدء الترحيل من Supabase إلى OneDrive...');
+  
+  /* الجداول الرئيسية */
+  for(var si=0;si<systems.length;si++){
+    var sys=systems[si];
+    rep('📦 ترحيل النظام: '+sys.key);
+    
+    for(var ti=0;ti<tables.length;ti++){
+      var tbl=tables[ti];
+      var tblName=SB_TABLES[sys.sb][tbl];
+      var key=sys.key+'/'+tbl;
+      
+      rep('  → جلب '+tblName+'...');
+      
+      try{
+        /* جلب كل البيانات بصفحات */
+        var allRows=[];
+        var page=0,pageSize=1000,hasMore=true;
+        while(hasMore){
+          var rows=await _sbFetchReal(tblName+'?select=*&order=id.asc&limit='+pageSize+'&offset='+(page*pageSize));
+          if(rows&&rows.length>0){
+            allRows=allRows.concat(rows);
+            if(rows.length<pageSize)hasMore=false;
+            else page++;
+          }else hasMore=false;
+        }
+        
+        /* الكتابة على OneDrive */
+        await odWrite(sys.key,tbl,{items:allRows});
+        report.tables[key]={count:allRows.length,success:true};
+        report.totalRows+=allRows.length;
+        rep('  ✓ '+tblName+': '+allRows.length+' سجل');
+      }catch(e){
+        report.errors.push({table:key,error:e.message});
+        report.tables[key]={count:0,success:false,error:e.message};
+        rep('  ⚠ '+tblName+': '+e.message);
+      }
+    }
+  }
+  
+  /* الجداول الإضافية (gm = الاجتماعات والتكليفات العامة) */
+  rep('📦 ترحيل الجداول الإضافية...');
+  for(var ei=0;ei<extraTables.length;ei++){
+    var ex=extraTables[ei];
+    var exKey=ex.sysKey+'/'+ex.table;
+    rep('  → جلب '+ex.sbTable+'...');
+    try{
+      var exRows=await _sbFetchReal(ex.sbTable+'?select=*');
+      if(!exRows)exRows=[];
+      await odWrite(ex.sysKey,ex.table,{items:exRows});
+      report.tables[exKey]={count:exRows.length,success:true};
+      report.totalRows+=exRows.length;
+      rep('  ✓ '+ex.sbTable+': '+exRows.length+' سجل');
+    }catch(e){
+      report.errors.push({table:exKey,error:e.message});
+      report.tables[exKey]={count:0,success:false,error:e.message};
+      rep('  ⚠ '+ex.sbTable+': '+e.message);
+    }
+  }
+  
+  /* وضع علامة "تم الترحيل" */
+  try{
+    localStorage.setItem(OD_CONFIG.migrationDoneKey,JSON.stringify({
+      date:new Date().toISOString(),
+      report:report
+    }));
+    OD_MIGRATION_DONE=true;
+  }catch(e){}
+  
+  rep('✅ اكتمل الترحيل: '+report.totalRows+' سجل');
+  return report;
+}
+
+/* ── فحص هل تم الترحيل سابقاً ── */
+function odIsMigrationDone(){
+  try{
+    var v=localStorage.getItem(OD_CONFIG.migrationDoneKey);
+    if(v){OD_MIGRATION_DONE=true;return true;}
+  }catch(e){}
+  return false;
+}
+
+/* استدعاء فوري - قبل أي كود آخر يحاول استخدام sbFetch */
+odIsMigrationDone();
+
+/* محاولة استرجاع OD_ROOT_HANDLE فوراً (بدون انتظار DOMContentLoaded) */
+(async function(){
+  try{
+    if(!window.indexedDB)return;
+    var saved=await odLoadHandle(OD_CONFIG.rootHandleKey);
+    if(saved){
+      try{
+        var perm=await saved.queryPermission({mode:'readwrite'});
+        if(perm==='granted'){
+          OD_ROOT_HANDLE=saved;
+          console.log('[OD] Handle restored at startup');
+        }
+      }catch(e){}
+    }
+  }catch(e){}
+})();
+
+
 var SB_CONFIG={
   url:'https://quaosjduxutnqhretejo.supabase.co',
   key:'sb_publishable_7EpFx4cOzztzJoDqT8cykg_TM1N7h25'
@@ -6581,6 +7180,72 @@ var SB_TABLES={
   main:{committees:'lajan_committees',meetings:'lajan_meetings',users:'lajan_users',audit:'lajan_audit',trash:'lajan_trash'},
   intl:{committees:'intl_committees',meetings:'intl_meetings',users:'intl_users',audit:'intl_audit',trash:'intl_trash'}
 };
+
+/* ══════════════════════════════════════════════════════════════════════
+   معالج أخطاء بصري عام - يظهر أي خطأ في النافذة
+   هذا سيساعد على تشخيص المشاكل بدون الحاجة لـ Console
+   ═══════════════════════════════════════════════════════════════════ */
+window.__odErrorBox=function(title,err){
+  try{
+    var existing=document.getElementById('odErrBox');
+    if(existing)existing.remove();
+    var box=document.createElement('div');
+    box.id='odErrBox';
+    box.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;background:#fff;border:2px solid #dc2626;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.3);max-width:600px;width:90%;direction:rtl;font-family:inherit;animation:odFadeIn .3s';
+    var msg=err&&err.message?err.message:String(err||'خطأ غير معروف');
+    var stack=err&&err.stack?err.stack:'';
+    box.innerHTML=
+      '<div style="background:#dc2626;color:#fff;padding:12px 18px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center">'
+        +'<div style="font-weight:800;font-size:14px">⚠ '+title+'</div>'
+        +'<button onclick="document.getElementById(\'odErrBox\').remove()" style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:13px">×</button>'
+      +'</div>'
+      +'<div style="padding:14px 18px">'
+        +'<div style="font-size:12.5px;color:#0f172a;font-weight:700;margin-bottom:6px">رسالة الخطأ:</div>'
+        +'<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px;font-size:11.5px;color:#991b1b;direction:ltr;text-align:left;font-family:Consolas,monospace;word-break:break-word;margin-bottom:10px">'+msg+'</div>'
+        +(stack?'<details style="margin-top:8px"><summary style="cursor:pointer;font-size:11px;color:#64748b">تفاصيل تقنية (للمطور)</summary><div style="background:#0f172a;color:#94a3b8;border-radius:6px;padding:10px;font-size:10px;direction:ltr;text-align:left;font-family:Consolas,monospace;max-height:150px;overflow:auto;white-space:pre-wrap;margin-top:6px">'+stack+'</div></details>':'')
+      +'</div>';
+    document.body.appendChild(box);
+    /* إغلاق تلقائي بعد 15 ثانية */
+    setTimeout(function(){if(box.parentNode)box.remove();},15000);
+  }catch(e){alert(title+'\n'+msg);}
+};
+
+/* اعتراض كل الأخطاء غير المعالجة - نسجل في console فقط بدون عرض صندوق
+   يحجب الواجهة. صندوق الخطأ كان يحجب نقرات الأزرار. */
+window.addEventListener('error',function(e){
+  if(e.error&&(e.error.stack||'').indexOf('odBootstrap')<0){
+    console.warn('[Auto-Error]',(e.error&&e.error.message)||e.message,e.error);
+  }
+});
+window.addEventListener('unhandledrejection',function(e){
+  console.warn('[Auto-Rejection]',(e.reason&&e.reason.message)||e.reason);
+  /* منع ظهور الخطأ في console كـ Uncaught */
+  e.preventDefault&&e.preventDefault();
+});
+
+/* تغليف ذكي لدوال الأزرار - يلتقط أي خطأ ويعرضه */
+window.__odWrapButton=function(fnName){
+  var orig=window[fnName];
+  if(typeof orig!=='function')return;
+  window[fnName]=async function(){
+    try{
+      return await orig.apply(this,arguments);
+    }catch(e){
+      console.error('['+fnName+'] error:',e);
+      window.__odErrorBox('فشل: '+fnName,e);
+      throw e;
+    }
+  };
+};
+
+/* تطبيق التغليف بعد تحميل الصفحة */
+document.addEventListener('DOMContentLoaded',function(){
+  setTimeout(function(){
+    ['openTrashModal','openAuditModal','openChangelogModal','openUserPermsModal'].forEach(function(fn){
+      if(typeof window[fn]==='function')window.__odWrapButton(fn);
+    });
+  },500);
+});
 
 
 /* ══════════════════════════════════════════════════════
@@ -6907,7 +7572,55 @@ function updateSystemUI(){
 
 /* ── Supabase REST helper (shared) ── */
 var SB_ACCESS_TOKEN=null;
+/* ══════════════════════════════════════════════════════════════════════
+   sbFetch — موجّه ذكي بين OneDrive و Supabase
+   
+   الأولوية:
+   1. إذا كان OneDrive جاهز ✓ والترحيل تم ✓ → يستخدم odFetch (OneDrive)
+   2. إذا لم يكتمل الترحيل بعد → يستخدم Supabase الفعلي
+   3. عند الفشل في الوضع OneDrive → يحاول Supabase كـ fallback
+   ═══════════════════════════════════════════════════════════════════ */
 async function sbFetch(path,method,body){
+  /* إذا الترحيل تم سابقاً، نضمن أن OD_ROOT_HANDLE جاهز قبل المتابعة */
+  if(OD_MIGRATION_DONE){
+    /* محاولة استرجاع الـ handle إن لم يكن جاهزاً */
+    if(!OD_ROOT_HANDLE){
+      try{
+        var saved=await odLoadHandle(OD_CONFIG.rootHandleKey);
+        if(saved){
+          var perm=await saved.queryPermission({mode:'readwrite'});
+          if(perm==='granted'){
+            OD_ROOT_HANDLE=saved;
+          }
+        }
+      }catch(e){}
+    }
+    
+    /* الآن: إن كان جاهزاً → نستخدم OneDrive */
+    if(OD_ROOT_HANDLE){
+      try{
+        return await odFetch(path,method,body);
+      }catch(e){
+        console.warn('[sbFetch] OneDrive fetch failed:',e.message);
+        throw e;
+      }
+    }
+    /* الترحيل تم لكن OD_ROOT_HANDLE غير متاح → الإذن مفقود */
+    /* نُرجع نتيجة فارغة بدلاً من الذهاب لـ Supabase (المحجوب) */
+    if(typeof odScreenReauth==='function'){
+      setTimeout(function(){odScreenReauth();},100);
+    }
+    /* حسب نوع الاستعلام، نرجع نتيجة فارغة مناسبة */
+    if(method==='GET'||!method)return [];
+    return null;
+  }
+  
+  /* الوضع 2: لم يتم الترحيل بعد → نستخدم Supabase الفعلي */
+  return await _sbFetchReal(path,method,body);
+}
+
+/* ── الاتصال الفعلي بـ Supabase (مُستخدم داخلياً للترحيل) ── */
+async function _sbFetchReal(path,method,body){
   var SB_URL=SB_CONFIG.url;
   var SB_KEY=SB_CONFIG.key;
   var headers={
@@ -8054,7 +8767,7 @@ async function exportPPTX(pMode){
 
   /* بيانات مفلترة */
   var FDP=getDashFiltered();
-  var today=new Date().toLocaleDateString('ar-SA');
+  var today=new Date().toLocaleDateString('ar-SA-u-nu-latn');
 
   /* إحصاءات */
   var ok=FDP.filter(function(d){return d.st==='مستمرة';}).length;
@@ -8385,8 +9098,8 @@ function dashPrint(printMode){
   var rpK=Object.keys(respMap).sort(function(a,b){return respMap[b]-respMap[a];}).slice(0,8);
   var rpV=rpK.map(function(k){return respMap[k];});
 
-  var today=new Date().toLocaleDateString('ar-SA-u-ca-gregory',{year:'numeric',month:'long',day:'numeric'});
-  var todayHijri=new Date().toLocaleDateString('ar-SA-u-ca-islamic',{year:'numeric',month:'long',day:'numeric'});
+  var today=new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'});
+  var todayHijri=new Date().toLocaleDateString('ar-SA-u-ca-islamic-nu-latn',{year:'numeric',month:'long',day:'numeric'});
 
   /* ── Type breakdown: النوع × النطاق ── */
   function byTS(ty,sc){
@@ -10351,7 +11064,7 @@ function printFullReport(fi){
     +'<span style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);border-radius:20px;padding:4px 14px;font-size:11px;font-family:inherit">'+d.ty+'</span>'
     +'<span style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.85);border-radius:20px;padding:4px 14px;font-size:11px;font-family:inherit">'+d.st+'</span>'
     +'</div>'
-    +'<div style="color:rgba(255,255,255,.4);font-size:10px;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;margin-top:12px">'+new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'})+'</div>'
+    +'<div style="color:rgba(255,255,255,.4);font-size:10px;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;margin-top:12px">'+new Date().toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'long',day:'numeric'})+'</div>'
     +'</div>'
     +'<div class="np" style="margin-bottom:14px"><button onclick="window.print()" style="background:#4a2080;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-family:inherit;cursor:pointer">طباعة</button></div>'
     +'<h3 style="font-size:12px;font-weight:700;color:#2c1654;border-bottom:2px solid #4a2080;padding-bottom:5px;margin-bottom:11px">البيانات الأساسية</h3>'
@@ -10425,7 +11138,7 @@ function exportS1Excel(){
     ['مستمرة',ok],['منتهية',dn2],['متعثرة',bl],['لم تبدأ',ns],
     activeSystem==='intl'?[['خارجية دولية',flt.filter(function(d){return d.sc==='خارجية دولية';}).length]]:[['داخلية',inn],['خارج نطاق الوزارة',flt.filter(function(d){return d.sc==='خارج نطاق الوزارة';}).length]],
     ['رئاسة الوكالة',hd],
-    ['تاريخ التصدير',new Date().toLocaleDateString('ar-SA')]
+    ['تاريخ التصدير',new Date().toLocaleDateString('ar-SA-u-nu-latn')]
   ];
   var ws2=XLSX.utils.aoa_to_sheet(sumRows);
   ws2['!cols']=[{wch:25},{wch:15}];
@@ -11072,8 +11785,8 @@ async function openTrashModal(){
       html+='<div style="text-align:center;padding:40px;color:#aaa;font-family:inherit;font-size:13px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><line x1="12" y1="3" x2="12" y2="21"/><path d="M3 9l9-7 9 7"/><path d="M5 9v11h14V9"/></svg> سلة المحذوفات فارغة</div>';
     } else {
       html+=rows.map(function(r){
-        var dt=new Date(r.deleted_at).toLocaleDateString('ar-SA');
-        var exp=new Date(r.expires_at).toLocaleDateString('ar-SA');
+        var dt=new Date(r.deleted_at).toLocaleDateString('ar-SA-u-nu-latn');
+        var exp=new Date(r.expires_at).toLocaleDateString('ar-SA-u-nu-latn');
         var typeLabel=r.item_type==='committee'?(activeSystem==='intl'?'🌐 مجلس/لجنة':'🏛 لجنة'):r.item_type==='meeting'?'📅 اجتماع':r.item_type==='task'?'✅ تكليف':'عنصر';
         return '<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid #f0e0e0;border-radius:10px;margin-bottom:8px;background:#fff9f9">'
           +'<div style="flex:1">'          +'<div style="font-size:9.5px;color:#888;margin-bottom:3px;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> تاريخ الحذف: <b style="color:#922b21">'+dt+'</b></div>'
@@ -11199,7 +11912,7 @@ async function openAuditModal(){
         +'</tr></thead><tbody>';
       rows.forEach(function(r,i){
         var dt=new Date(r.created_at);
-        var dtStr=dt.toLocaleDateString('ar-SA')+' '+dt.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+        var dtStr=dt.toLocaleDateString('ar-SA-u-nu-latn')+' '+dt.toLocaleTimeString('ar-SA-u-nu-latn',{hour:'2-digit',minute:'2-digit'});
         var bg=i%2===0?'#fff':'#f9f9f9';
         var ac=r.action||'';
         var badgeBg=actionColor[ac]||'#e9ecef';
@@ -12095,13 +12808,13 @@ function s4RenKanban(tasks){
       colTasks.forEach(function(t){
         var due=s4DueStatus(t);
         html+='<div class="kanban-card" style="border-top:3px solid '+colColor+'">'
-          +'<div class="kanban-card-comm">'+e(t.committee.substring(0,40))+'</div>'
-          +'<div class="kanban-card-title">'+e(t.task.substring(0,80))+'</div>'
+          +'<div class="kanban-card-comm">'+e(t.committee||'')+'</div>'
+          +'<div class="kanban-card-title">'+e(t.task||'')+'</div>'
           +(function(){var rag=s4GetRAG(t);return '<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">'+'<span style="font-size:10px;background:'+rag.bg+';color:'+rag.color+';border-radius:5px;padding:2px 8px;font-weight:700;border:1px solid '+rag.color+'20">'+rag.dot+' '+rag.label+'</span>'+(t.escalated?'<span style="font-size:10px;background:#fff3e0;color:#e65100;border-radius:5px;padding:2px 7px;font-weight:700;border:1px solid #ffcc0240"> مُصعَّد</span>':'')+' </div>';})()
           +'<div class="kanban-card-meta">'
           +(t.responsible?'<span>المسؤول: <b>'+e(t.responsible)+'</b></span>':'')
           +(due.label?'<span class="k-due '+due.cls+'">'+due.label+'</span>':'')
-          +(t.update?'<span style="color:#2980b9">آخر تحديث: '+e(cleanUpdateField(t.update).substring(0,40))+'</span>':'')
+          +(t.update?'<span style="color:#2980b9">آخر تحديث: '+e(cleanUpdateField(t.update))+'</span>':'')
           +(t.mailLog&&t.mailLog.length?'<span style="color:#1a5276;font-size:9.5px;background:#e8f4fd;border-radius:4px;padding:1px 6px"> '+t.mailLog.length+' مراسلة</span>':'')
           +'</div>'
           +'<div class="kanban-card-btns">'
@@ -12128,7 +12841,7 @@ function s4RenKanban(tasks){
 /* ── دوال مساعدة ── */
 function _ecEsc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function _ecPct(n,total){if(!total)return 0;return Math.round(n/total*100);}
-function _ecFmt(n){if(n===null||n===undefined||isNaN(n))return '—';return Number(n).toLocaleString('ar-EG');}
+function _ecFmt(n){if(n===null||n===undefined||isNaN(n))return '—';return Number(n).toLocaleString('en-US');}
 
 /* ══════════════════════════════════════════════════
    حساب المؤشرات التنفيذية
@@ -12294,7 +13007,7 @@ function ecRenderDashboard(){
 /* ── Header التنفيذي ── */
 function ecRenHeader(k){
   var entityWord=activeSystem==='intl'?'المجالس واللجان الدولية':'المجالس واللجان';
-  var today=new Date().toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  var today=new Date().toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'long',day:'numeric'});
   return ''
     +'<div style="background:linear-gradient(105deg,#0a2540 0%,#0f3a5f 60%,#0c4a6e 100%);'
     +'padding:18px 26px;display:flex;align-items:center;justify-content:space-between;'
@@ -12898,27 +13611,152 @@ function ecResetFilters(){
    تصدير PDF / PPTX (يستخدم الدوال الموجودة)
    ═══════════════════════════════════════════════════ */
 function ecExportPDF(){
-  /* نطبع الحاوية كاملة */
+  /* نطبع الحاوية كاملة - مع تحويل Canvas إلى صور وإزالة الفلاتر */
   var wrap=document.getElementById('ecDashboard');
-  if(!wrap)return;
-  var today2=new Date().toLocaleDateString('ar-SA');
+  if(!wrap){if(typeof showToast==='function')showToast('لا توجد بيانات للطباعة',true);return;}
+  var today2=new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'});
+  var logoSrc=(typeof LOGO_SITE_SRC!=='undefined')?LOGO_SITE_SRC:'';
+  
+  /* 1. نسخ HTML للحاوية ثم تحويله إلى DOM مؤقت لتعديله */
+  var tempDiv=document.createElement('div');
+  tempDiv.innerHTML=wrap.innerHTML;
+  
+  /* 2. حذف شريط الفلاتر بالكامل من النسخة المُطبَعة */
+  var filtersBar=tempDiv.querySelector('#ecFiltersHost');
+  if(filtersBar){
+    /* احذف الـ container الأب الكامل (شريط الفلاتر مع كل شيء بداخله) */
+    var p=filtersBar.parentElement;
+    while(p && !p.style.padding && p!==tempDiv){p=p.parentElement;}
+    if(p && p!==tempDiv){p.remove();}
+  }
+  /* احذف أي عنصر يحتوي على نص "الفلاتر:" */
+  tempDiv.querySelectorAll('*').forEach(function(el){
+    if(el.children.length===0 && el.textContent.trim()==='الفلاتر:'){
+      var par=el.closest('div[style*="padding"]')||el.parentElement;
+      if(par && par!==tempDiv)par.remove();
+    }
+  });
+  /* احذف أزرار الإجراءات (تقرير PDF / PowerPoint / إعادة تعيين) */
+  tempDiv.querySelectorAll('button').forEach(function(btn){
+    var t=(btn.textContent||'').trim();
+    if(t.indexOf('PDF')>=0||t.indexOf('PowerPoint')>=0||t.indexOf('إعادة تعيين')>=0||t.indexOf('تصدير')>=0){
+      btn.remove();
+    }
+  });
+  
+  /* 3. تحويل كل Canvas في النسخة الأصلية إلى صور وإدراجها في المكان المقابل في النسخة المنسوخة */
+  var origCanvases=wrap.querySelectorAll('canvas');
+  var copyCanvases=tempDiv.querySelectorAll('canvas');
+  for(var ci=0;ci<origCanvases.length && ci<copyCanvases.length;ci++){
+    try{
+      var dataUrl=origCanvases[ci].toDataURL('image/png');
+      var img=document.createElement('img');
+      img.src=dataUrl;
+      img.style.cssText='width:100%;height:auto;max-width:'+origCanvases[ci].offsetWidth+'px;display:block;margin:0 auto';
+      copyCanvases[ci].parentNode.replaceChild(img,copyCanvases[ci]);
+    }catch(e){console.warn('Canvas conversion failed:',e);}
+  }
+  
+  /* 4. بناء HTML النهائي مع الشعار والتذييل */
   var w=window.open('','_blank','width=1300,height=850,scrollbars=yes');
-  if(!w)return;
+  if(!w){if(typeof showToast==='function')showToast('يرجى السماح بفتح النوافذ المنبثقة',true);return;}
+  
+  var styleCSS=
+    '*{font-feature-settings:"lnum" 1,"tnum" 1;font-variant-numeric:lining-nums tabular-nums;box-sizing:border-box}'
+    +'html,body{margin:0;padding:0}'
+    +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2",Arial,serif;background:#fff;direction:rtl;color:#1a1a2e;font-size:16pt;line-height:1.7}'
+    /* الترويسة */
+    +'.report-header{text-align:center;padding:18px 20px 14px;border-bottom:3px solid #1976d2;margin-bottom:20px;page-break-inside:avoid}'
+    +'.report-header img{height:90px;width:auto;display:block;margin:0 auto 8px auto}'
+    +'.report-header .agency-name{font-size:22pt;font-weight:800;color:#0d47a1;margin-top:6px}'
+    +'.report-header h1{font-size:24pt;font-weight:800;color:#0a2540;margin:14px 0 6px 0}'
+    +'.report-header .report-meta{color:#5d6d7e;font-size:14pt;margin-top:4px}'
+    /* المحتوى - حجم أساسي 14pt (محسّن من 16) */
+    +'.report-body{padding:0 14mm 30mm 14mm}'
+    /* تكبير العناوين والنصوص الواضحة فقط (لا نلمس inline styles المعقدة) */
+    +'.report-body h1,.report-body h2,.report-body h3{font-weight:800}'
+    +'.report-body h2{font-size:20pt !important;color:#0a2540}'
+    +'.report-body h3{font-size:17pt !important}'
+    /* الصور والكانفس */
+    +'.report-body img{max-width:100%;height:auto;display:block;margin:0 auto}'
+    /* تكبير عام للأرقام والنصوص في الكروت بإستهداف عناصر محددة */
+    +'.report-body div[style*="font-size:32px"]{font-size:38pt !important;font-weight:800 !important}'
+    +'.report-body div[style*="font-size:28px"]{font-size:34pt !important;font-weight:800 !important}'
+    +'.report-body div[style*="font-size:11px"]{font-size:13pt !important}'
+    +'.report-body div[style*="font-size:10.5px"]{font-size:12pt !important}'
+    +'.report-body div[style*="font-size:10px"]{font-size:12pt !important}'
+    +'.report-body div[style*="font-size:9px"]{font-size:11pt !important}'
+    +'.report-body span[style*="font-size:9px"]{font-size:11pt !important}'
+    +'.report-body div[style*="font-size:14px"]{font-size:15pt !important;font-weight:700 !important}'
+    +'.report-body div[style*="font-size:13px"]{font-size:14pt !important}'
+    +'.report-body div[style*="font-size:12px"]{font-size:13pt !important}'
+    /* اضمن أن الـ grids تبقى واسعة كفاية */
+    +'.report-body div[style*="grid-template-columns"]{display:grid !important}'
+    /* التذييل: ثابت في كل صفحة عند الطباعة */
+    +'.report-footer{position:fixed;bottom:6mm;left:14mm;right:14mm;border-top:2px solid #1976d2;padding-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:13pt;color:#5d6d7e;background:#fff;z-index:99}'
+    +'.report-footer .footer-date{color:#0d47a1;font-weight:700}'
+    +'.report-footer .footer-unit{color:#0d47a1;font-weight:700;text-align:left}'
+    /* أزرار التحكم (تظهر فقط على الشاشة) */
+    +'.print-controls{position:fixed;top:14px;left:14px;z-index:9999;display:flex;gap:8px;background:#fff;border-radius:8px;padding:6px 10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}'
+    +'.print-controls button{background:linear-gradient(105deg,#0a2540,#0c4a6e);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}'
+    +'.print-controls button:hover{opacity:.9}'
+    /* إعدادات الطباعة */
+    +'@media print{'
+    +'@page{size:A3 portrait;margin:18mm 12mm 22mm 12mm}'
+    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
+    +'.print-controls{display:none!important}'
+    +'.report-header{page-break-after:avoid}'
+    /* عند الطباعة: نخفي التذييل النهائي ونعتمد على running footer فقط */
+    +'.report-footer{display:none !important}'
+    +'.report-body{padding-bottom:8mm}'
+    /* تذييل ثابت لكل صفحة */
+    +'.page-footer-running{position:fixed;bottom:5mm;left:14mm;right:14mm;border-top:1.5px solid #1976d2;padding-top:5px;display:flex;justify-content:space-between;align-items:center;font-size:11pt;color:#5d6d7e;background:#fff;font-family:"Sakkal Majalla","Sakkal Majalla 2",Arial,serif;direction:rtl}'
+    +'.page-footer-running .pf-date{color:#0d47a1;font-weight:700}'
+    +'.page-footer-running .pf-unit{color:#0d47a1;font-weight:700;text-align:left}'
+    +'}'
+    /* عرض الشاشة */
+    +'@media screen{'
+    +'body{background:#f5f5f5;padding:20px}'
+    +'.report-content{background:#fff;max-width:297mm;margin:0 auto;padding:20mm 0;box-shadow:0 0 20px rgba(0,0,0,.1);position:relative}'
+    +'.report-footer{margin:30px 14mm 0 14mm;border-top:2px solid #1976d2;padding-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:13pt;color:#5d6d7e;background:#fff}'
+    +'.report-footer .footer-date{color:#0d47a1;font-weight:700}'
+    +'.report-footer .footer-unit{color:#0d47a1;font-weight:700;text-align:left}'
+    +'.page-footer-running{display:none}'
+    +'}';
+  
+  var headerHTML='<div class="report-header">'
+    +(logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم">':'')
+    +'<div class="agency-name">وكالة التعاون الدولي</div>'
+    +'<h1>'+(activeSystem==='intl'?'التقرير التنفيذي — المجالس واللجان الدولية':'التقرير التنفيذي — المجالس واللجان')+'</h1>'
+    +'<div class="report-meta">📅 '+today2+'</div>'
+    +'</div>';
+  
+  var footerHTML='<div class="report-footer">'
+    +'<div class="footer-date">📅 '+today2+'</div>'
+    +'<div class="footer-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>'
+    +'</div>';
+  
+  var runningFooterHTML='<div class="page-footer-running">'
+    +'<div class="pf-date">📅 '+today2+'</div>'
+    +'<div class="pf-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>'
+    +'</div>';
+  
+  var controlsHTML='<div class="print-controls">'
+    +'<button onclick="window.print()">🖨 طباعة / حفظ PDF</button>'
+    +'<button onclick="window.close()" style="background:#94a3b8">إغلاق</button>'
+    +'</div>';
+  
   w.document.write(
-    '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>التقرير التنفيذي</title>'
-    +'<style>body{margin:0;padding:0;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;background:#f8fafc;direction:rtl}'
-    +'@media print{.np{display:none!important}@page{margin:8mm;size:A3 portrait}'
-    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}'
-    +'.ph{background:linear-gradient(105deg,#0a2540,#0f3a5f,#0c4a6e);padding:14px 22px;'
-    +'display:flex;align-items:center;justify-content:space-between;color:#fff}</style>'
+    '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>التقرير التنفيذي</title>'
+    +'<style>'+styleCSS+'</style>'
     +'</head><body>'
-    +'<div class="ph np">'
-    +'<div style="font-size:16px;font-weight:700">التقرير التنفيذي — '+(activeSystem==='intl'?'المجالس واللجان الدولية':'المجالس واللجان')+'</div>'
-    +'<div><span style="color:rgba(255,255,255,.7);font-size:11px;margin-left:12px">'+today2+'</span>'
-    +'<button onclick="window.print()" style="background:rgba(255,255,255,.18);'
-    +'border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 18px;border-radius:7px;'
-    +'font-size:11px;cursor:pointer;font-family:inherit">🖨 طباعة / PDF</button></div></div>'
-    +wrap.innerHTML
+    +controlsHTML
+    +runningFooterHTML
+    +'<div class="report-content">'
+    +headerHTML
+    +'<div class="report-body">'+tempDiv.innerHTML+'</div>'
+    +footerHTML
+    +'</div>'
     +'</body></html>'
   );
   w.document.close();
@@ -12980,7 +13818,7 @@ function _dEsc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&'
 function _dFmtNum(n,dec){
   if(n===null||n===undefined||isNaN(n))return '—';
   dec=dec||0;
-  return Number(n).toLocaleString('ar-EG',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  return Number(n).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
 }
 
 function _dFmtPct(n){
@@ -13535,7 +14373,7 @@ function s4DashEmpty(){
    ═══════════════════════════════════════════════════ */
 function s4DashV2Header(kpi,tasks,meetings){
   var today=new Date();
-  var dateStr=today.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  var dateStr=today.toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'long',day:'numeric'});
   var range=window._s4Range||30;
   
   /* العنوان الديناميكي */
@@ -13920,7 +14758,7 @@ function s4DashV2CoreAnalytics(tasks,meetings,entities){
         /* D. Meetings Heatmap */
         +s4DashV2Card(
           'نشاط الاجتماعات','Meetings Activity',
-          'التوزيع الشهري لآخر 6 أشهر',
+          'عدد الاجتماعات شهرياً لآخر 6 أشهر — الخط المتقطع يمثل المتوسط',
           '<canvas id="s4V2HeatCanvas" style="width:100%;height:240px;display:block"></canvas>'
         )
       +'</div>'
@@ -13941,7 +14779,7 @@ function s4DashV2PerformanceIntel(entities,tasks){
   
   return ''
     +'<div style="padding:18px 20px 0">'
-      +s4DashV2SectionTitle('استخبارات الأداء','Performance Intelligence','تحليل عميق لأفضل الجهات أداءً، الجهات التي تحتاج دعماً، وأنماط التأخير')
+      +s4DashV2SectionTitle('تحليل الأداء','Performance Analysis','تحليل عميق لأفضل الجهات أداءً، الجهات التي تحتاج دعماً، وأنماط التأخير')
       
       +'<div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:14px">'
         /* Top Performers */
@@ -13998,8 +14836,8 @@ function s4DashV2EntityRow(e,rank,type){
       +'<div style="width:26px;height:26px;background:'+medalColor+';color:#fff;border-radius:50%;'
       +'display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:Arial,sans-serif;flex-shrink:0">'+rank+'</div>'
       +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:11px;font-weight:700;color:'+S4_COLORS.text+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+_dEsc(e.name)+'">'+_dEsc(e.name)+'</div>'
-        +'<div style="font-size:9.5px;color:'+S4_COLORS.textMuted+';margin-top:1px">'+e.total+' تكليف'+lateLabel+'</div>'
+        +'<div style="font-size:11px;font-weight:700;color:'+S4_COLORS.text+';line-height:1.4;word-break:break-word" title="'+_dEsc(e.name)+'">'+_dEsc(e.name)+'</div>'
+        +'<div style="font-size:9.5px;color:'+S4_COLORS.textMuted+';margin-top:2px">'+e.total+' تكليف'+lateLabel+'</div>'
       +'</div>'
       +'<div style="text-align:left;flex-shrink:0">'
         +'<div style="font-size:13px;font-weight:800;color:'+scoreColor+';font-family:Arial,sans-serif;line-height:1">'+_dFmtNum(e.score)+'</div>'
@@ -15053,179 +15891,364 @@ function s4V2DrawBar(){
 }
 
 /* ══════════════════════════════════════════════════
-   D. Heatmap — نشاط الاجتماعات
+   D. Bar Chart — نشاط الاجتماعات (تصميم محسّن: رسم عمودي واضح بدلاً من heatmap)
    ═══════════════════════════════════════════════════ */
 function s4V2DrawHeatmap(){
   var p=_s4PrepCanvas('s4V2HeatCanvas');
   if(!p)return;
   var meetings=window._s4DashMeetings||[];
   
-  /* بناء آخر 6 أشهر × أسابيع */
+  /* بناء آخر 6 أشهر */
   var today=_dToday();
   var monthsBack=6;
   var months=[];
+  var monthNames=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   for(var i=monthsBack-1;i>=0;i--){
     var d=new Date(today.getFullYear(),today.getMonth()-i,1);
     months.push({
       year:d.getFullYear(),
       month:d.getMonth(),
-      label:['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][d.getMonth()].substring(0,4),
-      yearLabel:String(d.getFullYear()).substring(2)
+      label:monthNames[d.getMonth()],
+      yearLabel:String(d.getFullYear()),
+      count:0
     });
   }
   
-  /* عدّ الاجتماعات لكل (شهر × أسبوع) */
-  var grid=months.map(function(m){
-    return {
-      month:m,
-      weeks:[0,0,0,0,0,0]  /* حتى 6 أسابيع */
-    };
-  });
-  
+  /* عدّ الاجتماعات لكل شهر */
   meetings.forEach(function(mt){
     var d=_dParseD(mt.date);
     if(!d)return;
-    /* أوجد الشهر */
-    var monthIdx=-1;
     for(var i=0;i<months.length;i++){
-      if(months[i].year===d.getFullYear()&&months[i].month===d.getMonth()){monthIdx=i;break;}
+      if(months[i].year===d.getFullYear()&&months[i].month===d.getMonth()){
+        months[i].count++;
+        break;
+      }
     }
-    if(monthIdx<0)return;
-    /* حدد الأسبوع داخل الشهر */
-    var weekIdx=Math.floor((d.getDate()-1)/7);
-    if(weekIdx>=0&&weekIdx<6)grid[monthIdx].weeks[weekIdx]++;
   });
   
-  /* أوجد القيمة القصوى */
+  /* القيمة القصوى */
   var maxVal=0;
-  grid.forEach(function(g){g.weeks.forEach(function(v){if(v>maxVal)maxVal=v;});});
+  months.forEach(function(m){if(m.count>maxVal)maxVal=m.count;});
   if(maxVal===0)maxVal=1;
   
-  /* الرسم */
-  var pad={top:25,right:14,bottom:24,left:50};
+  /* المتوسط للمقارنة */
+  var totalMeetings=months.reduce(function(s,m){return s+m.count;},0);
+  var avgPerMonth=totalMeetings/monthsBack;
+  
+  /* الرسم — إعدادات */
+  var pad={top:30,right:18,bottom:48,left:36};
   var gw=p.W-pad.left-pad.right;
   var gh=p.H-pad.top-pad.bottom;
-  var cellW=gw/monthsBack;
-  var cellH=gh/6;
+  var barCount=monthsBack;
+  var barSpacing=gw/barCount;
+  var barWidth=Math.min(barSpacing*0.6,52);
   
-  /* عناوين الأشهر (أعلى) */
-  p.ctx.fillStyle=S4_COLORS.text;
+  /* خط أساس */
+  p.ctx.strokeStyle=S4_COLORS.border;
+  p.ctx.lineWidth=1;
+  p.ctx.beginPath();
+  p.ctx.moveTo(pad.left,pad.top+gh);
+  p.ctx.lineTo(pad.left+gw,pad.top+gh);
+  p.ctx.stroke();
+  
+  /* خطوط شبكة أفقية خفيفة */
+  var gridLines=4;
+  p.ctx.strokeStyle='rgba(0,0,0,0.06)';
+  p.ctx.lineWidth=1;
+  p.ctx.font='600 9px Arial';
+  p.ctx.fillStyle=S4_COLORS.neutralLight;
+  p.ctx.textAlign='right';
+  for(var gi=1;gi<=gridLines;gi++){
+    var gy=pad.top+gh-(gh*gi/gridLines);
+    p.ctx.beginPath();
+    p.ctx.moveTo(pad.left,gy);
+    p.ctx.lineTo(pad.left+gw,gy);
+    p.ctx.stroke();
+    /* تسمية المحور الرأسي */
+    var gv=Math.round(maxVal*gi/gridLines);
+    p.ctx.fillText(gv,pad.left-4,gy+3);
+  }
+  
+  /* خط المتوسط (متقطع) */
+  if(avgPerMonth>0){
+    var avgY=pad.top+gh-(avgPerMonth/maxVal)*gh;
+    p.ctx.strokeStyle='rgba(8,131,149,0.5)';
+    p.ctx.lineWidth=1.5;
+    p.ctx.setLineDash([4,3]);
+    p.ctx.beginPath();
+    p.ctx.moveTo(pad.left,avgY);
+    p.ctx.lineTo(pad.left+gw,avgY);
+    p.ctx.stroke();
+    p.ctx.setLineDash([]);
+  }
+  
+  /* الأعمدة */
+  months.forEach(function(m,idx){
+    /* RTL: نعكس */
+    var x=pad.left+(monthsBack-1-idx)*barSpacing+(barSpacing-barWidth)/2;
+    var barH=(m.count/maxVal)*gh;
+    var y=pad.top+gh-barH;
+    
+    /* تدرج لوني للعمود */
+    var grad=p.ctx.createLinearGradient(0,y,0,y+barH);
+    if(m.count===0){
+      grad.addColorStop(0,'#e2e8f0');
+      grad.addColorStop(1,'#cbd5e1');
+    } else if(m.count>=avgPerMonth){
+      grad.addColorStop(0,'#22c55e');
+      grad.addColorStop(1,'#15803d');
+    } else {
+      grad.addColorStop(0,'#0891b2');
+      grad.addColorStop(1,'#0e7490');
+    }
+    p.ctx.fillStyle=grad;
+    
+    /* عمود مع زوايا مدورة في الأعلى */
+    var radius=4;
+    p.ctx.beginPath();
+    p.ctx.moveTo(x,y+radius);
+    p.ctx.quadraticCurveTo(x,y,x+radius,y);
+    p.ctx.lineTo(x+barWidth-radius,y);
+    p.ctx.quadraticCurveTo(x+barWidth,y,x+barWidth,y+radius);
+    p.ctx.lineTo(x+barWidth,y+barH);
+    p.ctx.lineTo(x,y+barH);
+    p.ctx.closePath();
+    p.ctx.fill();
+    
+    /* الرقم فوق العمود */
+    if(m.count>0){
+      p.ctx.fillStyle=S4_COLORS.text;
+      p.ctx.font='800 13px Arial';
+      p.ctx.textAlign='center';
+      p.ctx.fillText(m.count,x+barWidth/2,y-6);
+    } else {
+      p.ctx.fillStyle=S4_COLORS.neutralLight;
+      p.ctx.font='600 11px Arial';
+      p.ctx.textAlign='center';
+      p.ctx.fillText('0',x+barWidth/2,pad.top+gh-4);
+    }
+    
+    /* اسم الشهر تحت العمود */
+    p.ctx.fillStyle=S4_COLORS.text;
+    p.ctx.font='700 10.5px "Sakkal Majalla","Sakkal Majalla 2",serif';
+    p.ctx.textAlign='center';
+    p.ctx.fillText(m.label,x+barWidth/2,pad.top+gh+15);
+    
+    /* السنة */
+    p.ctx.fillStyle=S4_COLORS.neutralLight;
+    p.ctx.font='600 8.5px Arial';
+    p.ctx.fillText(m.yearLabel,x+barWidth/2,pad.top+gh+27);
+  });
+  
+  /* عنوان المحور Y */
+  p.ctx.save();
+  p.ctx.translate(10,pad.top+gh/2);
+  p.ctx.rotate(-Math.PI/2);
+  p.ctx.fillStyle=S4_COLORS.textMuted;
   p.ctx.font='700 9.5px "Sakkal Majalla","Sakkal Majalla 2",serif';
   p.ctx.textAlign='center';
-  months.forEach(function(m,i){
-    /* RTL: نعكس الترتيب */
-    var x=pad.left+(monthsBack-1-i)*cellW+cellW/2;
-    p.ctx.fillStyle=S4_COLORS.text;
-    p.ctx.fillText(m.label,x,pad.top-12);
-    p.ctx.fillStyle=S4_COLORS.neutralLight;
-    p.ctx.font='600 8px Arial';
-    p.ctx.fillText("'"+m.yearLabel,x,pad.top-2);
-    p.ctx.font='700 9.5px "Sakkal Majalla","Sakkal Majalla 2",serif';
-  });
+  p.ctx.fillText('عدد الاجتماعات',0,0);
+  p.ctx.restore();
   
-  /* تسميات الأسابيع (يمين بـ RTL) */
-  p.ctx.fillStyle=S4_COLORS.textMuted;
-  p.ctx.font='600 9px "Sakkal Majalla","Sakkal Majalla 2",serif';
-  p.ctx.textAlign='left';
-  ['أ1','أ2','أ3','أ4','أ5','أ6'].forEach(function(lbl,i){
-    var y=pad.top+i*cellH+cellH/2+3;
-    p.ctx.fillText(lbl,pad.left-30,y);
-  });
-  
-  /* الخلايا */
-  for(var mi=0;mi<monthsBack;mi++){
-    for(var wi=0;wi<6;wi++){
-      var v=grid[mi].weeks[wi];
-      var intensity=v/maxVal;
-      /* RTL: نعكس */
-      var x=pad.left+(monthsBack-1-mi)*cellW+2;
-      var y=pad.top+wi*cellH+2;
-      var cw=cellW-4;
-      var cellh=cellH-4;
-      
-      /* الخلفية */
-      if(v===0){
-        p.ctx.fillStyle=S4_COLORS.bg;
-      }else{
-        var alpha=0.15+intensity*0.85;
-        p.ctx.fillStyle='rgba(8,131,149,'+alpha+')';
-      }
-      p.ctx.fillRect(x,y,cw,cellh);
-      
-      /* الإطار */
-      p.ctx.strokeStyle=S4_COLORS.border;
-      p.ctx.lineWidth=1;
-      p.ctx.strokeRect(x,y,cw,cellh);
-      
-      /* الرقم */
-      if(v>0){
-        p.ctx.fillStyle=intensity>0.5?'#fff':S4_COLORS.primaryDark;
-        p.ctx.font='800 11px Arial';
-        p.ctx.textAlign='center';
-        p.ctx.textBaseline='middle';
-        p.ctx.fillText(v,x+cw/2,y+cellh/2);
-        p.ctx.textBaseline='alphabetic';
-      }
-    }
-  }
-  
-  /* Legend مقياس */
-  var lx=pad.left;
-  var ly=p.H-12;
-  p.ctx.fillStyle=S4_COLORS.textMuted;
-  p.ctx.font='600 9px "Sakkal Majalla","Sakkal Majalla 2",serif';
-  p.ctx.textAlign='left';
-  p.ctx.fillText('أقل',lx,ly+3);
-  for(var i=0;i<5;i++){
-    var alpha=0.15+(i/4)*0.85;
-    p.ctx.fillStyle='rgba(8,131,149,'+alpha+')';
-    p.ctx.fillRect(lx+30+i*16,ly-6,14,10);
-    p.ctx.strokeStyle=S4_COLORS.border;
-    p.ctx.strokeRect(lx+30+i*16,ly-6,14,10);
-  }
-  p.ctx.fillStyle=S4_COLORS.textMuted;
-  p.ctx.fillText('أكثر',lx+30+5*16+4,ly+3);
-  
-  /* Insight: الأكثر نشاطاً */
-  var totalRecent=meetings.filter(function(m){
-    var d=_dParseD(m.date);
-    if(!d)return false;
-    var sixMonthsAgo=new Date(today.getFullYear(),today.getMonth()-6,today.getDate());
-    return d>=sixMonthsAgo;
-  }).length;
-  
+  /* ملخص في الأعلى: الإجمالي + المتوسط */
   p.ctx.fillStyle=S4_COLORS.text;
   p.ctx.font='800 10.5px "Sakkal Majalla","Sakkal Majalla 2",serif';
   p.ctx.textAlign='right';
-  p.ctx.fillText('إجمالي: '+totalRecent+' اجتماع',p.W-pad.right,ly+3);
+  p.ctx.fillText('إجمالي: '+totalMeetings+' اجتماع',p.W-pad.right,15);
+  
+  p.ctx.fillStyle='#0891b2';
+  p.ctx.font='700 9.5px "Sakkal Majalla","Sakkal Majalla 2",serif';
+  p.ctx.textAlign='left';
+  p.ctx.fillText('— — متوسط: '+avgPerMonth.toFixed(1)+' شهرياً',pad.left,15);
 }
 
 /* ══════════════════════════════════════════════════
    تصدير PDF التنفيذي
    ═══════════════════════════════════════════════════ */
 function s4DashExportPDF(){
+  /* تطبع لوحة المؤشرات التنفيذية - مع تحويل Canvas إلى صور وحذف العناصر التفاعلية */
   var wrap=document.getElementById('s4DashWrap');
-  if(!wrap)return;
-  var today2=new Date().toLocaleDateString('ar-SA');
+  if(!wrap){if(typeof showToast==='function')showToast('لا توجد بيانات للطباعة',true);return;}
+  var today2=new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'});
+  var logoSrc=(typeof LOGO_SITE_SRC!=='undefined')?LOGO_SITE_SRC:'';
+  var sysLabel=(activeSystem==='intl'?'المجالس واللجان الدولية':'المجالس واللجان');
+  
+  /* 1. نسخ HTML للحاوية ثم تحويله إلى DOM مؤقت لتعديله */
+  var tempDiv=document.createElement('div');
+  tempDiv.innerHTML=wrap.innerHTML;
+  
+  /* 2. حذف العناصر التفاعلية: زر "تصدير ملخص تنفيذي" + فلاتر النطاق الزمني + زر "فتح أداة الاستكمال" */
+  tempDiv.querySelectorAll('button').forEach(function(btn){
+    var t=(btn.textContent||'').trim();
+    if(t.indexOf('تصدير ملخص')>=0
+       ||t.indexOf('PDF')>=0
+       ||t.indexOf('PowerPoint')>=0
+       ||t.indexOf('فتح أداة الاستكمال')>=0
+       ||t.indexOf('مراجعة المعلَّمة')>=0
+       ||t.indexOf('7 أيام')>=0
+       ||t.indexOf('30 يوماً')>=0
+       ||t.indexOf('90 يوماً')>=0
+       ||t.indexOf('6 أشهر')>=0
+       ||t==='سنة'
+       ||t==='×'){
+      btn.remove();
+    }
+  });
+  /* احذف label "النطاق الزمني:" */
+  tempDiv.querySelectorAll('span').forEach(function(sp){
+    if(sp.children.length===0 && (sp.textContent||'').trim()==='النطاق الزمني:'){
+      sp.remove();
+    }
+  });
+  
+  /* 3. تحويل كل Canvas في النسخة الأصلية إلى صور PNG وإدراجها في النسخة المنسوخة */
+  var origCanvases=wrap.querySelectorAll('canvas');
+  var copyCanvases=tempDiv.querySelectorAll('canvas');
+  for(var ci=0;ci<origCanvases.length && ci<copyCanvases.length;ci++){
+    try{
+      var origC=origCanvases[ci];
+      /* تأكد أن Canvas مرسوم عليه (له أبعاد فعلية) */
+      if(origC.width>0 && origC.height>0){
+        var dataUrl=origC.toDataURL('image/png');
+        if(dataUrl && dataUrl.length>200){
+          var img=document.createElement('img');
+          img.src=dataUrl;
+          img.style.cssText='width:100%;height:auto;display:block;margin:0 auto;max-width:'+(origC.offsetWidth||origC.width)+'px';
+          copyCanvases[ci].parentNode.replaceChild(img,copyCanvases[ci]);
+        }
+      }
+    }catch(e){console.warn('Canvas conversion failed for index '+ci+':',e);}
+  }
+  
+  /* 4. إصلاح النصوص المبتورة: إزالة white-space:nowrap و text-overflow:ellipsis من النصوص داخل الكروت */
+  tempDiv.querySelectorAll('[style]').forEach(function(el){
+    var s=el.getAttribute('style')||'';
+    if(s.indexOf('text-overflow:ellipsis')>=0 || s.indexOf('white-space:nowrap')>=0){
+      /* إزالة هذه الخصائص للسماح بالتفاف النص */
+      var newStyle=s
+        .replace(/white-space\s*:\s*nowrap\s*;?/g,'')
+        .replace(/text-overflow\s*:\s*ellipsis\s*;?/g,'')
+        .replace(/overflow\s*:\s*hidden\s*;?/g,'');
+      el.setAttribute('style',newStyle);
+    }
+  });
+  
+  /* 5. بناء HTML النهائي مع الشعار والتذييل */
   var w=window.open('','_blank','width=1300,height=850,scrollbars=yes');
-  if(!w)return;
+  if(!w){if(typeof showToast==='function')showToast('يرجى السماح بفتح النوافذ المنبثقة',true);return;}
+  
+  var styleCSS=
+    '*{font-feature-settings:"lnum" 1,"tnum" 1;font-variant-numeric:lining-nums tabular-nums;box-sizing:border-box}'
+    +'html,body{margin:0;padding:0}'
+    +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2",Arial,serif;background:#fff;direction:rtl;color:#1a1a2e;font-size:16pt;line-height:1.7}'
+    /* الترويسة */
+    +'.report-header{text-align:center;padding:18px 20px 14px;border-bottom:3px solid #1976d2;margin-bottom:20px;page-break-inside:avoid}'
+    +'.report-header img{height:90px;width:auto;display:block;margin:0 auto 8px auto}'
+    +'.report-header .agency-name{font-size:22pt;font-weight:800;color:#0d47a1;margin-top:6px}'
+    +'.report-header h1{font-size:24pt;font-weight:800;color:#0a2540;margin:14px 0 6px 0}'
+    +'.report-header .report-meta{color:#5d6d7e;font-size:14pt;margin-top:4px}'
+    /* المحتوى - حجم 16pt كما طلبت */
+    +'.report-body{padding:0 14mm 30mm 14mm}'
+    +'.report-body h1,.report-body h2,.report-body h3{font-weight:800}'
+    +'.report-body h2{font-size:20pt !important;color:#0a2540}'
+    +'.report-body h3{font-size:17pt !important}'
+    /* الصور (Canvas المحوّل) */
+    +'.report-body img{max-width:100%;height:auto;display:block;margin:0 auto}'
+    /* تكبير العناصر بناءً على inline font-size الموجود في الكروت الأصلية */
+    +'.report-body div[style*="font-size:32px"]{font-size:38pt !important;font-weight:800 !important}'
+    +'.report-body div[style*="font-size:28px"]{font-size:34pt !important;font-weight:800 !important}'
+    +'.report-body div[style*="font-size:24px"]{font-size:28pt !important;font-weight:800 !important}'
+    +'.report-body div[style*="font-size:22px"]{font-size:26pt !important;font-weight:800 !important}'
+    +'.report-body div[style*="font-size:20px"]{font-size:22pt !important;font-weight:700 !important}'
+    +'.report-body div[style*="font-size:18px"]{font-size:20pt !important;font-weight:700 !important}'
+    +'.report-body div[style*="font-size:16px"]{font-size:17pt !important}'
+    +'.report-body div[style*="font-size:15px"]{font-size:16pt !important}'
+    +'.report-body div[style*="font-size:14px"]{font-size:16pt !important;font-weight:600 !important}'
+    +'.report-body div[style*="font-size:13px"]{font-size:15pt !important}'
+    +'.report-body div[style*="font-size:12.5px"]{font-size:14pt !important}'
+    +'.report-body div[style*="font-size:12px"]{font-size:14pt !important}'
+    +'.report-body div[style*="font-size:11.5px"]{font-size:13pt !important}'
+    +'.report-body div[style*="font-size:11px"]{font-size:13pt !important}'
+    +'.report-body div[style*="font-size:10.5px"]{font-size:12.5pt !important}'
+    +'.report-body div[style*="font-size:10px"]{font-size:12pt !important}'
+    +'.report-body div[style*="font-size:9.5px"]{font-size:11.5pt !important}'
+    +'.report-body div[style*="font-size:9px"]{font-size:11pt !important}'
+    /* spans */
+    +'.report-body span[style*="font-size:11px"]{font-size:13pt !important}'
+    +'.report-body span[style*="font-size:10.5px"]{font-size:12.5pt !important}'
+    +'.report-body span[style*="font-size:10px"]{font-size:12pt !important}'
+    +'.report-body span[style*="font-size:9px"]{font-size:11pt !important}'
+    /* السماح بالتفاف النصوص في كل العناصر */
+    +'.report-body *{white-space:normal !important;text-overflow:clip !important;word-wrap:break-word !important;overflow-wrap:break-word !important}'
+    /* حذف overflow:hidden الذي قد يخفي النص */
+    +'.report-body div[style*="overflow:hidden"]{overflow:visible !important}'
+    /* اضمن أن الـ grid containers تبقى */
+    +'.report-body div[style*="grid-template-columns"]{display:grid !important}'
+    /* التذييل - يستخدم position:fixed عند الشاشة و block ثابت في الطباعة */
+    +'.report-footer{display:flex;justify-content:space-between;align-items:center;font-size:13pt;color:#5d6d7e;background:#fff}'
+    +'.report-footer .footer-date{color:#0d47a1;font-weight:700}'
+    +'.report-footer .footer-unit{color:#0d47a1;font-weight:700;text-align:left}'
+    /* أزرار التحكم - تظهر فقط على الشاشة */
+    +'.print-controls{position:fixed;top:14px;left:14px;z-index:9999;display:flex;gap:8px;background:#fff;border-radius:8px;padding:6px 10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}'
+    +'.print-controls button{background:linear-gradient(105deg,#0a2540,#0c4a6e);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}'
+    +'.print-controls button:hover{opacity:.9}'
+    /* إعدادات الطباعة - استخدام running headers/footers */
+    +'@media print{'
+    +'@page{size:A3 portrait;margin:18mm 12mm 22mm 12mm}'
+    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
+    +'.print-controls{display:none!important}'
+    +'.report-header{page-break-after:avoid}'
+    /* عند الطباعة: نخفي التذييل النهائي ونعتمد فقط على running footer */
+    +'.report-footer{display:none !important}'
+    +'.report-body{padding-bottom:8mm}'
+    /* استخدام running element لتذييل كل صفحة */
+    +'.page-footer-running{position:fixed;bottom:5mm;left:14mm;right:14mm;border-top:1.5px solid #1976d2;padding-top:5px;display:flex;justify-content:space-between;align-items:center;font-size:11pt;color:#5d6d7e;background:#fff;font-family:"Sakkal Majalla","Sakkal Majalla 2",Arial,serif;direction:rtl}'
+    +'.page-footer-running .pf-date{color:#0d47a1;font-weight:700}'
+    +'.page-footer-running .pf-unit{color:#0d47a1;font-weight:700;text-align:left}'
+    +'}'
+    /* عرض الشاشة */
+    +'@media screen{'
+    +'body{background:#f5f5f5;padding:20px}'
+    +'.report-content{background:#fff;max-width:297mm;margin:0 auto;padding:20mm 0;box-shadow:0 0 20px rgba(0,0,0,.1);position:relative}'
+    +'.report-footer{margin:30px 14mm 0 14mm;border-top:2px solid #1976d2;padding-top:10px}'
+    +'.page-footer-running{display:none}'
+    +'}';
+  
+  var headerHTML='<div class="report-header">'
+    +(logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم">':'')
+    +'<div class="agency-name">وكالة التعاون الدولي</div>'
+    +'<h1>لوحة المؤشرات التنفيذية — التكليفات والمهام</h1>'
+    +'<div class="report-meta">📅 '+today2+'</div>'
+    +'</div>';
+  
+  /* تذييل يظهر في نهاية المحتوى (مرئي على الشاشة وفي PDF) */
+  var footerHTML='<div class="report-footer">'
+    +'<div class="footer-date">📅 '+today2+'</div>'
+    +'<div class="footer-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>'
+    +'</div>';
+  
+  /* تذييل ثابت يظهر في كل صفحة عند الطباعة (position:fixed يعمل في الطباعة لكل صفحة في Chrome PDF) */
+  var runningFooterHTML='<div class="page-footer-running">'
+    +'<div class="pf-date">📅 '+today2+'</div>'
+    +'<div class="pf-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>'
+    +'</div>';
+  
+  var controlsHTML='<div class="print-controls">'
+    +'<button onclick="window.print()">🖨 طباعة / حفظ PDF</button>'
+    +'<button onclick="window.close()" style="background:#94a3b8">إغلاق</button>'
+    +'</div>';
+  
   w.document.write(
-    '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>لوحة المؤشرات التنفيذية</title>'
-    +'<style>body{margin:0;padding:0;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;background:#f8fafc;direction:rtl}'
-    +'.ph{background:linear-gradient(108deg,#063547,#0a4d68,#088395);padding:14px 22px;'
-    +'display:flex;align-items:center;justify-content:space-between;color:#fff}'
-    +'@media print{.np{display:none!important}'
-    +'@page{margin:8mm;size:A3 portrait}'
-    +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}</style>'
+    '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>لوحة المؤشرات التنفيذية</title>'
+    +'<style>'+styleCSS+'</style>'
     +'</head><body>'
-    +'<div class="ph np">'
-    +'<div style="font-size:16px;font-weight:700">لوحة المؤشرات التنفيذية — ملخص</div>'
-    +'<div style="display:flex;gap:12px;align-items:center">'
-    +'<span style="color:rgba(255,255,255,.7);font-size:11px">'+today2+'</span>'
-    +'<button onclick="window.print()" class="np" style="background:rgba(255,255,255,.18);'
-    +'border:1px solid rgba(255,255,255,.35);color:#fff;padding:7px 18px;border-radius:7px;'
-    +'font-size:11px;cursor:pointer;font-family:inherit">🖨 طباعة / PDF</button></div></div>'
-    +wrap.innerHTML
+    +controlsHTML
+    +runningFooterHTML
+    +'<div class="report-content">'
+    +headerHTML
+    +'<div class="report-body">'+tempDiv.innerHTML+'</div>'
+    +footerHTML
+    +'</div>'
     +'</body></html>'
   );
   w.document.close();
@@ -15389,7 +16412,7 @@ function s4ExportTasksReport(){
 
   /* تاريخ التقرير */
   var today=new Date();
-  var reportDate=today.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  var reportDate=today.toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'long',day:'numeric'});
   var reportDateEN=today.toLocaleDateString('en-GB');
 
   /* === بناء جدول اللجان === */
@@ -15912,7 +16935,7 @@ function s4LogMail(toEmail,subject,type){
     to:toEmail,
     subject:subject,
     date:now.toISOString().split('T')[0],
-    time:now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'}),
+    time:now.toLocaleTimeString('ar-SA-u-nu-latn',{hour:'2-digit',minute:'2-digit'}),
     by:currentUser?currentUser.email:''
   };
   task.mailLog.push(entry);
@@ -15946,6 +16969,11 @@ function s4CopyMail(){
 }
 
 function openAdminPanel(){
+  /* نظف أي error box عالق قد يحجب النقرات */
+  try{var _eb=document.getElementById('odErrBox');if(_eb)_eb.remove();}catch(e){}
+  try{document.querySelectorAll('div[id^="odErr"],div[style*="z-index:99999"][style*="position:fixed"]').forEach(function(el){
+    if(el.id!=='adminModal' && el.id!=='trashModal' && el.id!=='auditModal'){el.remove();}
+  });}catch(e){}
   var _am=document.getElementById('adminModal');_am.style.display='flex';(function(){var inner=_am.firstElementChild;var handle=inner&&inner.querySelector('[style*="gradient"]');if(inner&&handle)makeDraggable(_am,inner,handle);if(inner&&typeof umEnhanceModal==='function')umEnhanceModal(_am,inner,handle);})();
   document.getElementById('usersList').innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-family:inherit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M5 3h14"/><path d="m17 3-5 7-5-7"/><path d="M5 21h14"/><path d="m17 21-5-7-5 7"/></svg> جاري التحميل...</div>';
   loadAuthUsers().then(function(){renderUsersList();}).catch(function(){renderUsersList();});
@@ -15957,7 +16985,7 @@ function fmtLastLogin(ts){
   if(diff<1)return'الآن';
   if(diff<60)return'منذ '+diff+' دقيقة';
   if(diff<1440)return'منذ '+Math.floor(diff/60)+' ساعة';
-  return d.toLocaleDateString('ar-SA')+' '+d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('ar-SA-u-nu-latn')+' '+d.toLocaleTimeString('ar-SA-u-nu-latn',{hour:'2-digit',minute:'2-digit'});
 }
 function renderUsersList(){
   var el=document.getElementById('usersList');
@@ -15978,7 +17006,7 @@ function renderUsersList(){
       if(diff<1)return'الآن';
       if(diff<60)return'منذ '+diff+' دقيقة';
       if(diff<1440)return'منذ '+Math.floor(diff/60)+' ساعة';
-      return d.toLocaleDateString('ar-SA')+' '+d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+      return d.toLocaleDateString('ar-SA-u-nu-latn')+' '+d.toLocaleTimeString('ar-SA-u-nu-latn',{hour:'2-digit',minute:'2-digit'});
     }
         return'<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid #e8eef5;border-radius:10px;margin-bottom:8px;background:#fff">'
       +'<div style="flex:1">'
@@ -16759,7 +17787,7 @@ function printInitiativeStatusReport(ri){
 function printInitiativesPeriodicReport(){
   var list = INITIATIVES;
   if(!list.length){showToast('لا توجد مبادرات للتقرير',true);return;}
-  var nowStr = new Date().toLocaleDateString('ar-SA');
+  var nowStr = new Date().toLocaleDateString('ar-SA-u-nu-latn');
   var stColors={'مقترحة':'#f0c040','قيد الدراسة':'#0ea5e9','معتمدة':'#8b5cf6','قيد التنفيذ':'#7c3aed','منجزة':'#10b981','متوقفة':'#ef4444'};
 
   /* ملخص */
@@ -16850,7 +17878,7 @@ function printQuarterlyReport(period){
   var currentQ = Math.ceil((now.getMonth()+1)/3);
   var currentY = now.getFullYear();
   period = period || 'Q'+currentQ+'/'+currentY;
-  var nowStr = now.toLocaleDateString('ar-SA');
+  var nowStr = now.toLocaleDateString('ar-SA-u-nu-latn');
 
   var stColors={'مقترحة':'#f0c040','قيد الدراسة':'#0ea5e9','معتمدة':'#8b5cf6','قيد التنفيذ':'#7c3aed','منجزة':'#10b981','متوقفة':'#ef4444'};
   var nowISO = now.toISOString().slice(0,10);
@@ -17622,7 +18650,7 @@ function printInitiativesReport(){
     return true;
   });
   var stColors = {'مقترحة':'#f0c040','قيد الدراسة':'#0ea5e9','معتمدة':'#10b981','قيد التنفيذ':'#7c3aed','منجزة':'#1d8a4e','متوقفة':'#e74c3c'};
-  var body='<div style="margin-bottom:14px;font-size:12px;color:#777">إجمالي: <b>'+list.length+'</b> مبادرة / مشروع | تاريخ: '+new Date().toLocaleDateString('ar-SA')+(typeF?' | النوع: '+typeF:'')+(statusF?' | الحالة: '+statusF:'')+'</div>'
+  var body='<div style="margin-bottom:14px;font-size:12px;color:#777">إجمالي: <b>'+list.length+'</b> مبادرة / مشروع | تاريخ: '+new Date().toLocaleDateString('ar-SA-u-nu-latn')+(typeF?' | النوع: '+typeF:'')+(statusF?' | الحالة: '+statusF:'')+'</div>'
     +'<table style="width:100%;border-collapse:collapse;font-size:11.5px">'
     +'<thead><tr>'
     +['#','العنوان','النوع','الحالة','الأولوية','الجهة النظيرة','المجلس','الاجتماع','التكليف','تاريخ البدء','تاريخ الانتهاء','الهدف','الخطوة التالية'].map(function(h){return'<th style="background:linear-gradient(135deg,#6c3eb5,#9b59b6);color:#fff;padding:8px 10px;text-align:right;font-size:11px;white-space:nowrap">'+h+'</th>';}).join('')
@@ -19624,7 +20652,7 @@ async function openChangelogModal(){
     var actionColors={'إضافة':'#27ae60','تعديل اجتماع':'#2980b9','تعديل':'#2980b9','حذف':'#e74c3c','دخول':'#9b59b6','استرداد':'#e67e22','إضافة مستخدم':'#1abc9c','حذف مستخدم':'#c0392b','تغيير دور':'#8e44ad'};
     body.innerHTML=rows.map(function(r){
       var d=new Date(r.created_at);
-      var dateStr=d.toLocaleDateString('ar-SA')+' '+d.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+      var dateStr=d.toLocaleDateString('ar-SA-u-nu-latn')+' '+d.toLocaleTimeString('ar-SA-u-nu-latn',{hour:'2-digit',minute:'2-digit'});
       var col=actionColors[r.action]||'#7f8c8d';
       return'<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f0f4f8;align-items:flex-start">'
         +'<div style="flex-shrink:0;background:'+col+';color:#fff;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;margin-top:2px;white-space:nowrap">'+e(r.action||'')+'</div>'
@@ -20334,6 +21362,7 @@ function goToHome(){
         <button onclick="openChangelogModal()" style="background:rgba(29,138,78,.3);color:#fff;border:1px solid rgba(29,138,78,.5);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> سجل التغييرات</button>
         <button onclick="openTrashModal()" style="background:rgba(231,76,60,.3);color:#fff;border:1px solid rgba(255,100,100,.4);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> سلة المحذوفات</button>
         <button onclick="openAuditModal()" style="background:rgba(41,128,185,.3);color:#fff;border:1px solid rgba(56,182,232,.4);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg> سجل التدقيق</button>
+        <button onclick="if(typeof odForceMigrate==='function')odForceMigrate();else alert('غير متاح');" style="background:rgba(217,119,6,.3);color:#fff;border:1px solid rgba(245,158,11,.5);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap" title="إعادة جلب البيانات من Supabase وتحديث ملفات OneDrive"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg> إعادة الترحيل</button>
       </div>
       <button onclick="openRLSGuide()" style="background:rgba(243,156,18,.3);color:#fff;border:1px solid rgba(243,156,18,.5);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg> دليل الأمان</button>
       <button onclick="clM('adminModal')" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">× إغلاق</button>
@@ -21046,7 +22075,7 @@ function gmFormatDate(d){
   try{
     var dt = new Date(d);
     if(isNaN(dt)) return d;
-    return dt.toLocaleDateString('ar-SA-u-ca-gregory', {year:'numeric',month:'long',day:'numeric'});
+    return dt.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', {year:'numeric',month:'long',day:'numeric'});
   }catch(e){ return d; }
 }
 function gmParseDate(s){
@@ -21406,7 +22435,7 @@ function gmRenderCalendar(container){
   var firstDay = new Date(year, month, 1).getDay();
   var daysInMonth = new Date(year, month+1, 0).getDate();
   var today = new Date(); today.setHours(0,0,0,0);
-  var monthName = cur.toLocaleDateString('ar-SA-u-ca-gregory',{month:'long',year:'numeric'});
+  var monthName = cur.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{month:'long',year:'numeric'});
   // اجتماعات الشهر
   var mtgsByDay = {};
   (window.GM_DATA.meetings||[]).forEach(function(m){
@@ -21870,16 +22899,30 @@ function gmExportExcel(){
 function gmPrintReport(){
   var meetings = window.GM_DATA.meetings || [];
   if(meetings.length===0){ alert('لا توجد بيانات للطباعة'); return; }
-  var now = new Date().toLocaleDateString('ar-SA-u-ca-gregory', {year:'numeric',month:'long',day:'numeric'});
+  var now = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', {year:'numeric',month:'long',day:'numeric'});
+  var logoSrc = (typeof LOGO_SITE_SRC !== 'undefined') ? LOGO_SITE_SRC : '';
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>تقرير الاجتماعات العامة</title>';
-  html += '<style>body{font-family:"Sakkal Majalla",Arial,sans-serif;direction:rtl;padding:20px;color:#1a1a2e}';
-  html += 'h1{color:#0d47a1;border-bottom:3px solid #1976d2;padding-bottom:8px;margin-bottom:20px}';
+  html += '<style>';
+  /* إعدادات الصفحة للطباعة */
+  html += '@page{size:A4;margin:25mm 15mm 25mm 15mm}';
+  html += '*{font-feature-settings:"lnum" 1,"tnum" 1;font-variant-numeric:lining-nums tabular-nums}';
+  html += 'html,body{margin:0;padding:0}';
+  html += 'body{font-family:"Sakkal Majalla",Arial,sans-serif;direction:rtl;color:#1a1a2e;padding:0}';
+  /* الترويسة (Header) */
+  html += '.report-header{display:flex;align-items:center;justify-content:center;gap:18px;padding-bottom:14px;margin-bottom:22px;border-bottom:3px solid #1976d2;text-align:center;flex-direction:column}';
+  html += '.report-header img{height:80px;width:auto;display:block;margin:0 auto 8px auto}';
+  html += '.report-header .agency-name{font-size:18pt;font-weight:800;color:#0d47a1;margin-top:4px}';
+  /* العنوان الرئيسي */
+  html += 'h1{color:#0d47a1;text-align:center;margin:18px 0 8px 0;font-size:22pt;font-weight:800}';
+  html += '.report-meta{text-align:center;color:#5d6d7e;font-size:11pt;margin-bottom:24px}';
+  /* عناوين الاجتماعات */
   html += 'h2{color:#1565c0;margin-top:24px;margin-bottom:8px;font-size:16pt;background:#e3f2fd;padding:8px 12px;border-radius:6px}';
   html += '.mtg-meta{background:#f5f8fb;padding:10px;border-radius:8px;margin-bottom:10px;font-size:11pt}';
   html += '.mtg-meta span{margin-left:16px;color:#1a5276}';
+  /* الجداول */
   html += 'table{width:100%;border-collapse:collapse;margin:8px 0;font-size:10.5pt}';
   html += 'th{background:#1976d2;color:#fff;padding:6px 8px;text-align:right;font-size:10pt}';
-  html += 'td{border:1px solid #e2eaf2;padding:6px 8px}';
+  html += 'td{border:1px solid #e2eaf2;padding:6px 8px;vertical-align:top}';
   html += 'tr:nth-child(even) td{background:#fafbfc}';
   html += '.sec-lbl{font-weight:700;color:#0d47a1;margin-top:8px;margin-bottom:4px;font-size:11pt}';
   html += '.notes{background:#fff8e1;padding:8px;border-radius:6px;font-size:10.5pt;color:#7a5500;margin-top:6px}';
@@ -21889,10 +22932,39 @@ function gmPrintReport(){
   html += '.tasks-toggle:hover{background:#d0e3f7}';
   html += '.tasks-section{display:none;margin-top:6px}';
   html += '.tasks-section.open{display:block}';
-  html += '@media print{h2{page-break-before:auto;page-break-after:avoid}table{page-break-inside:avoid}.tasks-section{display:block!important}}';
+  /* التذييل (Footer) - ثابت في كل صفحة عند الطباعة */
+  html += '.report-footer{position:fixed;bottom:8mm;left:15mm;right:15mm;border-top:2px solid #1976d2;padding-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:9.5pt;color:#5d6d7e;background:#fff}';
+  html += '.report-footer .footer-date{color:#0d47a1;font-weight:700}';
+  html += '.report-footer .footer-unit{color:#0d47a1;font-weight:700;text-align:left}';
+  /* مساحة فارغة في أسفل المحتوى لمنع التداخل مع التذييل */
+  html += '.content-spacer{height:30mm}';
+  /* إعدادات الطباعة */
+  html += '@media print{';
+  html += 'body{padding:0}';
+  html += 'h2{page-break-before:auto;page-break-after:avoid}';
+  html += 'table{page-break-inside:avoid}';
+  html += '.tasks-section{display:block!important}';
+  html += '.report-footer{position:fixed;bottom:0}';
+  html += '.no-print{display:none!important}';
+  html += '}';
+  /* إعدادات العرض على الشاشة */
+  html += '@media screen{';
+  html += 'body{padding:25mm 15mm 35mm 15mm;max-width:210mm;margin:0 auto;background:#f5f5f5}';
+  html += '.report-content{background:#fff;padding:20mm;box-shadow:0 0 10px rgba(0,0,0,0.1);min-height:240mm;position:relative}';
+  html += '.report-footer{position:relative;margin-top:30px;bottom:auto;left:auto;right:auto}';
+  html += '}';
   html += '</style></head><body>';
+  html += '<div class="report-content">';
+  /* الترويسة: شعار الوزارة + وكالة التعاون الدولي */
+  html += '<div class="report-header">';
+  if(logoSrc){
+    html += '<img src="'+logoSrc+'" alt="وزارة التعليم">';
+  }
+  html += '<div class="agency-name">وكالة التعاون الدولي</div>';
+  html += '</div>';
+  /* العنوان الرئيسي */
   html += '<h1>تقرير الاجتماعات والتكليفات العامة</h1>';
-  html += '<div style="color:#5d6d7e;font-size:11pt;margin-bottom:20px">تاريخ التقرير: '+now+' | إجمالي الاجتماعات: '+meetings.length+'</div>';
+  html += '<div class="report-meta">تاريخ التقرير: '+now+' | إجمالي الاجتماعات: '+meetings.length+'</div>';
   meetings.forEach(function(m, idx){
     html += '<h2>'+(idx+1)+'. '+gmEsc(m.name||'(بدون اسم)')+'</h2>';
     html += '<div class="mtg-meta">';
@@ -21915,6 +22987,15 @@ function gmPrintReport(){
       html += '</div>';
     }
   });
+  /* مساحة قبل التذييل لمنع التداخل */
+  html += '<div class="content-spacer"></div>';
+  /* إغلاق report-content */
+  html += '</div>';
+  /* التذييل: التاريخ + اسم الوحدة */
+  html += '<div class="report-footer">';
+  html += '<div class="footer-date">📅 '+now+'</div>';
+  html += '<div class="footer-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>';
+  html += '</div>';
   html += '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},500);};</scr'+'ipt>';
   html += '</body></html>';
   var w = window.open('', '_blank', 'width=1000,height=700');
@@ -22174,7 +23255,7 @@ function gmNotifyAttendees(mid){
 function gmPrintMeetingPDF(mid){
   var m = (window.GM_DATA.meetings||[]).find(function(x){return x.id===mid;});
   if(!m){ alert('الاجتماع غير موجود'); return; }
-  var now = new Date().toLocaleDateString('ar-SA-u-ca-gregory', {year:'numeric',month:'long',day:'numeric'});
+  var now = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', {year:'numeric',month:'long',day:'numeric'});
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>محضر اجتماع - '+gmEsc(m.name||'')+'</title>';
   html += '<style>@page{size:A4;margin:18mm 15mm}';
   html += 'body{font-family:"Sakkal Majalla","Arial",sans-serif;direction:rtl;color:#1a1a2e;margin:0;padding:0;font-size:12pt}';
@@ -22492,7 +23573,7 @@ document.addEventListener('click', function(e){
    ═══════════════════════════════════════════════════════════ */
 V2.formatNumber = function(n){
   if(n == null || isNaN(n)) return '0';
-  return Number(n).toLocaleString('ar-SA');
+  return Number(n).toLocaleString('ar-SA-u-nu-latn');
 };
 V2.formatPercent = function(n){
   if(n == null || isNaN(n)) return '0%';
@@ -22643,6 +23724,434 @@ V2.help = function(){
 };
 
 })();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     ONEDRIVE SETUP + AUTO-MIGRATION SCREENS
+     شاشات الإعداد الأولي والترحيل التلقائي من Supabase
+     ═════════════════════════════════════════════════════════════════ -->
+<style>
+@keyframes odSpin{to{transform:rotate(360deg)}}
+@keyframes odFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.od-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0a2540,#0c4a6e);z-index:99998;display:flex;align-items:center;justify-content:center;direction:rtl;font-family:inherit;padding:20px}
+.od-card{background:#fff;border-radius:18px;width:min(640px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:odFadeIn .4s ease}
+.od-head{background:linear-gradient(105deg,#0a2540,#0c4a6e);padding:24px 28px;color:#fff;border-radius:18px 18px 0 0}
+.od-head-row{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.od-icon{background:#0078D4;width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.od-title{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.od-subtitle{font-size:11.5px;color:rgba(255,255,255,.7);margin-top:2px}
+.od-body{padding:22px 28px}
+.od-text{font-size:13px;color:#334155;line-height:1.7;margin-bottom:16px}
+.od-text strong{color:#0f172a}
+.od-step-list{background:#f1f5f9;border-radius:10px;padding:16px;margin-bottom:18px}
+.od-step-list-title{font-size:12.5px;font-weight:800;color:#0f172a;margin-bottom:10px}
+.od-step-list ol{margin:0;padding-right:22px;font-size:11.5px;color:#475569;line-height:1.9}
+.od-info-box{background:#dbeafe;border-right:4px solid #2563eb;border-radius:8px;padding:12px 14px;font-size:11.5px;color:#1e40af;line-height:1.7;margin-bottom:14px}
+.od-warn-box{background:#fef3c7;border-right:4px solid #d97706;border-radius:8px;padding:12px 14px;font-size:11.5px;color:#92400e;line-height:1.7;margin-bottom:14px}
+.od-error-box{background:#fee2e2;border-right:4px solid #dc2626;border-radius:8px;padding:12px 14px;font-size:11.5px;color:#991b1b;line-height:1.7;margin-bottom:14px}
+.od-success-box{background:#dcfce7;border-right:4px solid #16a34a;border-radius:8px;padding:12px 14px;font-size:11.5px;color:#166534;line-height:1.7;margin-bottom:14px}
+.od-foot{background:#f8fafc;padding:16px 28px;border-top:1px solid #e2e8f0;border-radius:0 0 18px 18px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.od-btn{border:none;border-radius:8px;padding:10px 22px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.od-btn-primary{background:#0078D4;color:#fff}
+.od-btn-primary:hover{background:#006abf}
+.od-btn-primary:disabled{background:#94a3b8;cursor:not-allowed}
+.od-btn-success{background:#16a34a;color:#fff}
+.od-btn-success:hover{background:#15803d}
+.od-btn-secondary{background:#fff;color:#475569;border:1px solid #cbd5e1}
+.od-btn-secondary:hover{background:#f8fafc}
+.od-progress{background:#0f172a;color:#38bdf8;font-family:'Consolas','Courier New',monospace;font-size:11px;border-radius:8px;padding:14px;max-height:280px;overflow:auto;direction:ltr;text-align:left;line-height:1.7;margin-bottom:14px}
+.od-progress div{margin:2px 0}
+.od-progress .ok{color:#22c55e}
+.od-progress .err{color:#ef4444}
+.od-progress .info{color:#38bdf8}
+.od-spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:odSpin .8s linear infinite;vertical-align:middle}
+</style>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   شاشات الإعداد + الترحيل
+   ═══════════════════════════════════════════════════════════════════ */
+
+function odShowScreen(html){
+  var existing=document.getElementById('odScreen');
+  if(existing)existing.remove();
+  var div=document.createElement('div');
+  div.id='odScreen';
+  div.className='od-screen';
+  div.innerHTML='<div class="od-card">'+html+'</div>';
+  document.body.appendChild(div);
+}
+
+function odCloseScreen(){
+  var s=document.getElementById('odScreen');
+  if(s)s.remove();
+}
+
+/* ── شاشة 1: ترحيب وشرح ── */
+function odScreenWelcome(){
+  odShowScreen(
+    '<div class="od-head">'
+      +'<div class="od-head-row">'
+        +'<div class="od-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M21.7 16.5c0-2.5-2-4.5-4.5-4.5-.4 0-.8 0-1.2.2-.5-2.4-2.6-4.2-5.2-4.2-2.9 0-5.3 2.4-5.3 5.3v.3C2.6 14.2 1 16.1 1 18.5 1 21 3 23 5.5 23h13c1.7 0 3.2-1.4 3.2-3.2 0-1.5-1-2.7-2.3-3.1.4-.4.3-.8.3-1.2z"/></svg></div>'
+        +'<div>'
+          +'<div class="od-title">إعداد النظام لأول مرة</div>'
+          +'<div class="od-subtitle">First-Time Setup • OneDrive Integration</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="od-body">'
+      +'<div class="od-text">'
+        +'<strong>أهلاً بك!</strong> هذه أول مرة يُفتح فيها النظام على هذا الجهاز. النظام يستخدم الآن '
+        +'<strong>OneDrive</strong> لحفظ البيانات بشكل آمن داخل شبكة الوزارة.'
+      +'</div>'
+      +'<div class="od-step-list">'
+        +'<div class="od-step-list-title">الخطوات الثلاث:</div>'
+        +'<ol>'
+          +'<li>اختيار مجلد OneDrive (تتم مرة واحدة فقط)</li>'
+          +'<li>ترحيل البيانات الحالية من النظام القديم تلقائياً</li>'
+          +'<li>البدء في استخدام النظام الجديد</li>'
+        +'</ol>'
+      +'</div>'
+      +'<div class="od-info-box">'
+        +'<strong>ملاحظة:</strong> إذا كنت تفتح النظام لأول مرة وكان لديك بيانات في النظام القديم (Supabase)، '
+        +'احرص على فتح النظام من <strong>المنزل</strong> (حيث يعمل الاتصال بالخادم القديم) ليتم ترحيل البيانات تلقائياً.'
+      +'</div>'
+    +'</div>'
+    +'<div class="od-foot">'
+      +'<button class="od-btn od-btn-primary" onclick="odScreenSelectFolder()">'
+        +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7L9 5H5a2 2 0 0 0-2 2z"/></svg>'
+        +'البدء — اختيار المجلد'
+      +'</button>'
+    +'</div>'
+  );
+}
+
+/* ── شاشة 2: اختيار المجلد ── */
+async function odScreenSelectFolder(){
+  if(!window.showDirectoryPicker){
+    odShowScreen(
+      '<div class="od-head"><div class="od-head-row"><div class="od-icon" style="background:#dc2626"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="od-title">المتصفح غير مدعوم</div><div class="od-subtitle">Unsupported Browser</div></div></div></div>'
+      +'<div class="od-body"><div class="od-error-box">متصفحك الحالي لا يدعم File System Access API.<br>يرجى استخدام <strong>Microsoft Edge</strong> أو <strong>Google Chrome</strong> (إصدار 86 أو أحدث).</div></div>'
+    );
+    return;
+  }
+  
+  try{
+    var handle=await odSelectFolder();
+    /* نجح الاختيار → الانتقال للترحيل أو الدخول */
+    await odPostSetupFlow();
+  }catch(e){
+    if(e.name==='AbortError'){
+      /* المستخدم ألغى - نعيد عرض شاشة الترحيب */
+      odScreenWelcome();
+    }else{
+      odShowScreen(
+        '<div class="od-head"><div class="od-head-row"><div class="od-icon" style="background:#dc2626"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="od-title">حدث خطأ</div></div></div></div>'
+        +'<div class="od-body"><div class="od-error-box">'+(e.message||'خطأ غير معروف')+'</div></div>'
+        +'<div class="od-foot"><button class="od-btn od-btn-primary" onclick="odScreenWelcome()">إعادة المحاولة</button></div>'
+      );
+    }
+  }
+}
+
+/* ── ما بعد اختيار المجلد: فحص الترحيل ── */
+async function odPostSetupFlow(){
+  /* فحص: هل OneDrive يحتوي بيانات بالفعل؟ */
+  var hasData=false;
+  try{
+    var c=await odRead('lajan','committees');
+    if(c && c.items && c.items.length>0)hasData=true;
+    if(!hasData){
+      var c2=await odRead('intl','committees');
+      if(c2 && c2.items && c2.items.length>0)hasData=true;
+    }
+  }catch(e){}
+  
+  if(hasData){
+    /* البيانات موجودة → الدخول مباشرة */
+    OD_MIGRATION_DONE=true;
+    try{localStorage.setItem(OD_CONFIG.migrationDoneKey,JSON.stringify({date:new Date().toISOString(),restored:true}));}catch(e){}
+    odCloseScreen();
+    odBootApp();
+    return;
+  }
+  
+  /* البيانات فارغة → عرض شاشة الترحيل */
+  odScreenMigratePrompt();
+}
+
+/* ── شاشة 3: عرض الترحيل ── */
+function odScreenMigratePrompt(){
+  odShowScreen(
+    '<div class="od-head">'
+      +'<div class="od-head-row">'
+        +'<div class="od-icon" style="background:#f59e0b"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>'
+        +'<div>'
+          +'<div class="od-title">ترحيل البيانات الحالية</div>'
+          +'<div class="od-subtitle">Migration from Supabase</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="od-body">'
+      +'<div class="od-text">'
+        +'مجلد OneDrive جاهز ✓ — والآن نحتاج جلب البيانات الحالية من النظام القديم وحفظها هنا.'
+      +'</div>'
+      +'<div class="od-warn-box">'
+        +'<strong>⚠ مهم:</strong> هذه العملية تتطلب اتصالاً بـ Supabase. '
+        +'إذا كنت داخل شبكة الوزارة وSupabase محجوب، لن تنجح.<br>'
+        +'<strong>الحل:</strong> افتح هذا الملف من <strong>المنزل</strong> أولاً، '
+        +'سيرحّل البيانات تلقائياً ويحفظها على OneDrive، ثم استخدمه في الوزارة.'
+      +'</div>'
+      +'<div class="od-info-box">'
+        +'<strong>ماذا سيحدث:</strong><br>'
+        +'• جلب اللجان والاجتماعات من النظامين (الرئيسي + الدولي)<br>'
+        +'• حفظها كملفات JSON على OneDrive<br>'
+        +'• مزامنتها تلقائياً مع OneDrive السحابي ومع زملائك<br>'
+        +'• بعد اكتمال الترحيل: لن يعتمد النظام على Supabase مرة أخرى'
+      +'</div>'
+    +'</div>'
+    +'<div class="od-foot">'
+      +'<button class="od-btn od-btn-secondary" onclick="odScreenSkipMigration()">تخطي (بدء بنظام فارغ)</button>'
+      +'<button class="od-btn od-btn-primary" id="odMigBtn" onclick="odScreenRunMigration()">'
+        +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
+        +'بدء الترحيل'
+      +'</button>'
+    +'</div>'
+  );
+}
+
+/* ── شاشة 4: تنفيذ الترحيل ── */
+async function odScreenRunMigration(){
+  odShowScreen(
+    '<div class="od-head">'
+      +'<div class="od-head-row">'
+        +'<div class="od-icon" style="background:#0078D4"><span class="od-spinner"></span></div>'
+        +'<div>'
+          +'<div class="od-title">جارٍ ترحيل البيانات...</div>'
+          +'<div class="od-subtitle" id="odMigStatus">قد يستغرق الأمر دقيقة أو دقيقتين</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="od-body">'
+      +'<div class="od-progress" id="odMigLog">'
+        +'<div class="info">▶ بدء عملية الترحيل من Supabase إلى OneDrive...</div>'
+      +'</div>'
+    +'</div>'
+  );
+  
+  var logEl=document.getElementById('odMigLog');
+  function addLog(msg,type){
+    if(!logEl)return;
+    var d=document.createElement('div');
+    d.className=type||'info';
+    d.textContent=msg;
+    logEl.appendChild(d);
+    logEl.scrollTop=logEl.scrollHeight;
+  }
+  
+  try{
+    var report=await odMigrateFromSupabase(function(msg){
+      var type='info';
+      if(msg.indexOf('✓')===0 || msg.indexOf('  ✓')===0)type='ok';
+      if(msg.indexOf('⚠')>=0 || msg.indexOf('error')>=0 || msg.indexOf('fail')>=0)type='err';
+      addLog(msg,type);
+    });
+    
+    /* انتهى الترحيل */
+    document.getElementById('odMigStatus').textContent='اكتمل بنجاح ✓';
+    
+    setTimeout(function(){
+      odShowScreen(
+        '<div class="od-head"><div class="od-head-row">'
+          +'<div class="od-icon" style="background:#16a34a"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>'
+          +'<div><div class="od-title">تم الترحيل بنجاح!</div><div class="od-subtitle">Migration Completed</div></div>'
+        +'</div></div>'
+        +'<div class="od-body">'
+          +'<div class="od-success-box">'
+            +'<strong>✓ تم نقل '+report.totalRows+' سجل من Supabase إلى OneDrive</strong><br>'
+            +'النظام جاهز الآن للعمل من أي مكان. البيانات محفوظة على جهازك ومزامنة مع OneDrive.'
+          +'</div>'
+          +(report.errors.length>0?'<div class="od-warn-box"><strong>⚠ تحذيرات:</strong> '+report.errors.length+' من الجداول لم تُرحَّل (قد تكون فارغة - هذا طبيعي)</div>':'')
+        +'</div>'
+        +'<div class="od-foot">'
+          +'<button class="od-btn od-btn-success" onclick="odCloseScreen();odBootApp();">'
+            +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>'
+            +'الدخول إلى النظام'
+          +'</button>'
+        +'</div>'
+      );
+    },1500);
+    
+  }catch(e){
+    addLog('✗ فشل الترحيل: '+e.message,'err');
+    setTimeout(function(){
+      odShowScreen(
+        '<div class="od-head"><div class="od-head-row">'
+          +'<div class="od-icon" style="background:#dc2626"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>'
+          +'<div><div class="od-title">فشل الترحيل</div><div class="od-subtitle">Migration Failed</div></div>'
+        +'</div></div>'
+        +'<div class="od-body">'
+          +'<div class="od-error-box"><strong>السبب:</strong> '+e.message+'</div>'
+          +'<div class="od-warn-box">'
+            +'<strong>الحلول:</strong><br>'
+            +'• إذا كنت في الوزارة: افتح الملف من المنزل (Supabase محجوب في الوزارة)<br>'
+            +'• تأكد من اتصال الإنترنت<br>'
+            +'• حاول مرة أخرى بعد قليل'
+          +'</div>'
+        +'</div>'
+        +'<div class="od-foot">'
+          +'<button class="od-btn od-btn-secondary" onclick="odScreenSkipMigration()">المتابعة بنظام فارغ</button>'
+          +'<button class="od-btn od-btn-primary" onclick="odScreenRunMigration()">إعادة المحاولة</button>'
+        +'</div>'
+      );
+    },2000);
+  }
+}
+
+/* ── تخطي الترحيل (بدء بنظام فارغ) ── */
+function odScreenSkipMigration(){
+  if(!confirm('هل أنت متأكد؟ سيبدأ النظام بدون بيانات. يمكنك إضافة البيانات يدوياً لاحقاً.'))return;
+  OD_MIGRATION_DONE=true;
+  try{
+    localStorage.setItem(OD_CONFIG.migrationDoneKey,JSON.stringify({date:new Date().toISOString(),skipped:true}));
+  }catch(e){}
+  odCloseScreen();
+  odBootApp();
+}
+
+/* ── شاشة طلب الإذن (للجلسات اللاحقة) ── */
+function odScreenReauth(){
+  odShowScreen(
+    '<div class="od-head">'
+      +'<div class="od-head-row">'
+        +'<div class="od-icon" style="background:#0078D4"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>'
+        +'<div>'
+          +'<div class="od-title">إذن الوصول للبيانات</div>'
+          +'<div class="od-subtitle">Permission Required</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="od-body">'
+      +'<div class="od-text">'
+        +'يحتاج النظام إعادة طلب الإذن للوصول إلى مجلد البيانات على OneDrive.'
+      +'</div>'
+      +'<div class="od-info-box">'
+        +'هذا إجراء أمني من المتصفح يتم مرة في كل جلسة جديدة. اضغط الزر أدناه لمنح الإذن.'
+      +'</div>'
+    +'</div>'
+    +'<div class="od-foot">'
+      +'<button class="od-btn od-btn-primary" onclick="odDoReauth()">'
+        +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        +'منح الإذن'
+      +'</button>'
+    +'</div>'
+  );
+}
+
+async function odDoReauth(){
+  try{
+    await odRequestPermission();
+    odCloseScreen();
+    /* فحص الترحيل بعد منح الإذن */
+    if(odIsMigrationDone()){
+      odBootApp();
+    }else{
+      odPostSetupFlow();
+    }
+  }catch(e){
+    alert('فشل منح الإذن: '+e.message);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   bootstrap — نقطة بدء التطبيق الذكية
+   ═══════════════════════════════════════════════════════════════════ */
+async function odBootstrap(){
+  /* فحص: هل المتصفح يدعم File System Access API؟ */
+  if(!window.showDirectoryPicker){
+    /* غير مدعوم - نستمر بـ Supabase التقليدي (للتطوير على متصفحات قديمة) */
+    console.warn('[OD] File System Access API not supported - falling back to Supabase mode');
+    return;
+  }
+  
+  /* فحص: هل تم الترحيل؟ */
+  odIsMigrationDone();
+  
+  /* فحص: هل هناك إعداد محفوظ؟ */
+  var setup=await odCheckSetup();
+  
+  if(setup.status==='ready'){
+    /* جاهز تماماً - الدخول مباشرة */
+    if(OD_MIGRATION_DONE){
+      odBootApp();
+    }else{
+      odPostSetupFlow();
+    }
+    return;
+  }
+  
+  if(setup.status==='needs-permission'){
+    /* الإعداد محفوظ لكن يحتاج إذن */
+    odScreenReauth();
+    return;
+  }
+  
+  if(setup.status==='needs-setup'){
+    /* أول مرة - عرض شاشة الترحيب */
+    odScreenWelcome();
+    return;
+  }
+  
+  if(setup.status==='unsupported'){
+    /* المتصفح لا يدعم API */
+    return;
+  }
+  
+  /* خطأ - عرض الترحيب كـ fallback */
+  odScreenWelcome();
+}
+
+/* ── البدء العادي للتطبيق (loginScreen ثم باقي النظام) ── */
+function odBootApp(){
+  /* loginScreen يظهر بشكل افتراضي - النظام الحالي يعمل من هنا */
+  /* نتأكد فقط أن أي شاشة OneDrive مغلقة */
+  odCloseScreen();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   إعادة الترحيل اليدوية (للحالات التي يحتاج فيها الأدمن إعادة جلب البيانات
+   من Supabase - مثلاً بعد إصلاح في الكود يحتاج جلب جداول جديدة)
+   
+   كيفية الاستخدام:
+   - من Console: odForceMigrate()
+   - أو من زر في لوحة الادمن (إن أُضيف)
+   ═══════════════════════════════════════════════════════════════════ */
+window.odForceMigrate=async function(){
+  if(!confirm('سيتم إعادة جلب البيانات من Supabase وتحديث ملفات OneDrive.\n\nهذا مفيد إذا كانت بعض البيانات (مثل الاجتماعات والتكليفات العامة) لا تظهر.\n\nهل تريد المتابعة؟')){
+    return;
+  }
+  
+  /* مسح علامة الترحيل لإعادة عرض شاشة الترحيل */
+  try{localStorage.removeItem(OD_CONFIG.migrationDoneKey);}catch(e){}
+  OD_MIGRATION_DONE=false;
+  
+  /* عرض شاشة الترحيل مباشرة */
+  if(typeof odScreenRunMigration==='function'){
+    odScreenRunMigration();
+  }else{
+    location.reload();
+  }
+};
+
+/* ── تشغيل bootstrap عند تحميل الصفحة ── */
+document.addEventListener('DOMContentLoaded',function(){
+  /* تأخير قصير لضمان تحميل كل العناصر */
+  setTimeout(function(){
+    odBootstrap().catch(function(e){
+      console.error('[OD] Bootstrap error:',e);
+    });
+  },300);
+});
 </script>
 
 </body>
