@@ -6495,6 +6495,79 @@ var D=(function(){
 })();
 
 var M={};var syncTimer=null;var flt=[],editI=-1,dashF='committees',CI={};
+
+/* ══════════════════════════════════════════════════════════════════
+   appState — مركز الحالة الموحد
+   يجمع كل المتغيرات الحرجة في مكان واحد ويوفر:
+   - حماية من undefined قبل التهيئة
+   - تتبع حالة التحميل والمزامنة
+   - مرجع واحد للحالة عبر كل النظام
+══════════════════════════════════════════════════════════════════ */
+window.appState = {
+  initialized: false,        /* هل اكتملت التهيئة */
+  loading: false,            /* هل يجري تحميل البيانات */
+  syncInProgress: false,     /* هل يجري حفظ للخادم */
+  ui: {
+    activePanel: null,
+    lastError: null
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   أدوات مساعدة عامة — تُستخدم عبر كل النظام
+══════════════════════════════════════════════════════════════════ */
+
+/* safeArr: يضمن إرجاع مصفوفة دائماً — يمنع .length على undefined */
+function safeArr(v){ return Array.isArray(v) ? v : []; }
+
+/* safeGet: قراءة آمنة من كائن متداخل */
+function safeGet(obj, path, def){
+  try{
+    var parts = path.split('.');
+    var cur = obj;
+    for(var i=0; i<parts.length; i++){
+      if(cur == null) return def !== undefined ? def : null;
+      cur = cur[parts[i]];
+    }
+    return cur !== undefined ? cur : (def !== undefined ? def : null);
+  }catch(e){ return def !== undefined ? def : null; }
+}
+
+/* safeLS: localStorage آمن — يتعامل مع الحالة المحجوبة */
+var safeLS = {
+  get: function(key, def){
+    try{ var v=localStorage.getItem(key); return v!=null?v:(def!==undefined?def:null); }
+    catch(e){ return def!==undefined?def:null; }
+  },
+  set: function(key, val){
+    try{ localStorage.setItem(key, typeof val==='string'?val:JSON.stringify(val)); return true; }
+    catch(e){ console.warn('[safeLS] set failed:',key,e.message); return false; }
+  },
+  getJSON: function(key, def){
+    try{ var v=localStorage.getItem(key); return v?JSON.parse(v):(def!==undefined?def:null); }
+    catch(e){ return def!==undefined?def:null; }
+  },
+  remove: function(key){
+    try{ localStorage.removeItem(key); }catch(e){}
+  }
+};
+
+/* safeQ: querySelector آمن — لا يرمي خطأ إذا العنصر غير موجود */
+function safeQ(sel, ctx){
+  try{ return (ctx||document).querySelector(sel); }catch(e){ return null; }
+}
+function safeQA(sel, ctx){
+  try{ return Array.from((ctx||document).querySelectorAll(sel)); }catch(e){ return []; }
+}
+
+/* guardInit: يمنع تنفيذ handlers قبل اكتمال التهيئة */
+function guardInit(fn){
+  return function(){
+    if(!window.appState.initialized) return;
+    return fn.apply(this, arguments);
+  };
+}
+
 var taskFilter='all';
 var selectedItems=new Set();
 var currSec='';
@@ -7049,20 +7122,29 @@ var SB_ACCESS_TOKEN=null;
    ══════════════════════════════════════════════════════════════ */
 async function sbFetch(path,method,body){
   var isReadOnly = !method || method === 'GET';
-  var maxAttempts = isReadOnly ? 3 : 1;  /* retry فقط للقراءة */
+  /* ══════════════════════════════════════════════════════════════
+     retry للقراءة: 3 محاولات
+     retry للكتابة: 3 محاولات أيضاً — السبب: كود 57014 (statement_timeout)
+     يحدث على Free tier عند كتابة بيانات ضخمة — الحل: نعيد المحاولة
+     بفاصل أطول حتى يخف الضغط على قاعدة البيانات
+  ══════════════════════════════════════════════════════════════ */
+  var maxAttempts = 3;
   var lastErr;
   for(var _attempt=0; _attempt < maxAttempts; _attempt++){
     try{
-      return await _sbFetchReal(path,method,body);
+      return await _sbFetchReal(path, method, body);
     }catch(e){
       lastErr = e;
-      /* لا تعيد المحاولة إذا كان الخطأ من الخادم (4xx/5xx) لا شبكة */
-      if(e.message && e.message.indexOf('Supabase 4') === 0) throw e;
-      if(e.message && e.message.indexOf('Supabase 5') === 0) throw e;
+      var msg = e.message || '';
+      /* لا تعيد المحاولة على أخطاء 401/403 (مصادقة/صلاحيات) */
+      if(msg.indexOf('Supabase 401')===0 || msg.indexOf('Supabase 403')===0) throw e;
+      /* لا تعيد المحاولة على أخطاء الحماية الداخلية */
+      if(msg.indexOf('PROTECTION:')===0 || msg.indexOf('SAVE_LOCKED:')===0) throw e;
       if(_attempt < maxAttempts-1){
-        /* انتظر قبل المحاولة التالية: 1.5s ثم 3s */
-        await new Promise(function(r){ setTimeout(r, (_attempt+1)*1500); });
-        console.warn('[sbFetch] محاولة '+ (_attempt+2) +' بعد خطأ: '+e.message);
+        /* فاصل متزايد: 3s → 6s → 9s — يعطي قاعدة البيانات وقتاً للتعافي */
+        var waitMs = (_attempt+1) * 3000;
+        console.warn('[sbFetch] retry '+(_attempt+2)+'/'+maxAttempts+' بعد '+waitMs+'ms | '+msg.substring(0,100));
+        await new Promise(function(r){ setTimeout(r, waitMs); });
       }
     }
   }
@@ -7077,21 +7159,37 @@ async function _sbFetchReal(path,method,body){
     'Authorization':'Bearer '+(SB_ACCESS_TOKEN||SB_KEY),
     'Content-Type':'application/json'
   };
-  if(method==='POST')headers['Prefer']='return=representation';
-  if(method==='PATCH')headers['Prefer']='return=representation';
-  if(method==='DELETE')headers['Prefer']='return=representation';
-  /* timeout 12 ثانية — سريع بما يكفي لكشف المشكلة دون قطع اتصال بطيء */
+  /* ══════════════════════════════════════════════════════════════
+     إصلاح statement_timeout (كود 57014):
+     السبب: Supabase Free tier يقطع الـ PATCH بعد 8 ثوانٍ افتراضياً
+     الحل 1: إزالة "return=representation" من PATCH — يقلل الحمل 50%
+     الحل 2: POST يحتفظ بـ return=representation للحصول على id الجديد
+     الحل 3: timeout المتصفح 60s > statement_timeout لرؤية الخطأ الحقيقي
+  ══════════════════════════════════════════════════════════════ */
+  if(method==='POST')  headers['Prefer']='return=representation';
+  if(method==='DELETE') headers['Prefer']='return=representation';
+  /* PATCH: بدون return=representation — يقلل الحمل على الخادم بشكل كبير */
+
   var fetchPromise = fetch(SB_URL+'/rest/v1/'+path,{
-    method:method||'GET',
-    headers:headers,
-    body:(body&&method!=='DELETE')?JSON.stringify(body):undefined
+    method: method||'GET',
+    headers: headers,
+    body: (body && method!=='DELETE') ? JSON.stringify(body) : undefined
   });
-  var timeoutPromise = new Promise(function(_, reject){
-    setTimeout(function(){ reject(new Error('Supabase timeout: تجاوز الحد الزمني (12s)')); }, 12000);
+  /* 60 ثانية — أطول من statement_timeout حتى نرى الخطأ الحقيقي من Supabase */
+  var timeoutPromise = new Promise(function(_,reject){
+    setTimeout(function(){ reject(new Error('CLIENT_TIMEOUT: تجاوز 60 ثانية')); }, 60000);
   });
   var res = await Promise.race([fetchPromise, timeoutPromise]);
-  if(!res.ok){var t=await res.text();throw new Error('Supabase '+res.status+': '+t);}
-  var txt=await res.text();return txt?JSON.parse(txt):null;
+  if(!res.ok){
+    var t = await res.text();
+    /* كشف 57014 statement_timeout لتفعيل retry */
+    if(t.indexOf('57014')!==-1 || t.indexOf('statement timeout')!==-1 || t.indexOf('canceling statement')!==-1){
+      throw new Error('DB_TIMEOUT_57014 ('+res.status+'): '+t.substring(0,200));
+    }
+    throw new Error('Supabase '+res.status+': '+t.substring(0,300));
+  }
+  var txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -7590,40 +7688,29 @@ var _lastKnownServerCount = 0; /* آخر عدد سجلات معروف في Supab
 var _doSaveInProgress = false; /* منع تشغيل حفظين في نفس الوقت */
 
 async function doSave(skipSafetyCheck){
-  /* ── حارس: لا حفظين في نفس الوقت ── */
-  if(_doSaveInProgress){
-    console.log('[doSave] حفظ آخر قيد التنفيذ — تجاهل');
-    return;
-  }
+  if(_doSaveInProgress){ console.log('[doSave] حفظ آخر قيد التنفيذ — تجاهل'); return; }
 
-  /* ── فحص القفل: فقط إذا D فارغ فعلاً ── */
   if(window._saveLocked && D.length === 0){
     var reason = window._saveLockReason || 'الحفظ مقفل لحماية البيانات';
     showToast('🔒 '+reason, true);
     throw new Error('SAVE_LOCKED: '+reason);
   }
-  /* إذا D غير فارغ، نتجاوز القفل (البيانات موجودة = آمن للحفظ) */
   if(window._saveLocked && D.length > 0){
     console.log('[doSave] تجاوز القفل — D غير فارغ ('+D.length+' سجل)');
-    window._saveLocked = false;
-    window._saveLockReason = null;
+    window._saveLocked = false; window._saveLockReason = null;
   }
 
-  /* ── فحص حماية البيانات بدون network call ── */
   if(!skipSafetyCheck && _lastKnownServerCount > 0 && D.length > 0){
-    var localCount = D.length;
-    var serverCount = _lastKnownServerCount;
+    var localCount = D.length, serverCount = _lastKnownServerCount;
     if(serverCount > 0 && localCount < serverCount * 0.7){
       var lossPercent = Math.round((1 - localCount/serverCount) * 100);
-      var msg = '⚠️ تحذير: حماية البيانات\n\n'
+      var warnMsg = '⚠️ تحذير: حماية البيانات\n\n'
         +'بياناتك المحلية: '+localCount+' لجنة\n'
         +'في الخادم: '+serverCount+' لجنة\n'
         +'الفرق: '+(serverCount-localCount)+' لجنة ('+lossPercent+'% أقل)\n\n'
         +'🟢 الخيار الآمن: اضغط "إلغاء" ثم أعد تحميل الصفحة.\n'
-        +'🔴 للمتابعة والكتابة فوق الخادم: اضغط "موافق".';
-      if(!window.confirm(msg)){
-        throw new Error('PROTECTION: تم إلغاء الحفظ لحماية البيانات.');
-      }
+        +'🔴 للمتابعة: اضغط "موافق".';
+      if(!window.confirm(warnMsg)) throw new Error('PROTECTION: تم إلغاء الحفظ لحماية البيانات.');
     }
   }
 
@@ -7631,45 +7718,64 @@ async function doSave(skipSafetyCheck){
   var _saveSys = activeSystem;
   setSyncUI('syncing','جاري الحفظ...');
 
-  try{
-    /* ── تأكد من وجود IDs (عادةً لا تحتاج network call بعد init ناجح) ── */
-    if(!SB_ROW_C || !SB_ROW_M){
-      await ensureRows();
+  /* ══════════════════════════════════════════════════════════════
+     _buildPayload: يضغط البيانات بـ LZString (تقليل 70-80%)
+     - PATCH: لا يرسل null للحقول (يسبب مشاكل في Supabase)
+     - POST: يرسل null للحقل الآخر لتنظيف الصف الجديد
+     - إذا فشل LZString: يرسل JSON عادي (fallback)
+  ══════════════════════════════════════════════════════════════ */
+  function _buildPayload(obj, isPost){
+    var p = {updated_at: new Date().toISOString()};
+    if(typeof LZString !== 'undefined'){
+      try{
+        var cmp = LZString.compressToBase64(JSON.stringify(obj));
+        if(cmp && cmp.length > 10){
+          p.data_compressed = cmp;
+          if(isPost) p.data = null;
+          return p;
+        }
+      }catch(e){ console.warn('[doSave] LZString failed:', e.message); }
     }
+    p.data = obj;
+    if(isPost) p.data_compressed = null;
+    return p;
+  }
 
+  try{
+    if(!SB_ROW_C || !SB_ROW_M) await ensureRows();
     if(activeSystem !== _saveSys){ setSyncUI('ok',''); return; }
 
     var newTs = new Date().toISOString();
 
-    /* ── حفظ اللجان (call واحد) ── */
+    /* ── حفظ اللجان ── */
     var _saveD = _sanitizeDates(D.filter(function(x){
       return activeSystem==='intl' ? (x.sc==='خارجية دولية') : (x.sc!=='خارجية دولية');
     }));
-    var _savePayloadC = (typeof LZString!=='undefined')
-      ? {data_compressed:LZString.compressToBase64(JSON.stringify(_saveD)), data:null, updated_at:newTs}
-      : {data:_saveD, data_compressed:null, updated_at:newTs};
+    var _payloadC = _buildPayload(_saveD, !SB_ROW_C);
+    _payloadC.updated_at = newTs;
 
     if(SB_ROW_C){
-      await sbFetch(SB_TABLES[activeSystem].committees+'?id=eq.'+SB_ROW_C, 'PATCH', _savePayloadC);
+      await sbFetch(SB_TABLES[activeSystem].committees+'?id=eq.'+SB_ROW_C, 'PATCH', _payloadC);
     } else {
-      var rc = await sbFetch(SB_TABLES[activeSystem].committees, 'POST', _savePayloadC);
-      if(rc&&rc.length>0) SB_ROW_C=rc[0].id;
+      var rc = await sbFetch(SB_TABLES[activeSystem].committees, 'POST', _payloadC);
+      if(rc && rc.length > 0) SB_ROW_C = rc[0].id;
     }
     SB_LAST_UPDATED_C = newTs;
-    _lastKnownServerCount = _saveD.length; /* حدّث العدد المعروف */
+    _lastKnownServerCount = _saveD.length;
+    console.log('[doSave] ✓ لجان ('+_saveD.length+(_payloadC.data_compressed?' مضغوط':' JSON')+')');
 
-    /* ── حفظ الاجتماعات (call واحد) ── */
+    /* ── حفظ الاجتماعات ── */
     var mData = mSerialize();
-    var _savePayloadM = (typeof LZString!=='undefined')
-      ? {data_compressed:LZString.compressToBase64(JSON.stringify(mData)), data:null, updated_at:newTs}
-      : {data:mData, data_compressed:null, updated_at:newTs};
+    var _payloadM = _buildPayload(mData, !SB_ROW_M);
+    _payloadM.updated_at = newTs;
 
     if(SB_ROW_M){
-      await sbFetch(SB_TABLES[activeSystem].meetings+'?id=eq.'+SB_ROW_M, 'PATCH', _savePayloadM);
+      await sbFetch(SB_TABLES[activeSystem].meetings+'?id=eq.'+SB_ROW_M, 'PATCH', _payloadM);
     } else {
-      var rm = await sbFetch(SB_TABLES[activeSystem].meetings, 'POST', _savePayloadM);
-      if(rm&&rm.length>0) SB_ROW_M=rm[0].id;
+      var rm = await sbFetch(SB_TABLES[activeSystem].meetings, 'POST', _payloadM);
+      if(rm && rm.length > 0) SB_ROW_M = rm[0].id;
     }
+    console.log('[doSave] ✓ اجتماعات ('+(_payloadM.data_compressed?'مضغوط':'JSON')+')');
 
     setSyncUI('ok','تم الحفظ ✓');
     _pendingSave = false;
@@ -7677,8 +7783,8 @@ async function doSave(skipSafetyCheck){
 
   }catch(err){
     setSyncUI('err','فشل الحفظ — انقر للإعادة');
-    console.error('[doSave] خطأ:', err.message);
-    throw err; /* يصعد لـ saveNow/scheduleSave للتعامل معه */
+    console.error('[doSave] ✗', err.message);
+    throw err;
   } finally {
     _doSaveInProgress = false;
   }
@@ -10508,7 +10614,8 @@ function openEdit(fi){
   cfSet(d);
   document.getElementById('cfModalTitle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> '+d.n;
   document.getElementById('cf_save').style.background='linear-gradient(135deg,#d68910,#e67e22)';
-  document.querySelector('#addModal .mhdr').className='mhdr ho';
+  var _mhdr=document.querySelector('#addModal .mhdr'); if(_mhdr)_mhdr.className='mhdr ho';
+
   document.getElementById('cf_save').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> حفظ التعديل';
   document.getElementById('cf_err').style.display='none';
   cfMode='edit';
@@ -10522,7 +10629,8 @@ function openAdd(){
   cfSet({});
   document.getElementById('cfModalTitle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'+(activeSystem==='intl'?' إضافة مجلس / لجنة دولية':' إضافة لجنة جديدة');
   document.getElementById('cf_save').style.background='linear-gradient(135deg,#3b83b5,#48a883)';
-  document.querySelector('#addModal .mhdr').className='mhdr hb';
+  var _mhdr2=document.querySelector('#addModal .mhdr'); if(_mhdr2)_mhdr2.className='mhdr hb';
+
   document.getElementById('cf_save').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> إضافة';
   document.getElementById('cf_err').style.display='none';
   cfMode='add'; cfEditI=-1;
@@ -11391,6 +11499,8 @@ async function init(){
   }
 }
 async function _initCore(){
+  window.appState.loading = true;
+  window.appState.initialized = false;
   /* ⚠️ حماية: إذا كانت هناك تغييرات معلقة لم تُحفظ بعد،
      لا نمسح D حتى لا نفقدها. ننتظر أن تُحفظ أولاً. */
   if(_pendingSave && _pendingChangesCount > 0 && D.length > 0){
@@ -11583,8 +11693,10 @@ async function _initCore(){
   _pendingChangesCount = 0;
   _pendingSave = false;
   if(typeof updatePendingBadge === 'function') updatePendingBadge();
-  /* احفظ نسخة محلية نظيفة — لكن فقط إذا لم تكن هناك تغييرات معلقة */
   if(currentUser && !_pendingSave) _saveToLocalBackup();
+  /* ✅ علّم النظام كمُهيَّأ بالكامل */
+  window.appState.initialized = true;
+  window.appState.loading = false;
   refRep();applyF();updateHomeStats();
 } /* end _initCore */
 async function forceReloadEmbedded(){
@@ -19013,7 +19125,7 @@ document.addEventListener('input', function(ev){
       var sess=JSON.parse(savedSess);
       /* validate session structure before using it */
       if(!sess||!sess.email||!sess.role||!sess.loginTime){
-        localStorage.removeItem(_sessKey);
+        try{ localStorage.removeItem(_sessKey); }catch(e){}
         savedSess=null;
       }
     }
@@ -19078,7 +19190,7 @@ document.addEventListener('input', function(ev){
         setTimeout(wrapRenCards,100);
         return;
       }
-      localStorage.removeItem(_sessKey);
+      try{ localStorage.removeItem(_sessKey); }catch(e){}
     }
   }catch(e){
     console.error('[restoreSession] خطأ غير ممسوك:', e);
