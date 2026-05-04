@@ -7289,47 +7289,62 @@ function _loadFromLocalBackup(){
 
 /* ──── scheduleSave: حفظ محلي فوري + حفظ تلقائي للخادم بعد 3 ثوانٍ ──── */
 var _scheduleTimer = null;
+/* ══════════════════════════════════════════════════════════════
+   scheduleSave — آلية الحفظ الموحدة (مطابقة لـ gmSaveData)
+   ══════════════════════════════════════════════════════════════
+   1. حفظ محلي فوري دائماً (localStorage)
+   2. debounce 800ms ثم PATCH مباشر لـ Supabase
+   3. retry تلقائي عند الفشل (3 محاولات)
+   ══════════════════════════════════════════════════════════════ */
+var _scheduleTimer = null;
 function scheduleSave(){
-  /* أوقف init retry فوراً — لا تمسح بيانات أثناء تعديل */
+  /* أوقف init retry — لا تمسح بيانات أثناء تعديل */
   if(_initRetryTimer){ clearInterval(_initRetryTimer); _initRetryTimer=null; }
-  /* 1. احفظ محلياً فوراً (مضمون حتى بدون إنترنت) */
-  _saveToLocalBackup();
-  /* 2. زد عداد التغييرات */
+
+  /* 1. حفظ محلي فوري دائماً */
+  try{ _saveToLocalBackup(); }catch(e){}
+
+  /* 2. تحديث العداد والمؤشر */
   _pendingChangesCount++;
   _pendingSave = true;
-  updatePendingBadge();
-  updateSyncStatusIndicator();
-  /* 3. حفظ تلقائي للخادم بعد 3 ثوانٍ من آخر تغيير */
+  if(typeof updatePendingBadge==='function') updatePendingBadge();
+  if(typeof setSyncUI==='function') setSyncUI('syncing','في انتظار الحفظ...');
+
+  /* 3. debounce 800ms ثم حفظ Supabase */
   if(_scheduleTimer) clearTimeout(_scheduleTimer);
   _scheduleTimer = setTimeout(function(){
     if(!currentUser || !_pendingSave) return;
-    var snapshotCount = _pendingChangesCount;
-    var _attempt = 0;
-    function _tryScheduledSave(){
-      _attempt++;
-      doSave(true).then(function(){
-        _pendingSave = false;
-        _pendingChangesCount = Math.max(0, _pendingChangesCount - snapshotCount);
-        window._supabaseHealthy = true;
-        updatePendingBadge();
-        updateSyncStatusIndicator();
-        _saveToLocalBackup();
-        console.log('[scheduleSave] تم الحفظ في المحاولة '+_attempt);
-      }).catch(function(err){
-        window._supabaseHealthy = false;
-        updateSyncStatusIndicator();
-        if(_attempt < 3){
-          /* retry تلقائي — 4s ثم 8s */
-          setTimeout(_tryScheduledSave, _attempt * 4000);
-          console.warn('[scheduleSave] إعادة المحاولة '+(_attempt+1)+' بعد '+(_attempt*4)+'s');
-        } else {
-          console.error('[scheduleSave] فشلت 3 محاولات — محفوظ محلياً فقط');
-          setSyncUI('err','محفوظ محلياً — انقر للمزامنة');
-        }
-      });
-    }
-    _tryScheduledSave();
-  }, 3000);
+    _doScheduledSave();
+  }, 800);
+}
+
+function _doScheduledSave(){
+  var snapshotCount = _pendingChangesCount;
+  var _attempt = 0;
+  function _try(){
+    _attempt++;
+    doSave(true).then(function(){
+      _pendingSave = false;
+      _pendingChangesCount = Math.max(0, _pendingChangesCount - snapshotCount);
+      window._supabaseHealthy = true;
+      if(typeof updatePendingBadge==='function') updatePendingBadge();
+      if(typeof updateSyncStatusIndicator==='function') updateSyncStatusIndicator();
+      try{ _saveToLocalBackup(); }catch(e){}
+      console.log('[scheduleSave] ✓ محاولة '+_attempt);
+    }).catch(function(err){
+      window._supabaseHealthy = false;
+      if(typeof updateSyncStatusIndicator==='function') updateSyncStatusIndicator();
+      if(_attempt < 3){
+        var wait = _attempt * 3000; /* 3s ثم 6s */
+        console.warn('[scheduleSave] retry '+(_attempt+1)+' بعد '+wait+'ms');
+        setTimeout(_try, wait);
+      } else {
+        console.error('[scheduleSave] فشلت 3 محاولات');
+        if(typeof setSyncUI==='function') setSyncUI('err','محفوظ محلياً — انقر للمزامنة');
+      }
+    });
+  }
+  _try();
 }
 
 /* ──── الطبقة 2: الحفظ اليدوي للخادم مع retry داخلي ──── */
@@ -7687,43 +7702,40 @@ var SB_LAST_UPDATED_C=null;
 var _lastKnownServerCount = 0; /* آخر عدد سجلات معروف في Supabase */
 var _doSaveInProgress = false; /* منع تشغيل حفظين في نفس الوقت */
 
+/* ══════════════════════════════════════════════════════════════
+   doSave — الحفظ الفعلي في Supabase (مطابق لـ gmDoSaveRemote)
+   ══════════════════════════════════════════════════════════════
+   - بسيط ومباشر: ضغط → PATCH → نجاح/فشل
+   - حماية البيانات: تحقق من العدد قبل الكتابة
+   - لا تعقيد زائد — نفس آلية gmSaveData
+   ══════════════════════════════════════════════════════════════ */
+var _doSaveInProgress = false;
 async function doSave(skipSafetyCheck){
-  if(_doSaveInProgress){ console.log('[doSave] حفظ آخر قيد التنفيذ — تجاهل'); return; }
+  /* حارس: لا حفظين في نفس الوقت */
+  if(_doSaveInProgress){ return; }
 
+  /* حماية: D فارغ + قفل = لا نكتب */
   if(window._saveLocked && D.length === 0){
-    var reason = window._saveLockReason || 'الحفظ مقفل لحماية البيانات';
-    showToast('🔒 '+reason, true);
-    throw new Error('SAVE_LOCKED: '+reason);
+    throw new Error('SAVE_LOCKED: '+( window._saveLockReason||'الحفظ مقفل'));
   }
+  /* D غير فارغ = نفتح القفل */
   if(window._saveLocked && D.length > 0){
-    console.log('[doSave] تجاوز القفل — D غير فارغ ('+D.length+' سجل)');
     window._saveLocked = false; window._saveLockReason = null;
   }
 
-  if(!skipSafetyCheck && _lastKnownServerCount > 0 && D.length > 0){
-    var localCount = D.length, serverCount = _lastKnownServerCount;
-    if(serverCount > 0 && localCount < serverCount * 0.7){
-      var lossPercent = Math.round((1 - localCount/serverCount) * 100);
-      var warnMsg = '⚠️ تحذير: حماية البيانات\n\n'
-        +'بياناتك المحلية: '+localCount+' لجنة\n'
-        +'في الخادم: '+serverCount+' لجنة\n'
-        +'الفرق: '+(serverCount-localCount)+' لجنة ('+lossPercent+'% أقل)\n\n'
-        +'🟢 الخيار الآمن: اضغط "إلغاء" ثم أعد تحميل الصفحة.\n'
-        +'🔴 للمتابعة: اضغط "موافق".';
-      if(!window.confirm(warnMsg)) throw new Error('PROTECTION: تم إلغاء الحفظ لحماية البيانات.');
-    }
+  /* حماية البيانات: إذا المحلي أقل بكثير من الخادم */
+  if(!skipSafetyCheck && _lastKnownServerCount > 0 && D.length > 0
+      && D.length < _lastKnownServerCount * 0.7){
+    var diff = _lastKnownServerCount - D.length;
+    var msg = '⚠️ تحذير: بياناتك المحلية أقل بـ '+diff+' سجل من الخادم.\n'
+             +'اضغط "إلغاء" للتراجع، أو "موافق" للمتابعة.';
+    if(!window.confirm(msg)) throw new Error('PROTECTION: إلغاء المستخدم');
   }
 
   _doSaveInProgress = true;
-  var _saveSys = activeSystem;
-  setSyncUI('syncing','جاري الحفظ...');
+  if(typeof setSyncUI==='function') setSyncUI('syncing','جاري الحفظ...');
 
-  /* ══════════════════════════════════════════════════════════════
-     _buildPayload: يضغط البيانات بـ LZString (تقليل 70-80%)
-     - PATCH: لا يرسل null للحقول (يسبب مشاكل في Supabase)
-     - POST: يرسل null للحقل الآخر لتنظيف الصف الجديد
-     - إذا فشل LZString: يرسل JSON عادي (fallback)
-  ══════════════════════════════════════════════════════════════ */
+  /* دالة بناء payload مضغوط */
   function _buildPayload(obj, isPost){
     var p = {updated_at: new Date().toISOString()};
     if(typeof LZString !== 'undefined'){
@@ -7734,7 +7746,7 @@ async function doSave(skipSafetyCheck){
           if(isPost) p.data = null;
           return p;
         }
-      }catch(e){ console.warn('[doSave] LZString failed:', e.message); }
+      }catch(e){}
     }
     p.data = obj;
     if(isPost) p.data_compressed = null;
@@ -7742,17 +7754,19 @@ async function doSave(skipSafetyCheck){
   }
 
   try{
-    if(!SB_ROW_C || !SB_ROW_M) await ensureRows();
-    if(activeSystem !== _saveSys){ setSyncUI('ok',''); return; }
+    var ts = new Date().toISOString();
+    var _saveSys = activeSystem;
 
-    var newTs = new Date().toISOString();
+    /* تأكد من وجود IDs */
+    if(!SB_ROW_C || !SB_ROW_M) await ensureRows();
+    if(activeSystem !== _saveSys){ if(typeof setSyncUI==='function') setSyncUI('ok',''); return; }
 
     /* ── حفظ اللجان ── */
     var _saveD = _sanitizeDates(D.filter(function(x){
       return activeSystem==='intl' ? (x.sc==='خارجية دولية') : (x.sc!=='خارجية دولية');
     }));
     var _payloadC = _buildPayload(_saveD, !SB_ROW_C);
-    _payloadC.updated_at = newTs;
+    _payloadC.updated_at = ts;
 
     if(SB_ROW_C){
       await sbFetch(SB_TABLES[activeSystem].committees+'?id=eq.'+SB_ROW_C, 'PATCH', _payloadC);
@@ -7760,14 +7774,13 @@ async function doSave(skipSafetyCheck){
       var rc = await sbFetch(SB_TABLES[activeSystem].committees, 'POST', _payloadC);
       if(rc && rc.length > 0) SB_ROW_C = rc[0].id;
     }
-    SB_LAST_UPDATED_C = newTs;
+    SB_LAST_UPDATED_C = ts;
     _lastKnownServerCount = _saveD.length;
-    console.log('[doSave] ✓ لجان ('+_saveD.length+(_payloadC.data_compressed?' مضغوط':' JSON')+')');
 
     /* ── حفظ الاجتماعات ── */
     var mData = mSerialize();
     var _payloadM = _buildPayload(mData, !SB_ROW_M);
-    _payloadM.updated_at = newTs;
+    _payloadM.updated_at = ts;
 
     if(SB_ROW_M){
       await sbFetch(SB_TABLES[activeSystem].meetings+'?id=eq.'+SB_ROW_M, 'PATCH', _payloadM);
@@ -7775,14 +7788,14 @@ async function doSave(skipSafetyCheck){
       var rm = await sbFetch(SB_TABLES[activeSystem].meetings, 'POST', _payloadM);
       if(rm && rm.length > 0) SB_ROW_M = rm[0].id;
     }
-    console.log('[doSave] ✓ اجتماعات ('+(_payloadM.data_compressed?'مضغوط':'JSON')+')');
 
-    setSyncUI('ok','تم الحفظ ✓');
+    if(typeof setSyncUI==='function') setSyncUI('ok','تم الحفظ ✓');
     _pendingSave = false;
     window._supabaseHealthy = true;
+    console.log('[doSave] ✓ ('+_saveD.length+' لجنة'+((_payloadC.data_compressed)?'، مضغوط':'')+')');
 
   }catch(err){
-    setSyncUI('err','فشل الحفظ — انقر للإعادة');
+    if(typeof setSyncUI==='function') setSyncUI('err','فشل الحفظ — انقر للإعادة');
     console.error('[doSave] ✗', err.message);
     throw err;
   } finally {
