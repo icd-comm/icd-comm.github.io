@@ -7192,6 +7192,8 @@ function _loadFromLocalBackup(){
 /* ──── scheduleSave: حفظ محلي فوري + حفظ تلقائي للخادم بعد 3 ثوانٍ ──── */
 var _scheduleTimer = null;
 function scheduleSave(){
+  /* أوقف init retry فوراً — لا تمسح بيانات أثناء تعديل */
+  if(_initRetryTimer){ clearInterval(_initRetryTimer); _initRetryTimer=null; }
   /* 1. احفظ محلياً فوراً (مضمون حتى بدون إنترنت) */
   _saveToLocalBackup();
   /* 2. زد عداد التغييرات */
@@ -7204,18 +7206,31 @@ function scheduleSave(){
   _scheduleTimer = setTimeout(function(){
     if(!currentUser || !_pendingSave) return;
     var snapshotCount = _pendingChangesCount;
-    doSave(true).then(function(){
-      _pendingSave = false;
-      _pendingChangesCount = Math.max(0, _pendingChangesCount - snapshotCount);
-      window._supabaseHealthy = true;
-      updatePendingBadge();
-      updateSyncStatusIndicator();
-      _saveToLocalBackup();
-    }).catch(function(err){
-      /* فشل الخادم — البيانات محفوظة محلياً، AutoRetry سيحاول لاحقاً */
-      window._supabaseHealthy = false;
-      updateSyncStatusIndicator();
-    });
+    var _attempt = 0;
+    function _tryScheduledSave(){
+      _attempt++;
+      doSave(true).then(function(){
+        _pendingSave = false;
+        _pendingChangesCount = Math.max(0, _pendingChangesCount - snapshotCount);
+        window._supabaseHealthy = true;
+        updatePendingBadge();
+        updateSyncStatusIndicator();
+        _saveToLocalBackup();
+        console.log('[scheduleSave] تم الحفظ في المحاولة '+_attempt);
+      }).catch(function(err){
+        window._supabaseHealthy = false;
+        updateSyncStatusIndicator();
+        if(_attempt < 3){
+          /* retry تلقائي — 4s ثم 8s */
+          setTimeout(_tryScheduledSave, _attempt * 4000);
+          console.warn('[scheduleSave] إعادة المحاولة '+(_attempt+1)+' بعد '+(_attempt*4)+'s');
+        } else {
+          console.error('[scheduleSave] فشلت 3 محاولات — محفوظ محلياً فقط');
+          setSyncUI('err','محفوظ محلياً — انقر للمزامنة');
+        }
+      });
+    }
+    _tryScheduledSave();
   }, 3000);
 }
 
@@ -7395,23 +7410,29 @@ function _scheduleInitRetry(){
   _initRetryTimer = setInterval(function(){
     if(!currentUser){ clearInterval(_initRetryTimer); _initRetryTimer=null; return; }
     if(window._supabaseHealthy === true){ clearInterval(_initRetryTimer); _initRetryTimer=null; return; }
-    if(_initRetryCount >= 5){ /* توقف بعد 5 محاولات — يكفي */
+    if(_initRetryCount >= 5){
       clearInterval(_initRetryTimer); _initRetryTimer=null;
       console.warn('[InitRetry] توقف بعد 5 محاولات');
+      return;
+    }
+    /* ⚠️ الحماية الحاسمة: لا تُعيد init إذا كانت هناك تغييرات معلقة
+       السبب: init() تمسح D وتعيد تحميله من Supabase القديم → تضيع التعديلات */
+    if(_pendingSave || _pendingChangesCount > 0){
+      console.log('[InitRetry] تأجيل — يوجد '+_pendingChangesCount+' تغيير لم يُحفظ بعد');
       return;
     }
     _initRetryCount++;
     console.log('[InitRetry] محاولة '+_initRetryCount+' لإعادة التحميل من Supabase...');
     init().then(function(){
       clearInterval(_initRetryTimer); _initRetryTimer=null;
-      console.log('[InitRetry] نجح إعادة التحميل في المحاولة '+_initRetryCount);
+      console.log('[InitRetry] نجح في المحاولة '+_initRetryCount);
       if(typeof refRep === 'function') refRep();
       if(typeof applyF === 'function') applyF();
       if(typeof updateHomeStats === 'function') updateHomeStats();
     }).catch(function(e){
       console.warn('[InitRetry] فشلت المحاولة '+_initRetryCount+':', e.message);
     });
-  }, 20000);  /* محاولة كل 20 ثانية */
+  }, 20000);
 }
 
 /* ──── الطبقة 3: إعادة محاولة تلقائية في الخلفية ──── */
@@ -7625,8 +7646,8 @@ async function doSave(skipSafetyCheck){
       return activeSystem==='intl' ? (x.sc==='خارجية دولية') : (x.sc!=='خارجية دولية');
     }));
     var _savePayloadC = (typeof LZString!=='undefined')
-      ? {data_compressed:LZString.compressToBase64(JSON.stringify(_saveD)), updated_at:newTs}
-      : {data:_saveD, updated_at:newTs};
+      ? {data_compressed:LZString.compressToBase64(JSON.stringify(_saveD)), data:null, updated_at:newTs}
+      : {data:_saveD, data_compressed:null, updated_at:newTs};
 
     if(SB_ROW_C){
       await sbFetch(SB_TABLES[activeSystem].committees+'?id=eq.'+SB_ROW_C, 'PATCH', _savePayloadC);
@@ -7640,8 +7661,8 @@ async function doSave(skipSafetyCheck){
     /* ── حفظ الاجتماعات (call واحد) ── */
     var mData = mSerialize();
     var _savePayloadM = (typeof LZString!=='undefined')
-      ? {data_compressed:LZString.compressToBase64(JSON.stringify(mData)), updated_at:newTs}
-      : {data:mData, updated_at:newTs};
+      ? {data_compressed:LZString.compressToBase64(JSON.stringify(mData)), data:null, updated_at:newTs}
+      : {data:mData, data_compressed:null, updated_at:newTs};
 
     if(SB_ROW_M){
       await sbFetch(SB_TABLES[activeSystem].meetings+'?id=eq.'+SB_ROW_M, 'PATCH', _savePayloadM);
@@ -11370,6 +11391,12 @@ async function init(){
   }
 }
 async function _initCore(){
+  /* ⚠️ حماية: إذا كانت هناك تغييرات معلقة لم تُحفظ بعد،
+     لا نمسح D حتى لا نفقدها. ننتظر أن تُحفظ أولاً. */
+  if(_pendingSave && _pendingChangesCount > 0 && D.length > 0){
+    console.warn('[_initCore] تم الإلغاء — يوجد '+_pendingChangesCount+' تغيير معلق. احفظ أولاً ثم أعد التحميل.');
+    throw new Error('PENDING_CHANGES: يوجد تغييرات غير محفوظة');
+  }
   /* مسح البيانات القديمة قبل تحميل النظام الجديد */
   D.length=0; M={}; flt=[];
   SB_ROW_C=null; SB_ROW_M=null; SB_LAST_UPDATED_C=null;
@@ -11383,11 +11410,18 @@ async function _initCore(){
     /* تحميل اللجان */
     if(rc&&rc.length>0){
       SB_ROW_C=rc[0].id;
-      var p=rc[0].data;
-      /* فك ضغط البيانات إذا كانت مضغوطة */
-      if(!p && rc[0].data_compressed && typeof LZString!=='undefined'){
-        try{ p=JSON.parse(LZString.decompressFromBase64(rc[0].data_compressed)); }catch(e){ console.error('[LZ] decompress committees error:',e); }
+      var p=null;
+      /* ══════════════════════════════════════════════════════
+         أولوية القراءة: data_compressed دائماً أحدث من data
+         السبب: doSave يكتب إلى data_compressed فقط
+         إذا قرأنا data أولاً نحصل على نسخة قديمة قبل آخر حفظ
+         ══════════════════════════════════════════════════════ */
+      if(rc[0].data_compressed && typeof LZString!=='undefined'){
+        try{ p=JSON.parse(LZString.decompressFromBase64(rc[0].data_compressed)); }
+        catch(e){ console.error('[LZ] decompress committees error:',e); p=null; }
       }
+      /* احتياطي: استخدم data فقط إذا لم تكن هناك نسخة مضغوطة */
+      if(!p || !Array.isArray(p)) p = rc[0].data;
       if(Array.isArray(p)&&p.length>0){
         /* ISOLATION GUARD: filter loaded data for system purity,
            detect and auto-repair prior DB contamination */
@@ -11471,10 +11505,13 @@ async function _initCore(){
     if(rm&&rm.length>0){
       SB_ROW_M=rm[0].id;
       M={};
-      var _mData=rm[0].data;
-      if(!_mData && rm[0].data_compressed && typeof LZString!=='undefined'){
-        try{ _mData=JSON.parse(LZString.decompressFromBase64(rm[0].data_compressed)); }catch(e){ console.error('[LZ] decompress meetings error:',e); }
+      /* data_compressed أولاً — دائماً أحدث من data */
+      var _mData=null;
+      if(rm[0].data_compressed && typeof LZString!=='undefined'){
+        try{ _mData=JSON.parse(LZString.decompressFromBase64(rm[0].data_compressed)); }
+        catch(e){ console.error('[LZ] decompress meetings error:',e); _mData=null; }
       }
+      if(!_mData) _mData = rm[0].data;
       mDeserialize(_mData);
     } else {
       try{
@@ -11546,8 +11583,8 @@ async function _initCore(){
   _pendingChangesCount = 0;
   _pendingSave = false;
   if(typeof updatePendingBadge === 'function') updatePendingBadge();
-  /* احفظ نسخة محلية نظيفة بعداد صفر — يمنع ظهور تغييرات وهمية عند إعادة الفتح */
-  if(currentUser) _saveToLocalBackup();
+  /* احفظ نسخة محلية نظيفة — لكن فقط إذا لم تكن هناك تغييرات معلقة */
+  if(currentUser && !_pendingSave) _saveToLocalBackup();
   refRep();applyF();updateHomeStats();
 } /* end _initCore */
 async function forceReloadEmbedded(){
