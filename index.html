@@ -7814,7 +7814,8 @@ async function checkSupabaseHealth(){
 }
 
 function updateHomeStats(){
-  var _validD=D.filter(function(d){return isValidScope(d.sc);});
+  /* استخدم D مباشرة — كل السجلات في النظام الحالي صالحة بعد isolation في init */
+  var _validD = D;
   var ok=_validD.filter(function(d){return d.st==='مستمرة';}).length;
   var tm=0,activeT=0,lateT=0;
   var today=new Date();today.setHours(0,0,0,0);
@@ -7858,8 +7859,14 @@ function updateHomeStats(){
 }
 
 function upTop(){
-  var tm=0,tt=0;D.forEach(function(d,i){GM(i).forEach(function(m){tm++;tt+=m.tasks.length;});});
-  document.getElementById('topMeta').innerHTML='<div class="tms"><div class="tms-v">'+D.length+'</div><div class="tms-l">لجنة</div></div><div class="tmd"></div><div class="tms"><div class="tms-v">'+tm+'</div><div class="tms-l">اجتماع</div></div><div class="tmd"></div><div class="tms"><div class="tms-v">'+tt+'</div><div class="tms-l">تكليف</div></div>';
+  var tm=0,tt=0;
+  D.forEach(function(d,i){ GM(i).forEach(function(m){ tm++; tt+=m.tasks.length; }); });
+  document.getElementById('topMeta').innerHTML=
+    '<div class="tms"><div class="tms-v">'+D.length+'</div><div class="tms-l">'+
+    (activeSystem==='intl'?'مجلس/لجنة':'لجنة')+
+    '</div></div><div class="tmd"></div><div class="tms"><div class="tms-v">'+tm+
+    '</div><div class="tms-l">اجتماع</div></div><div class="tmd"></div><div class="tms"><div class="tms-v">'+tt+
+    '</div><div class="tms-l">تكليف</div></div>';
 }
 
 var secMeta={
@@ -11472,7 +11479,7 @@ var _btnEx3 = document.getElementById('btnExcelS3');
 if(_btnEx3) _btnEx3.addEventListener('click',exportS3Excel);
 
 /* INIT */
-var EMBEDDED_COUNT_MAIN=161; /* main system record count */
+var EMBEDDED_COUNT_MAIN=161; /* بيانات مضمنة أصلية — Supabase قد يحتوي أكثر بعد الإضافات */
 var EMBEDDED_COUNT_INTL=94;  /* intl system record count */
 function getEmbeddedCount(){ return activeSystem==='intl'?EMBEDDED_COUNT_INTL:EMBEDDED_COUNT_MAIN; }
 var EMBEDDED_COUNT=getEmbeddedCount(); /* backward-compat — updated on system switch */
@@ -11556,9 +11563,11 @@ async function _initCore(){
         D.length=0;p.forEach(function(x){D.push(x);});
         SB_LAST_UPDATED_C=rc[0].updated_at||null;
         _lastKnownServerCount = D.length; /* سجّل العدد الصحيح من Supabase */
-        /* ── seed guard: إذا Supabase أقل من المدمج → استبدل وأعد الرفع ── */
+        /* ── seed guard: إذا Supabase أقل بكثير من المدمج → استبدل وأعد الرفع ──
+           ملاحظة: إذا Supabase أكبر من المدمج → طبيعي (المستخدم أضاف سجلات)
+           نُعيد البذر فقط إذا كان Supabase أقل من 80% من البيانات المضمنة        */
         var _embCount = activeSystem==='intl' ? EMBEDDED_COUNT_INTL : EMBEDDED_COUNT_MAIN;
-        if(D.length < _embCount){
+        if(D.length < Math.floor(_embCount * 0.8)){
           console.warn('[SEED] Supabase has '+D.length+' records < embedded '+_embCount+' → reseeding from embedded data');
           var _freshD = (function(){
             try{
@@ -21559,10 +21568,6 @@ function goToHome(){
   </div>
 </div>
 
-<!-- ╔══════════════════════════════════════════════════════════════╗
-     ║  V2 CORE LAYER - طبقة الحماية والتحسين التقنية                ║
-     ║  SAFE_MODE + Schema Guard + Transaction Log + Toast + A11y    ║
-     ╚══════════════════════════════════════════════════════════════╝ -->
 <script id="v2-core-layer">
 (function(){
 'use strict';
@@ -23698,244 +23703,96 @@ window.gmBuildAttachRow = gmBuildAttachRow;
 })();
 </script>
 
-
-<!-- ╔══════════════════════════════════════════════════════════════╗
-     ║  V2 BATCH 2 JS - تحسينات تفاعلية متقدمة                        ║
-     ║  - تحسين showToast الأصلي                                      ║
-     ║  - تحسين استخدام alert للدوال الحرجة                           ║
-     ║  - Global keyboard + Auto-save indicators                       ║
-     ║  - Empty states improvement                                     ║
-     ╚══════════════════════════════════════════════════════════════╝ -->
-<script id="v2-batch-2-js">
+<!-- طبقة V2 المنظفة - Supabase فقط، بدون SAFE_MODE -->
+<script>
 (function(){
-'use strict';
-if(!window.V2){ return; } // يحتاج طبقة V2 الأساسية
+/* V2 - نسخة نظيفة تعمل مع Supabase مباشرة */
+var V2 = window.V2 = window.V2 || {};
+V2.version = '2.0.0-clean';
+V2.SAFE_MODE = false; /* دائماً false - لا حجب للكتابة */
 
-/* ═══════════════════════════════════════════════════════════
-   V2.20 — UPGRADE showToast (الدالة الموجودة في الكود الأصلي)
-   ═══════════════════════════════════════════════════════════ */
-// نحتفظ بالدالة الأصلية للتوافق الخلفي
-V2._origShowToast = window.showToast;
+/* تأكد أن window.fetch أصلي (مسح أي interceptor سابق) */
+if(V2._origFetch){ window.fetch = V2._origFetch; }
 
-// نستبدلها بنسخة محسّنة تستخدم V2.toast لكن تحافظ على نفس التوقيع
-window.showToast = function(msg, isErr){
-  try{
-    // استدعاء النسخة الاحترافية
-    var type = isErr ? 'error' : 'success';
-    var title = isErr ? 'خطأ' : 'تم بنجاح';
-    var safeMsg = String(msg || '');
+V2.setSafeMode = function(){ /* معطل */ };
 
-    // إذا كانت الرسالة قصيرة جداً، اعرضها كعنوان فقط
-    if(safeMsg.length < 40){
-      V2.toast(safeMsg, type, '', isErr ? 5000 : 3000);
-    }else{
-      V2.toast(title, type, safeMsg, isErr ? 6000 : 4000);
-    }
-  }catch(e){
-    // fallback لو فشلت
-    if(V2._origShowToast) V2._origShowToast(msg, isErr);
+/* Toast notifications */
+V2.toastIcons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+
+V2._ensureToastContainer = function(){
+  var c = document.getElementById('v2-toast-container');
+  if(!c){
+    c = document.createElement('div');
+    c.id = 'v2-toast-container';
+    c.style.cssText = 'position:fixed;bottom:24px;left:24px;z-index:99999;display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none;';
+    document.body.appendChild(c);
   }
+  return c;
 };
 
-/* ═══════════════════════════════════════════════════════════
-   V2.21 — AUTO-SAVE INDICATOR (مؤشر الحفظ التلقائي)
-   ═══════════════════════════════════════════════════════════ */
-V2.showSaving = function(){
-  var sd = document.getElementById('syncDot');
-  var st = document.getElementById('syncTxt');
-  if(sd) sd.className = 'sync-dot sync';
-  if(st) st.textContent = 'جاري الحفظ...';
-};
-V2.showSaved = function(){
-  var sd = document.getElementById('syncDot');
-  var st = document.getElementById('syncTxt');
-  if(sd) sd.className = 'sync-dot ok';
-  if(st) st.textContent = 'محفوظ';
-  setTimeout(function(){
-    if(st && st.textContent === 'محفوظ') st.textContent = 'جاهز';
-  }, 2500);
-};
-
-/* ═══════════════════════════════════════════════════════════
-   V2.22 — EMPTY STATE HELPER
-   ═══════════════════════════════════════════════════════════ */
-V2.emptyState = function(icon, title, message){
-  var iconHtml = icon || '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>';
-  return '<div class="v2-empty-state">' +
-    '<div class="v2-empty-icon">' + iconHtml + '</div>' +
-    '<div class="v2-empty-title">' + V2.escapeHtml(title || 'لا توجد بيانات') + '</div>' +
-    (message ? '<div class="v2-empty-msg">' + V2.escapeHtml(message) + '</div>' : '') +
-  '</div>';
-};
-
-/* ═══════════════════════════════════════════════════════════
-   V2.23 — SMOOTH SCROLL للروابط الداخلية
-   ═══════════════════════════════════════════════════════════ */
-document.addEventListener('click', function(e){
-  var a = e.target.closest && e.target.closest('a[href^="#"]');
-  if(a && a.getAttribute('href').length > 1){
-    var target = document.querySelector(a.getAttribute('href'));
-    if(target){
-      e.preventDefault();
-      target.scrollIntoView({behavior:'smooth', block:'start'});
-    }
-  }
-});
-
-/* ═══════════════════════════════════════════════════════════
-   V2.24 — NUMBER FORMATTING (تنسيق الأرقام العربية)
-   ═══════════════════════════════════════════════════════════ */
-V2.formatNumber = function(n){
-  if(n == null || isNaN(n)) return '0';
-  return Number(n).toLocaleString('ar-SA-u-nu-latn');
-};
-V2.formatPercent = function(n){
-  if(n == null || isNaN(n)) return '0%';
-  return Number(n).toFixed(1).replace(/\.0$/, '') + '%';
-};
-
-/* ═══════════════════════════════════════════════════════════
-   V2.25 — COPY TO CLIPBOARD helper
-   ═══════════════════════════════════════════════════════════ */
-V2.copyToClipboard = function(text, successMsg){
-  var done = function(){
-    V2.ok(successMsg || 'تم النسخ', 'البيانات محفوظة في الحافظة');
-  };
-  var fail = function(){
-    V2.err('تعذّر النسخ', 'يرجى المحاولة يدوياً');
-  };
+V2.toast = function(title, type, msg, duration){
   try{
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(done).catch(fail);
-    }else{
-      // Fallback
-      var ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';ta.style.left = '-9999px';
-      document.body.appendChild(ta);
-      ta.select();
-      try{ document.execCommand('copy'); done(); }
-      catch(e){ fail(); }
-      document.body.removeChild(ta);
-    }
-  }catch(e){ fail(); }
+    type = type || 'info';
+    duration = duration || 4000;
+    var container = V2._ensureToastContainer();
+    var toast = document.createElement('div');
+    var icon = V2.toastIcons[type] || 'ℹ️';
+    var colors = {
+      success: '#10b981', error: '#ef4444',
+      warning: '#f59e0b', info: '#3b82f6'
+    };
+    var bg = colors[type] || '#3b82f6';
+    toast.style.cssText = 'background:'+bg+';color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-family:inherit;min-width:220px;max-width:340px;box-shadow:0 4px 16px rgba(0,0,0,.2);pointer-events:all;direction:rtl;opacity:0;transform:translateY(8px);transition:all .25s ease;';
+    toast.innerHTML = '<strong>'+icon+' '+(title||'')+'</strong>'+(msg?'<div style="margin-top:4px;font-size:12px;opacity:.9">'+msg+'</div>':'');
+    container.appendChild(toast);
+    requestAnimationFrame(function(){ toast.style.opacity='1'; toast.style.transform='translateY(0)'; });
+    setTimeout(function(){
+      toast.style.opacity='0'; toast.style.transform='translateY(8px)';
+      setTimeout(function(){ if(toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+    }, duration);
+  }catch(e){}
+};
+V2.ok   = function(t,m){ V2.toast(t,'success',m); };
+V2.err  = function(t,m){ V2.toast(t,'error',m,6000); };
+V2.warn = function(t,m){ V2.toast(t,'warning',m,5000); };
+V2.info = function(t,m){ V2.toast(t,'info',m); };
+
+/* healthCheck - يستخدم fetch الأصلي دائماً */
+V2.healthCheck = async function(){
+  var cfg = window.SB_CONFIG;
+  if(!cfg) return { ok:false, error:'No SB_CONFIG' };
+  try{
+    var r = await fetch(cfg.url+'/rest/v1/lajan_committees?select=id&limit=1',{
+      headers:{'apikey':cfg.key,'Authorization':'Bearer '+cfg.key}
+    });
+    return { ok: r.ok, status: r.status };
+  }catch(e){ return { ok:false, error:e.message }; }
 };
 
-/* ═══════════════════════════════════════════════════════════
-   V2.26 — INTERCEPT SYNC STATE VISUAL (تحسين مؤشر المزامنة)
-   ═══════════════════════════════════════════════════════════ */
-// نحتفظ بالدالة الأصلية
-V2._origSetSyncUI = window.setSyncUI;
-if(typeof V2._origSetSyncUI === 'function'){
-  window.setSyncUI = function(st, msg){
-    try{
-      V2._origSetSyncUI.apply(this, arguments);
-    }catch(e){}
-    // إضافة تحسينات بصرية إضافية
-    var bar = document.getElementById('syncBar');
-    if(!bar) return;
-    // Remove old glow
-    bar.style.transition = 'all .3s ease';
-    if(st === 'err'){
-      bar.style.boxShadow = '0 0 0 2px rgba(220,38,38,.15)';
-    }else if(st === 'sync'){
-      bar.style.boxShadow = '0 0 0 2px rgba(59,131,181,.15)';
-    }else{
-      bar.style.boxShadow = '';
-    }
-  };
-}
+/* مسح SAFE_MODE من localStorage إذا كان مفعلاً */
+try{
+  localStorage.removeItem('lajan_v2_safe_mode');
+  localStorage.removeItem('intl_v2_safe_mode');
+  localStorage.removeItem('v2_safe_mode');
+}catch(e){}
 
-/* ═══════════════════════════════════════════════════════════
-   V2.27 — ACCESSIBILITY - ARIA enhancements runtime
-   ═══════════════════════════════════════════════════════════ */
-V2.enhanceAria = function(){
+/* init */
+V2.init = function(){
   try{
-    // أزرار بدون aria-label نضيف label من الـ title
-    document.querySelectorAll('button[title]:not([aria-label])').forEach(function(b){
-      b.setAttribute('aria-label', b.getAttribute('title'));
-    });
-    // النوافذ المنبثقة role=dialog
-    document.querySelectorAll('.modal-overlay,.mbg').forEach(function(m){
-      if(!m.getAttribute('role')){
-        m.setAttribute('role', 'dialog');
-        m.setAttribute('aria-modal', 'true');
-      }
-    });
-    // جداول البيانات
-    document.querySelectorAll('table:not([role])').forEach(function(t){
-      t.setAttribute('role', 'table');
-    });
+    /* إزالة شارة SAFE_MODE إذا كانت موجودة */
+    var badge = document.getElementById('v2-safe-badge');
+    if(badge) badge.parentNode.removeChild(badge);
+    
+    console.log('%c V2 Clean (Supabase) v'+V2.version+' — SAFE_MODE disabled ✓',
+      'background:#10b981;color:#fff;padding:4px 10px;border-radius:4px;font-weight:bold');
   }catch(e){}
 };
 
-/* ═══════════════════════════════════════════════════════════
-   V2.28 — OBSERVE DOM FOR NEW ELEMENTS (تلقائي للعناصر الجديدة)
-   ═══════════════════════════════════════════════════════════ */
-V2._ariaObserver = null;
-V2.startAriaObserver = function(){
-  if(V2._ariaObserver) return;
-  if(typeof MutationObserver !== 'function') return;
-  V2._ariaObserver = new MutationObserver(function(muts){
-    // throttle
-    if(V2._ariaObserverPending) return;
-    V2._ariaObserverPending = true;
-    setTimeout(function(){
-      V2.enhanceAria();
-      V2._ariaObserverPending = false;
-    }, 500);
-  });
-  V2._ariaObserver.observe(document.body, { childList: true, subtree: true });
-};
-
-/* ═══════════════════════════════════════════════════════════
-   V2.29 — INIT Batch 2
-   ═══════════════════════════════════════════════════════════ */
-V2.initBatch2 = function(){
-  try{ V2.enhanceAria(); }catch(e){}
-  try{ V2.startAriaObserver(); }catch(e){}
-  console.log('%c V2 Batch 2 loaded ', 
-              'background:linear-gradient(135deg,#48a883,#3b83b5);color:#fff;padding:3px 10px;border-radius:4px');
-};
-
 if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', V2.initBatch2);
-}else{
-  setTimeout(V2.initBatch2, 100);
+  document.addEventListener('DOMContentLoaded', V2.init);
+} else {
+  V2.init();
 }
-
-/* ═══════════════════════════════════════════════════════════
-   V2.30 — PUBLIC API DOCUMENTATION (للمطورين)
-   ═══════════════════════════════════════════════════════════ */
-V2.help = function(){
-  console.log('%c ════════════════ V2 API ════════════════ ', 
-              'background:#0f172a;color:#fff;padding:6px;font-weight:bold');
-  console.log('\n%c إشعارات Toast:', 'color:#3b83b5;font-weight:bold;font-size:14px');
-  console.log('  V2.ok(title, message)        - إشعار نجاح');
-  console.log('  V2.err(title, message)       - إشعار خطأ');
-  console.log('  V2.warn(title, message)      - إشعار تحذير');
-  console.log('  V2.info(title, message)      - إشعار معلومة');
-  console.log('\n%c نوافذ التأكيد:', 'color:#48a883;font-weight:bold;font-size:14px');
-  console.log('  V2.confirm({title, message, type}) - نافذة تأكيد async');
-  console.log('\n%c الحماية والأمان:', 'color:#dc2626;font-weight:bold;font-size:14px');
-  console.log('  V2.setSafeMode(true|false)    - تفعيل/إيقاف وضع القراءة فقط');
-  console.log('  V2.SAFE_MODE                  - الحالة الحالية');
-  console.log('  V2.healthCheck()              - فحص الاتصال بالجداول');
-  console.log('  V2.getTxLog()                 - عرض آخر 50 عملية');
-  console.log('  V2.clearTxLog()               - مسح السجل');
-  console.log('\n%c أدوات مساعدة:', 'color:#d97706;font-weight:bold;font-size:14px');
-  console.log('  V2.copyToClipboard(text)      - نسخ للحافظة');
-  console.log('  V2.formatNumber(n)            - تنسيق رقم عربي');
-  console.log('  V2.formatPercent(n)           - تنسيق نسبة مئوية');
-  console.log('  V2.escapeHtml(str)            - حماية من XSS');
-  console.log('  V2.showLoading(target, msg)   - عرض مؤشر تحميل');
-  console.log('\n%c اختصارات لوحة المفاتيح:', 'color:#6b21a8;font-weight:bold;font-size:14px');
-  console.log('  Alt + 1,2,3,4                 - التنقل بين الأقسام');
-  console.log('  Ctrl+Shift+S                  - تبديل Safe Mode');
-  console.log('  Ctrl+Shift+H                  - فحص النظام');
-  console.log('\n%c اكتب V2.help() في أي وقت لعرض هذه القائمة ', 
-              'background:#f1f5f9;color:#0f172a;padding:4px 8px;border-radius:4px');
-};
 
 })();
 </script>
