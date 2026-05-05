@@ -43,7 +43,10 @@ html body .spanel.active{
 }
 /* adminModal: z-index أعلى لمنع تغطيته من error boxes */
 #adminModal{
-  z-index:1000001 !important;
+  z-index:1000002 !important;
+}
+#adminModal,#adminModal *{
+  pointer-events:auto !important;
 }
 /* odErrBox: z-index منخفض ليكون تحت أي modal مفتوح */
 #odErrBox{
@@ -6716,8 +6719,8 @@ var activeSystem='main'; /* القيمة الافتراضية */
    5. حارس المزامنة يكتشف ويصلح أي تلوّث تلقائياً
    ══════════════════════════════════════════════════════════════════════ */
 var SB_TABLES={
-  main:{committees:'lajan_committees',meetings:'lajan_meetings',users:'lajan_users',audit:'lajan_audit',trash:'lajan_trash'},
-  intl:{committees:'intl_committees',meetings:'intl_meetings',users:'intl_users',audit:'intl_audit',trash:'intl_trash'}
+  main:{committees:'lajan_committees',meetings:'lajan_meetings',users:'lajan_users',audit:'lajan_audit',trash:'lajan_trash',gm:'lajan_gm'},
+  intl:{committees:'intl_committees',meetings:'intl_meetings',users:'intl_users',audit:'intl_audit',trash:'intl_trash',gm:'intl_gm'}
 };
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -9317,7 +9320,7 @@ function dashPrint(printMode){
     +'}'
     +'</style>'
     +'</head><body>'
-    +buildCoverPage({title:pModeLbl,subtitle:'وزارة التعليم — وكالة التعاون الدولي',logoSrc:(typeof LOGO2_SRC!=='undefined'?LOGO2_SRC:''),bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:'وحدة المجالس واللجان — وكالة التعاون الدولي',meta:[{label:'إجمالي اللجان',val:FDP.length},{label:'المستمرة',val:ok},{label:'التكليفات',val:tt}]})
+    +buildCoverPage({title:pModeLbl,subtitle:'وزارة التعليم — وكالة التعاون الدولي',logoSrc:(typeof LOGO2_SRC!=='undefined'?LOGO2_SRC:''),bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),meta:[{label:'إجمالي اللجان',val:FDP.length},{label:'المستمرة',val:ok},{label:'التكليفات',val:tt}]})
     /* toolbar */
     +'<div id="toolbar">'
     +'<button class="btn-print" onclick="window.print()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0B1F3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> طباعة / حفظ PDF</button>'
@@ -11082,7 +11085,7 @@ function printFullReport(fi){
     +'.rpt-leg-bar{height:6px;border-radius:3px;display:inline-block}'
     +'@media print{@page{margin:12mm 10mm;size:A4 portrait;orphans:3;widows:3}.np,.toolbar,.no-print{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}table{width:100%!important;border-collapse:collapse!important;page-break-inside:auto}thead{display:table-header-group!important}tr{page-break-inside:avoid}td,th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}canvas,img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}h1,h2,h3,h4{page-break-after:avoid!important;break-after:avoid!important}.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}'
     +'</style></head><body>'
-    +buildCoverPage({title:e(d.n),subtitle:(activeSystem==='intl'?'تقرير المجلس/اللجنة الدولية':'التقرير التنفيذي للمجالس واللجان'),logoSrc:LOGO2_SRC,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:'وحدة المجالس واللجان — وكالة التعاون الدولي',meta:[{label:'ممثل الوكالة',val:e(d.r||'—')},{label:'الحالة',val:e(d.st||'—')},{label:'النوع',val:e(d.ty||'—')}]})
+    +buildCoverPage({title:e(d.n),subtitle:(activeSystem==='intl'?'تقرير المجلس/اللجنة الدولية':'التقرير التنفيذي للمجالس واللجان'),logoSrc:LOGO2_SRC,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),meta:[{label:'ممثل الوكالة',val:e(d.r||'—')},{label:'الحالة',val:e(d.st||'—')},{label:'النوع',val:e(d.ty||'—')}]})
     +'<div style="color:rgba(255,255,255,.4);font-size:10px;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;margin-top:12px">'+new Date().toLocaleDateString('ar-SA-u-nu-latn',{year:'numeric',month:'long',day:'numeric'})+'</div>'
     +'</div>'
     +'<div class="np" style="margin-bottom:14px"><button onclick="window.print()" style="background:#4a2080;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-family:inherit;cursor:pointer">طباعة</button></div>'
@@ -11742,6 +11745,8 @@ async function _initCore(){
   window.appState.initialized = true;
   window.appState.loading = false;
   refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
+  /* تحميل تعديلات النصوص من Supabase */
+  if(typeof _loadFromSupabase==='function')setTimeout(_loadFromSupabase,500);
 } /* end _initCore */
 async function forceReloadEmbedded(){
   confirmDel('سيتم مسح بيانات Supabase واستبدالها ببيانات الملف الأصلية ('+getEmbeddedCount()+' سجل). متابعة؟',async function(ok){
@@ -11758,6 +11763,8 @@ async function forceReloadEmbedded(){
       /* لا نمسح الاجتماعات — نحتفظ بها كما هي */
       setSyncUI('ok','تم التحديث ✓');
       refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
+  /* تحميل تعديلات النصوص من Supabase */
+  if(typeof _loadFromSupabase==='function')setTimeout(_loadFromSupabase,500);
       showToast('تم رفع البيانات ('+D.length+(activeSystem==='intl'?' مجلس/لجنة':' لجنة')+') — الاجتماعات محفوظة.');
     }catch(e){
       M={};refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
@@ -16816,7 +16823,7 @@ function s4ExportTasksReport(){
     +'</div>'
     /* الغلاف */
     +'<div class="report-wrapper">'
-    +buildCoverPage({title:'تقرير التكليفات الشامل',subtitle:'متابعة وإدارة تكليفات المجالس واللجان',logoSrc:logoSrc,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:'وحدة المجالس واللجان — وكالة التعاون الدولي',meta:[{label:'عدد اللجان',val:Object.keys(byComm).length},{label:'إجمالي التكليفات',val:stats.total},{label:'تاريخ التقرير',val:reportDate}]})
+    +buildCoverPage({title:'تقرير التكليفات الشامل',subtitle:'متابعة وإدارة تكليفات المجالس واللجان',logoSrc:logoSrc,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),meta:[{label:'عدد اللجان',val:Object.keys(byComm).length},{label:'إجمالي التكليفات',val:stats.total},{label:'تاريخ التقرير',val:reportDate}]})
 
     +'<main class="report-body">'
     +rows
@@ -16958,7 +16965,7 @@ async function s4MergeAllReports(){
       title:'تقرير',
       subtitle:'التكليفات والمؤشرات والأداء التنفيذي',
       logoSrc:logoSrc,bgImg:bgImg,
-      prepUnit:'وحدة المجالس واللجان — وكالة التعاون الدولي',
+      prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),
       stats:[],
       meta:[{label:'تاريخ التقرير',val:today}]
     });
@@ -17471,13 +17478,58 @@ function s4CopyMail(){
 }
 
 function openAdminPanel(){
-  /* نظف أي error box عالق قد يحجب النقرات */
-  try{var _eb=document.getElementById('odErrBox');if(_eb)_eb.remove();}catch(e){}
-  try{document.querySelectorAll('div[id^="odErr"],div[style*="z-index:99999"][style*="position:fixed"]').forEach(function(el){
-    if(el.id!=='adminModal' && el.id!=='trashModal' && el.id!=='auditModal'){el.remove();}
-  });}catch(e){}
-  var _am=document.getElementById('adminModal');_am.style.display='flex';
-  document.getElementById('usersList').innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-family:inherit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M5 3h14"/><path d="m17 3-5 7-5-7"/><path d="M5 21h14"/><path d="m17 21-5-7-5 7"/></svg> جاري التحميل...</div>';
+  /* ── تنظيف شامل لكل ما قد يحجب النقرات ── */
+  try{
+    /* 1. حذف error boxes */
+    var _eb=document.getElementById('odErrBox');if(_eb)_eb.remove();
+    /* 2. حذف أي عنصر fixed/absolute بـ z-index عالٍ (عدا modals المعروفة) */
+    var _safeIds=['adminModal','trashModal','auditModal','changelogModal','permModal',
+                  'rlsGuideModal','dtext-popup','dtext-toggle-btn','dtext-toolbar','dtext-badge',
+                  'logoutModal','execSumModal','sessionWarning'];
+    document.querySelectorAll('body > div[style*="position:fixed"]').forEach(function(el){
+      if(_safeIds.indexOf(el.id)<0 && el.id!=='loginScreen' && el.id!=='loginBg'){
+        el.remove();
+      }
+    });
+    /* 3. إزالة body classes قد تُعطّل النقر */
+    /* لا نُزيل dtext-edit-mode لأن المستخدم اختاره */
+  }catch(e){}
+
+  /* ── فتح adminModal مع ضمان pointer-events ── */
+  var _am=document.getElementById('adminModal');
+  if(!_am){console.error('[openAdminPanel] adminModal غير موجود');return;}
+  _am.style.display='flex';
+  _am.style.pointerEvents='auto';
+  _am.style.zIndex='1000002'; /* أعلى من كل شيء */
+  /* ضمان أن كل أبناء adminModal قابلة للنقر */
+  _am.querySelectorAll('*').forEach(function(el){
+    el.style.pointerEvents='auto';
+  });
+  /* ربط مباشر للأزرار الحرجة — بديل عن onclick HTML */
+  setTimeout(function(){
+    var btnMap={
+      'openChangelogModal':openChangelogModal,
+      'openTrashModal':openTrashModal,
+      'openAuditModal':openAuditModal,
+      'openRLSGuide':openRLSGuide
+    };
+    _am.querySelectorAll('button[onclick]').forEach(function(btn){
+      var oc=(btn.getAttribute('onclick')||'').trim();
+      Object.keys(btnMap).forEach(function(fnName){
+        if(oc.indexOf(fnName)>=0){
+          /* إضافة event listener مباشر كـ fallback */
+          btn.addEventListener('click',function(e){
+            e.stopPropagation();
+            try{btnMap[fnName]();}catch(err){console.error(fnName+' خطأ:',err);}
+          },{capture:true,once:false});
+        }
+      });
+    });
+  },100);
+
+  /* ── تحميل قائمة المستخدمين ── */
+  var _ul=document.getElementById('usersList');
+  if(_ul) _ul.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-family:inherit">جاري التحميل...</div>';
   loadAuthUsers().then(function(){renderUsersList();}).catch(function(){renderUsersList();});
 }
 
@@ -21506,7 +21558,7 @@ function closeRLSGuide(){
    يُخزَّن آخر وقت ping في localStorage — إذا مر 5 أيام يرسل طلباً
    خفيفاً لإبقاء المشروع نشطاً على الخطة المجانية              ── */
 (function keepSupabaseAlive(){
-  var KEY='lajan_sb_ping';
+  var KEY=(typeof activeSystem!=='undefined'&&activeSystem==='intl'?'intl':'lajan')+'_sb_ping';
   var INTERVAL=5*24*60*60*1000; /* 5 أيام */
   function shouldPing(){
     try{
@@ -24307,6 +24359,7 @@ body.dtext-edit-mode [data-dtext-opt]::after{
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
   <span id="dtext-btn-label">تحرير النصوص</span>
 </button>
+<span id="dtext-sync-status" style="position:fixed;bottom:112px;left:18px;z-index:999999;font-size:10px;font-family:inherit;font-weight:600;direction:rtl;pointer-events:none"></span>
 <div id="dtext-badge"></div>
 
 <div id="dtext-toolbar">
@@ -24370,6 +24423,80 @@ function _applyStored(){
 function _persist(){
   try{localStorage.setItem(LS,JSON.stringify(DT));}catch(ex){}
   _updateBadge();
+  /* مزامنة تلقائية مع Supabase بعد 1500ms */
+  _scheduleSyncToSupabase();
+}
+
+/* ── مزامنة مع Supabase (debounced) ── */
+var _syncTimer=null;
+var _syncStatus=document.getElementById('dtext-sync-status');
+
+function _scheduleSyncToSupabase(){
+  clearTimeout(_syncTimer);
+  _syncTimer=setTimeout(_syncToSupabase,1500);
+}
+
+async function _syncToSupabase(){
+  if(!window.currentUser||!window.sbFetch||!window.SB_TABLES||!window.activeSystem){
+    return; /* لا يوجد مستخدم أو اتصال */
+  }
+  var tbl=(window.SB_TABLES&&window.SB_TABLES[window.activeSystem||'main']&&window.SB_TABLES[window.activeSystem||'main'].gm)||(window.activeSystem==='intl'?'intl_gm':'lajan_gm');
+  var payload={key:'dtext_v1',value:JSON.stringify(DT),updated_at:new Date().toISOString(),
+               updated_by:(window.currentUser&&window.currentUser.email)||'unknown'};
+  _setSyncStatus('syncing');
+  try{
+    /* محاولة PATCH أولاً */
+    var existing=await window.sbFetch(tbl+'?key=eq.dtext_v1&select=id');
+    if(existing&&existing.length>0){
+      await window.sbFetch(tbl+'?key=eq.dtext_v1','PATCH',payload);
+    }else{
+      await window.sbFetch(tbl,'POST',payload);
+    }
+    _setSyncStatus('ok');
+    console.log('[DText] ✅ مزامنة ناجحة: '+Object.keys(DT).length+' تعديل');
+  }catch(err){
+    _setSyncStatus('err');
+    console.warn('[DText] ⚠️ فشل المزامنة:',err&&err.message||err);
+  }
+}
+
+async function _loadFromSupabase(){
+  if(!window.sbFetch||!window.SB_TABLES||!window.activeSystem)return;
+  var tbl=(window.SB_TABLES&&window.SB_TABLES[window.activeSystem||'main']&&window.SB_TABLES[window.activeSystem||'main'].gm)||(window.activeSystem==='intl'?'intl_gm':'lajan_gm');
+  try{
+    var rows=await window.sbFetch(tbl+'?key=eq.dtext_v1&select=value&limit=1');
+    if(rows&&rows.length>0&&rows[0].value){
+      var remote=JSON.parse(rows[0].value);
+      /* دمج: Supabase يُقدَّم على localStorage */
+      Object.keys(remote).forEach(function(k){DT[k]=remote[k];});
+      try{localStorage.setItem(LS,JSON.stringify(DT));}catch(e){}
+      /* تطبيق على DOM */
+      Object.keys(DT).forEach(function(k){
+        if(DT[k]==='__DELETED__'){
+          var el=document.querySelector('[data-dtext-opt="'+k+'"]');
+          if(el)el.style.display='none';
+        }else{
+          var el=document.querySelector('[data-dtext-id="'+k+'"]')||
+                 document.querySelector('[data-dtext-opt="'+k+'"]');
+          if(el)el.textContent=DT[k];
+        }
+      });
+      _updateBadge();
+      console.log('[DText] ✅ تحميل من Supabase: '+Object.keys(DT).length+' تعديل');
+    }
+  }catch(err){
+    console.warn('[DText] تعذّر التحميل من Supabase — يُستخدم localStorage');
+  }
+}
+
+function _setSyncStatus(st){
+  var el=document.getElementById('dtext-sync-status');
+  if(!el)return;
+  var map={syncing:{t:'⟳ جاري الحفظ...',c:'#f59e0b'},ok:{t:'✓ محفوظ',c:'#22c55e'},err:{t:'⚠️ فشل الحفظ',c:'#ef4444'}};
+  var s=map[st]||{t:'',c:'#888'};
+  el.textContent=s.t;
+  el.style.color=s.c;
+  if(st==='ok')setTimeout(function(){if(el)el.textContent='';},3000);
 }
 
 function _updateBadge(){
@@ -24658,12 +24785,20 @@ window.DTextLayer={
 
 /* ── التهيئة ── */
 if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',window.dtextScanDOM);
+  document.addEventListener('DOMContentLoaded',function(){
+    window.dtextScanDOM();
+    setTimeout(_loadFromSupabase,2000); /* انتظر تحميل init() أولاً */
+  });
 }else{
   window.dtextScanDOM();
+  setTimeout(_loadFromSupabase,2000);
 }
 /* مسح دوري خفيف للعناصر الديناميكية كل 3 ثوانٍ في وضع التحرير */
 setInterval(function(){if(_active)window.dtextRescan();},3000);
+/* إعادة مزامنة دورية كل 5 دقائق */
+setInterval(function(){
+  if(window.currentUser&&Object.keys(DT).length>0)_syncToSupabase();
+},5*60*1000);
 })();
 </script>
 <!-- ============================================================
