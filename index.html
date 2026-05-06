@@ -11878,8 +11878,7 @@ async function hashPassword(pass){
 async function loadAuthUsers(){
   /* تجرب الأعمدة بشكل تدريجي — تتعامل مع الـ schema بمرونة */
   var queries=[
-    SB_TABLES[activeSystem].users+'?select=email,role,name,permissions&order=email.asc',
-    SB_TABLES[activeSystem].users+'?select=email,role,name&order=email.asc',
+    SB_TABLES[activeSystem].users+'?select=email,role,permissions&order=email.asc',
     SB_TABLES[activeSystem].users+'?select=email,role&order=email.asc'
   ];
   for(var qi=0;qi<queries.length;qi++){
@@ -12406,16 +12405,46 @@ function doAutoLogout(){
 
 function doLogout(){
   clearSessionTimers();
-  try{localStorage.removeItem(activeSystem==='intl'?'intl_session':'lajan_session');}catch(e){}
+  /* حذف جميع بيانات الجلسة من localStorage — النظامان */
+  try{
+    ['lajan_session','intl_session',
+     'lajan_lastSec','intl_lastSec',
+     'lajan_D_cache_v1','intl_D_cache_v1',
+     'lajan_sb_ping','intl_sb_ping',
+     'lajan_dtext_store_v1','intl_dtext_store_v1',
+     'dtext_store_v1'
+    ].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+  }catch(e){}
+  /* إعادة تعيين الحالة */
   currentUser=null;
-  var ub=document.getElementById('userBadge');if(ub)ub.remove();
-  document.getElementById('homeScreen').style.display='none';
-  document.getElementById('appScreen').style.display='none';
+  D.length=0; M={}; flt=[];
+  try{var ub=document.getElementById('userBadge');if(ub)ub.remove();}catch(e){}
+  /* إخفاء appScreen و homeScreen */
+  try{document.getElementById('homeScreen').style.display='none';}catch(e){}
+  try{document.getElementById('appScreen').style.display='none';}catch(e){}
+  /* إخفاء adminModal و أي modal مفتوح */
+  try{
+    document.querySelectorAll('div[id$="Modal"],div[id*="Modal"]').forEach(function(el){
+      el.style.display='none';
+    });
+  }catch(e){}
+  /* إظهار loginScreen بشكل صريح وقوي */
   var ls=document.getElementById('loginScreen');
-  if(ls){ls.style.display='flex';ls.style.opacity='1';}
-  document.getElementById('loginEmail').value='';
-  document.getElementById('loginPass').value='';
-  document.getElementById('loginErr').style.display='none';
+  if(ls){
+    ls.style.cssText='display:flex!important;visibility:visible!important;opacity:1!important;z-index:10001!important';
+  }
+  /* إعادة تعيين حقول الدخول */
+  try{document.getElementById('loginEmail').value='';}catch(e){}
+  try{document.getElementById('loginPass').value='';}catch(e){}
+  try{document.getElementById('loginErr').style.display='none';}catch(e){}
+  try{document.getElementById('loginBtn').disabled=false;document.getElementById('loginBtn').textContent='دخول ←';}catch(e){}
+  /* تأكيد إضافي بعد 100ms */
+  setTimeout(function(){
+    var ls2=document.getElementById('loginScreen');
+    if(ls2&&ls2.style.display==='none'){
+      ls2.style.cssText='display:flex!important;visibility:visible!important;opacity:1!important;z-index:10001!important';
+    }
+  },100);
 }
 
 /* ── ADMIN PANEL ── */
@@ -19707,17 +19736,23 @@ document.addEventListener('input', function(ev){
       }
       try{ localStorage.removeItem(_sessKey); }catch(e){}
     }
+  /* لا توجد جلسة صالحة — أظهر صفحة الدخول */
+  else{
+    var _nls=document.getElementById('loginScreen');
+    if(_nls){_nls.style.cssText='display:flex!important;visibility:visible!important;opacity:1!important;z-index:10001!important';}
+    var _nas=document.getElementById('appScreen');if(_nas)_nas.style.display='none';
+    var _nhs=document.getElementById('homeScreen');if(_nhs)_nhs.style.display='none';
+  }
   }catch(e){
     console.error('[restoreSession] خطأ غير ممسوك:', e);
-    /* ضمان أن المستخدم لا يُترك معلقاً — نُخفي شاشة الدخول ونفتح التطبيق */
+    /* عند أي خطأ → أظهر صفحة الدخول */
     try {
       var lsEl2 = document.getElementById('loginScreen');
       var lb2 = document.getElementById('loginBtn');
-      if(lsEl2){ lsEl2.style.display='none'; lsEl2.style.visibility='hidden'; }
+      if(lsEl2){ lsEl2.style.cssText='display:flex!important;visibility:visible!important;opacity:1!important;z-index:10001!important'; }
       if(lb2){ lb2.disabled=false; lb2.textContent='دخول ←'; }
-      if(currentUser){
-        try{ goTo('s1'); }catch(e2){ console.error(e2); }
-      }
+      var as2=document.getElementById('appScreen');if(as2)as2.style.display='none';
+      var hs2=document.getElementById('homeScreen');if(hs2)hs2.style.display='none';
     } catch(e3){ console.error(e3); }
   }
 
@@ -24513,8 +24548,15 @@ async function _syncToSupabase(){
     _setSyncStatus('ok');
     console.log('[DText] ✅ مزامنة ناجحة: '+Object.keys(DT).length+' تعديل');
   }catch(err){
+    var _em=err&&err.message||String(err);
+    /* SCHEMA_ERR = الجدول لم يُنشأ بعد — لا نُظهر خطأ */
+    if(_em.indexOf('SCHEMA_ERR')>=0||_em.indexOf('does not exist')>=0||_em.indexOf('42703')>=0){
+      _setSyncStatus('err');
+      console.info('[DText] جدول gm غير موجود في Supabase — نفّذ create_gm_tables.sql');
+      return;
+    }
     _setSyncStatus('err');
-    console.warn('[DText] ⚠️ فشل المزامنة:',err&&err.message||err);
+    console.warn('[DText] ⚠️ فشل المزامنة:',_em);
   }
 }
 
@@ -24522,7 +24564,7 @@ async function _loadFromSupabase(){
   if(!window.sbFetch||!window.SB_TABLES||!window.activeSystem)return;
   var tbl=(window.SB_TABLES&&window.SB_TABLES[window.activeSystem||'main']&&window.SB_TABLES[window.activeSystem||'main'].gm)||(window.activeSystem==='intl'?'intl_gm':'lajan_gm');
   try{
-    var rows=await window.sbFetch(tbl+'?key=eq.dtext_v1&select=value&limit=1');
+    var rows=await window.sbFetch(tbl+'?key=eq.dtext_v1&select=id,value&limit=1');
     if(rows&&rows.length>0&&rows[0].value){
       var remote=JSON.parse(rows[0].value);
       /* دمج: Supabase يُقدَّم على localStorage */
@@ -24543,6 +24585,11 @@ async function _loadFromSupabase(){
       console.log('[DText] ✅ تحميل من Supabase: '+Object.keys(DT).length+' تعديل');
     }
   }catch(err){
+    var _em2=err&&err.message||String(err);
+    if(_em2.indexOf('does not exist')>=0||_em2.indexOf('42703')>=0||_em2.indexOf('SCHEMA_ERR')>=0){
+      console.info('[DText] جدول gm غير موجود — يُستخدم localStorage فقط');
+      return;
+    }
     console.warn('[DText] تعذّر التحميل من Supabase — يُستخدم localStorage');
   }
 }
