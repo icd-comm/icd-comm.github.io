@@ -11548,12 +11548,44 @@ async function _initCore(){
     throw new Error('PENDING_CHANGES: يوجد تغييرات غير محفوظة');
   }
   /* مسح البيانات القديمة قبل تحميل النظام الجديد */
+  /* فحص: هل البيانات تحتاج تحديثاً؟ */
+  var _ck2=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
+  var _cacheTs=0;
+  try{var _c2=localStorage.getItem(_ck2);if(_c2)_cacheTs=JSON.parse(_c2).ts||0;}catch(ex){}
   D.length=0; M={}; flt=[];
   SB_ROW_C=null; SB_ROW_M=null; SB_LAST_UPDATED_C=null;
   /* حفظ النظام الذي يعمل به هذه الـ init لمنع التداخل */
   var _initSys=activeSystem;
   setSyncUI('syncing','جاري التحميل من Supabase...');
   try{
+    /* فحص updated_at أولاً — إذا لم تتغير البيانات نتجاوز التحميل الكامل */
+    var _metaResults=await Promise.all([
+      sbFetch(SB_TABLES[activeSystem].committees+'?select=id,updated_at&limit=1&order=id.asc'),
+      sbFetch(SB_TABLES[activeSystem].meetings+'?select=id,updated_at&limit=1&order=id.asc')
+    ]).catch(function(){return[null,null];});
+    var _remoteTs=Math.max(
+      _metaResults[0]&&_metaResults[0][0]?new Date(_metaResults[0][0].updated_at||0).getTime():0,
+      _metaResults[1]&&_metaResults[1][0]?new Date(_metaResults[1][0].updated_at||0).getTime():0
+    );
+    /* إذا الـ cache أحدث من Supabase → تخطَّ التحميل */
+    if(_cacheTs>0&&_remoteTs>0&&_cacheTs>=_remoteTs&&D.length===0){
+      try{
+        var _ck3=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
+        var _cd3=JSON.parse(localStorage.getItem(_ck3)||'null');
+        if(_cd3&&Array.isArray(_cd3.data)&&_cd3.data.length>0){
+          D.length=0;_cd3.data.forEach(function(x){D.push(x);});
+          if(_cd3.meetings)Object.keys(_cd3.meetings).forEach(function(k){M[k]=_cd3.meetings[k];});
+          SB_ROW_C=_metaResults[0]&&_metaResults[0][0]?_metaResults[0][0].id:null;
+          SB_ROW_M=_metaResults[1]&&_metaResults[1][0]?_metaResults[1][0].id:null;
+          flt=[...D];
+          setSyncUI('ok','متزامن من cache ✓ ('+D.length+' سجل)');
+          console.log('[init] ✅ cache محدَّث — تخطي التحميل من Supabase');
+          refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
+          if(typeof _loadFromSupabase==='function')setTimeout(_loadFromSupabase,500);
+          return;
+        }
+      }catch(ex){}
+    }
     /* جلب committees و meetings بشكل متوازٍ — يوفر 50% من وقت التحميل */
     var _results=await Promise.all([
       sbFetch(SB_TABLES[activeSystem].committees+'?select=id,data,data_compressed&limit=1&order=id.asc'),
@@ -11745,6 +11777,15 @@ async function _initCore(){
   window.appState.initialized = true;
   window.appState.loading = false;
   refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
+  /* حفظ D في localStorage كـ cache للتحميل السريع عند التحديث */
+  try{
+    var _cacheKey=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
+    var _cacheData=JSON.stringify({ts:Date.now(),data:D,meetings:M});
+    /* حفظ فقط إذا الحجم معقول (<500KB) */
+    if(_cacheData.length<500000){
+      localStorage.setItem(_cacheKey,_cacheData);
+    }
+  }catch(ex){ console.warn('[cache] فشل حفظ D:',ex.message); }
   /* تحميل تعديلات النصوص من Supabase */
   if(typeof _loadFromSupabase==='function')setTimeout(_loadFromSupabase,500);
 } /* end _initCore */
@@ -19606,7 +19647,24 @@ document.addEventListener('input', function(ev){
         var _lb=document.getElementById('loginBtn');
         if(_lb){_lb.disabled=false;_lb.textContent='دخول ←';}
         updateSystemUI();
-        /* الدخول الفوري للتطبيق — البيانات المضمّنة متاحة فوراً */
+        /* الدخول الفوري — تحميل من cache إذا متاح، وإلا البيانات المضمّنة */
+        try{
+          var _ck=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
+          var _cd=localStorage.getItem(_ck);
+          if(_cd){
+            var _cp=JSON.parse(_cd);
+            var _age=Date.now()-(_cp.ts||0);
+            /* استخدم cache إذا أحدث من 4 ساعات */
+            if(_age<4*60*60*1000&&Array.isArray(_cp.data)&&_cp.data.length>0){
+              D.length=0;
+              _cp.data.forEach(function(x){D.push(x);});
+              if(_cp.meetings&&typeof _cp.meetings==='object'){
+                Object.keys(_cp.meetings).forEach(function(k){M[k]=_cp.meetings[k];});
+              }
+              console.log('[cache] ✅ تحميل من cache: '+D.length+' سجل (عمر: '+Math.round(_age/60000)+' دقيقة)');
+            }
+          }
+        }catch(ex){ console.warn('[cache] فشل تحميل cache'); }
         var _lastSec='s1';
         try{var _ls2=localStorage.getItem((activeSystem==='intl'?'intl':'lajan')+'_lastSec');if(_ls2)_lastSec=_ls2;}catch(e){}
         try{ goTo(_lastSec); }catch(e){ try{goTo('s1');}catch(e2){} }
