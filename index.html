@@ -43,7 +43,7 @@ html body .spanel.active{
 }
 /* adminModal: z-index أعلى لمنع تغطيته من error boxes */
 #adminModal{
-  z-index:1000002 !important;
+  z-index:1000000 !important;
 }
 #adminModal,#adminModal *{
   pointer-events:auto !important;
@@ -6638,7 +6638,21 @@ function applyIMP(){
   });
 }
 /* HELPERS */
+/* دالة e() أعيدت لشكلها الأصلي للحفاظ على السلوك المتوقع في 227 موضع
+   (لا تشمل ' / ` لأن هذا قد يؤثر على عرض URLs والمسارات).
+   للحماية من XSS الإضافية، استخدم window.SecurityCore.escHtml أو eX() أدناه. */
 function e(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+/* [Phase 1 fix C3] دالة escape إضافية للسياقات الحساسة (attribute values, html content) */
+function eX(s){
+  if(s===null||s===undefined) return '';
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;')
+    .replace(/`/g,'&#x60;');
+}
 function GM(i){if(!M[i])M[i]=[];return M[i];}
 function NM(){return{id:Date.now(),meetNum:0,date:'',loc:'',agendaItems:[],agenda:'',notes:'',tasks:[],attendees:'',attendeesCount:0,attendeesQuorum:0,decisionNum:'',decisionDate:'',remarks:''};}
 function cnt(arr,k){var r={};arr.forEach(function(d){var v=d[k]||'غير محدد';r[v]=(r[v]||0)+1;});return r;}
@@ -6681,18 +6695,190 @@ function setSyncUI(st,msg){
   dot.className='sync-dot '+st;
   txt.textContent=msg;
 }
+/* ══════════════════════════════════════════════════════════════════════
+   SecurityCore — وحدة الأمان الموحّدة (Phase 1 Hardening)
+   ─────────────────────────────────────────────────────────────────────
+   تضم كل الدوال الأمنية الأساسية في مكان واحد:
+   • escHtml      : escape آمن للنصوص داخل innerHTML
+   • escAttr      : escape لقيم الـ attributes
+   • signSession  : توقيع الجلسة بـ HMAC-SHA256 لمنع التلاعب
+   • verifySession: التحقق من توقيع الجلسة
+   • safeJsonParse: JSON.parse مع fallback
+   • SyncBus      : قناة تزامن بين تبويبات المتصفح (BroadcastChannel)
+   ══════════════════════════════════════════════════════════════════════ */
+window.SecurityCore = (function(){
+  'use strict';
+
+  /* ── 1) escapeHtml: ضد XSS داخل innerHTML ── */
+  /* يستبدل: & < > " ' / `  بنظائرها HTML entities */
+  var _escMap = {
+    '&':'&amp;', '<':'&lt;', '>':'&gt;',
+    '"':'&quot;', "'":'&#39;', '/':'&#x2F;', '`':'&#x60;'
+  };
+  function escHtml(v){
+    if(v===null||v===undefined) return '';
+    return String(v).replace(/[&<>"'`\/]/g, function(c){ return _escMap[c]; });
+  }
+
+  /* ── 2) escapeAttr: لقيم attributes (أكثر صرامة) ── */
+  function escAttr(v){
+    if(v===null||v===undefined) return '';
+    return String(v).replace(/[&<>"'`\/=]/g, function(c){
+      return _escMap[c] || ('&#x'+c.charCodeAt(0).toString(16)+';');
+    });
+  }
+
+  /* ── 3) safeJsonParse: لا يلقي exception ── */
+  function safeJsonParse(str, defaultVal){
+    if(str===null||str===undefined||str==='') return defaultVal;
+    try{ return JSON.parse(str); }
+    catch(e){
+      console.warn('[SecurityCore] JSON parse failed:', e.message);
+      return defaultVal;
+    }
+  }
+
+  /* ── 4) Session Signing: HMAC-SHA256 ── */
+  /* السر: مشتق من خصائص المتصفح + مفتاح ثابت — ليس آمناً ضد المهاجم بالكامل
+     لكنه يمنع التلاعب اليدوي البسيط (تغيير role في DevTools) */
+  var _SESSION_SECRET_BASE = 'lajan_v4_sec_';
+
+  function _getSessionSecret(){
+    /* الذي يهم: ثبات السر بين زيارات نفس المستخدم على نفس الجهاز */
+    try{
+      var s = _SESSION_SECRET_BASE + (navigator.userAgent||'') + (navigator.language||'');
+      return s;
+    }catch(e){ return _SESSION_SECRET_BASE + 'fallback'; }
+  }
+
+  /* HMAC-SHA256 */
+  function _hmacSign(message){
+    if(!window.crypto || !window.crypto.subtle){
+      /* fallback: hash بسيط — أضعف لكنه أفضل من لا شيء */
+      var s = _getSessionSecret() + '|' + message;
+      var h = 0;
+      for(var i=0;i<s.length;i++){ h = ((h<<5)-h) + s.charCodeAt(i); h |= 0; }
+      return Promise.resolve('h32_'+Math.abs(h).toString(16));
+    }
+    var enc = new TextEncoder();
+    var keyData = enc.encode(_getSessionSecret());
+    var msgData = enc.encode(message);
+    return crypto.subtle.importKey(
+      'raw', keyData, {name:'HMAC',hash:'SHA-256'}, false, ['sign']
+    ).then(function(k){
+      return crypto.subtle.sign('HMAC', k, msgData);
+    }).then(function(sig){
+      return Array.from(new Uint8Array(sig))
+        .map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+    });
+  }
+
+  /* signSession: يأخذ object → يعيد {data, sig} */
+  function signSession(payload){
+    var msg = JSON.stringify(payload);
+    return _hmacSign(msg).then(function(sig){
+      return JSON.stringify({d: payload, s: sig});
+    });
+  }
+
+  /* verifySession: يأخذ string → يعيد payload أو null */
+  function verifySession(signedStr){
+    var parsed = safeJsonParse(signedStr, null);
+    if(!parsed || typeof parsed !== 'object' || !parsed.d || !parsed.s){
+      return Promise.resolve(null);
+    }
+    var msg = JSON.stringify(parsed.d);
+    return _hmacSign(msg).then(function(sig){
+      /* مقارنة بطول ثابت لمنع timing attack بسيط */
+      if(sig.length !== parsed.s.length) return null;
+      var diff = 0;
+      for(var i=0;i<sig.length;i++){
+        diff |= sig.charCodeAt(i) ^ parsed.s.charCodeAt(i);
+      }
+      return diff === 0 ? parsed.d : null;
+    });
+  }
+
+  /* ── 5) SyncBus: تزامن بين التبويبات ── */
+  /* يدعم BroadcastChannel + storage event كـ fallback */
+  var _channel = null;
+  var _listeners = [];
+  function _initBus(){
+    if(_channel) return;
+    try{
+      if(typeof BroadcastChannel !== 'undefined'){
+        _channel = new BroadcastChannel('lajan_sync_v1');
+        _channel.onmessage = function(ev){
+          _listeners.forEach(function(fn){
+            try{ fn(ev.data); }catch(e){ console.warn('[SyncBus] listener error:',e); }
+          });
+        };
+      }
+    }catch(e){ console.warn('[SyncBus] BroadcastChannel unavailable'); }
+    /* fallback: storage event يعمل تلقائياً عبر setItem في تبويب آخر */
+    try{
+      window.addEventListener('storage', function(ev){
+        if(!ev.key || ev.key.indexOf('__lajan_sync__') !== 0) return;
+        var data = safeJsonParse(ev.newValue, null);
+        if(data){
+          _listeners.forEach(function(fn){
+            try{ fn(data); }catch(e){}
+          });
+        }
+      });
+    }catch(e){}
+  }
+  function syncSend(type, payload){
+    _initBus();
+    var msg = {type:type, payload:payload, ts:Date.now(),
+               source: (window._tabId = window._tabId || ('t'+Math.random().toString(36).slice(2,9)))};
+    if(_channel){
+      try{ _channel.postMessage(msg); }catch(e){}
+    }
+    /* fallback عبر localStorage event */
+    try{
+      var k = '__lajan_sync__' + Date.now();
+      localStorage.setItem(k, JSON.stringify(msg));
+      setTimeout(function(){ try{ localStorage.removeItem(k); }catch(e){} }, 100);
+    }catch(e){}
+  }
+  function syncListen(fn){
+    _initBus();
+    if(typeof fn === 'function') _listeners.push(fn);
+  }
+
+  return {
+    escHtml: escHtml,
+    escAttr: escAttr,
+    safeJsonParse: safeJsonParse,
+    signSession: signSession,
+    verifySession: verifySession,
+    syncSend: syncSend,
+    syncListen: syncListen
+  };
+})();
+
+/* ── Aliases مختصرة للاستخدام الواسع ── */
+var _h = window.SecurityCore.escHtml;     /* للنصوص داخل HTML */
+var _a = window.SecurityCore.escAttr;     /* لقيم attributes */
+var _sj = window.SecurityCore.safeJsonParse;
+
 /* ══════════════════════════════════════════════════════
-   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> إعدادات Supabase — يمكن تغييرها دون تعديل الكود
+   إعدادات Supabase — يمكن تغييرها دون تعديل الكود
    ══════════════════════════════════════════════════════
+   ⚠️ تنبيه أمني هام:
+   هذا المفتاح (publishable key) عام بطبيعته ويعتمد كلياً على RLS policies.
+   يجب التأكد من تفعيل RLS على كل جدول وأن السياسات تربط
+   القراءة/الكتابة بـ auth.uid() لتجنب التلاعب من المتصفح.
+   ──────────────────────────────────────────────────────
    تعليمات تفعيل RLS في Supabase (مهم للأمان):
    1. افتح لوحة Supabase → Authentication → Policies
    2. لكل جدول (lajan_committees, lajan_meetings, lajan_users,
       lajan_audit, lajan_trash) أضف هذه السياسات:
-      - SELECT: true  (أو قيّدها بـ auth.role() = 'authenticated')
-      - INSERT: true
-      - UPDATE: true
-      - DELETE: true
+      - SELECT: قيّدها بـ auth.role() = 'authenticated'
+      - INSERT/UPDATE/DELETE: قيّدها بدور authenticated أو role check
    3. فعّل RLS من زر "Enable RLS" في كل جدول
+   4. خاصة جدول users: امنع INSERT/UPDATE من غير admin
    ════════════════════════════════════════════════════ */
 
 var SB_CONFIG={
@@ -6826,6 +7012,11 @@ function switchSystem(sys){
   D.length=0;             /* مسح بيانات اللجان */
   M={};                   /* مسح بيانات الاجتماعات */
   flt=[];                 /* مسح نتائج الفلتر */
+  /* مسح تعديلات النصوص — كل نظام له تعديلاته المستقلة */
+  if(typeof DTextLayer!=='undefined'&&typeof DTextLayer.texts==='function'){
+    var _prevDT=DTextLayer.texts();
+    Object.keys(_prevDT).forEach(function(k){delete _prevDT[k];});
+  }
   SB_ROW_C=null;          /* مسح ID صف اللجان */
   SB_ROW_M=null;          /* مسح ID صف الاجتماعات */
   SB_LAST_UPDATED_C=null; /* مسح الطابع الزمني */
@@ -6951,7 +7142,9 @@ function updateSystemUI(){
   if(tyEl){
     var curVal=tyEl.value;
     var types=getTypes();
-    tyEl.innerHTML='<option value="">الكل</option>'+types.map(function(t){return'<option value="'+t+'"'+(t===curVal?' selected':'')+'>'+t+'</option>';}).join('');
+    /* [Phase 1 fix C3] استخدام e() لـ escape القيم في options
+       حماية من XSS لو احتوى نوع لجنة على أحرف خاصة */
+    tyEl.innerHTML='<option value="">الكل</option>'+types.map(function(t){return'<option value="'+e(t)+'"'+(t===curVal?' selected':'')+'>'+e(t)+'</option>';}).join('');
   }
 
   /* ── فلتر النطاق — النظام الدولي يُخفي "داخلية" ── */
@@ -7212,7 +7405,16 @@ async function _sbFetchReal(path,method,body){
     throw new Error('Supabase '+res.status+': '+t.substring(0,300));
   }
   var txt = await res.text();
-  return txt ? JSON.parse(txt) : null;
+  /* [Phase 1 fix H5] حماية ضد JSON تالف من Supabase
+     قد يحدث في حالات: شبكة منقطعة، proxy غير شفاف، خطأ في السيرفر
+     بدلاً من توقف النظام كلياً، نُعيد null ونسجّل خطأ */
+  if(!txt) return null;
+  try{
+    return JSON.parse(txt);
+  }catch(parseErr){
+    console.error('[sbFetch] JSON parse failed for response:', txt.substring(0,200));
+    throw new Error('استجابة غير صالحة من الخادم: ' + parseErr.message);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -7823,6 +8025,16 @@ async function doSave(skipSafetyCheck){
     _pendingSave = false;
     window._supabaseHealthy = true;
     console.log('[doSave] ✓ ('+_saveD.length+' لجنة'+((_payloadC.data_compressed)?'، مضغوط':'')+')');
+    /* [Phase 1 fix C4] إعلام التبويبات الأخرى بحفظ ناجح */
+    try{
+      if(window.SecurityCore){
+        window.SecurityCore.syncSend('data_changed', {
+          system: activeSystem,
+          recordCount: _saveD.length,
+          ts: Date.now()
+        });
+      }
+    }catch(syncErr){ /* لا نُفشل الحفظ بسبب فشل sync notification */ }
 
   }catch(err){
     if(typeof setSyncUI==='function') setSyncUI('err','فشل الحفظ — انقر للإعادة');
@@ -7839,12 +8051,81 @@ window.addEventListener('beforeunload', function(e){
   if(_pendingSave && _pendingChangesCount > 0){
     /* حفظ محلي فوري */
     try{ _saveToLocalBackup(); }catch(err){}
+    /* [Phase 1 fix C5] محاولة sync عاجلة باستخدام sendBeacon (لا يحظره المتصفح أثناء unload)
+       فقط إذا كانت دالة doSave موجودة وحالة Supabase صحية */
+    try{
+      if(navigator.sendBeacon && window._supabaseHealthy === true && SB_ROW_C){
+        /* لا نستطيع استدعاء sbFetch لأنه async ويلغي عند unload
+           لكن sendBeacon يضمن وصول الطلب */
+        var _payloadBeacon = JSON.stringify({
+          data: D,
+          updated_at: new Date().toISOString()
+        });
+        var _url = SB_CONFIG.url+'/rest/v1/'+SB_TABLES[activeSystem].committees+'?id=eq.'+SB_ROW_C;
+        /* sendBeacon يحتاج Blob مع content-type — لكن لا يدعم headers مخصصة
+           لذا نستخدم fetch مع keepalive كـ fallback */
+        try{
+          fetch(_url, {
+            method:'PATCH',
+            keepalive:true,
+            headers:{
+              'apikey':SB_CONFIG.key,
+              'Authorization':'Bearer '+(typeof SB_ACCESS_TOKEN!=='undefined'&&SB_ACCESS_TOKEN ? SB_ACCESS_TOKEN : SB_CONFIG.key),
+              'Content-Type':'application/json'
+            },
+            body:_payloadBeacon
+          }).catch(function(){});
+        }catch(beaconErr){}
+      }
+    }catch(beaconOuterErr){}
     /* تحذير المستخدم إذا كانت هناك تغييرات لم تُرفع للخادم */
     var msg = 'يوجد '+_pendingChangesCount+' تغيير لم يُحفظ على الخادم بعد. هل تريد المغادرة؟';
     e.returnValue = msg;
     return msg;
   }
 });
+
+/* [Phase 1 fix C4] SyncBus: تزامن البيانات بين تبويبات المتصفح
+   عند تعديل بيانات في تبويب → نُعلم باقي التبويبات لإعادة التحميل
+   هذا يحل race condition المعروف في النظام */
+(function setupTabSync(){
+  if(!window.SecurityCore) return;
+  window.SecurityCore.syncListen(function(msg){
+    if(!msg || !msg.type) return;
+    /* تجاهل رسائل من نفس التبويب */
+    if(msg.source === window._tabId) return;
+    /* تجاهل رسائل من نظام مختلف (main vs intl) */
+    if(msg.payload && msg.payload.system && msg.payload.system !== activeSystem) return;
+    if(msg.type === 'data_changed'){
+      /* تبويب آخر حفظ تغييرات → نعرض تحذيراً للمستخدم */
+      console.log('[TabSync] data changed in another tab:', msg.payload);
+      /* إذا كان لدى المستخدم تغييرات معلقة → تحذير قوي */
+      if(_pendingChangesCount > 0){
+        if(typeof showToast==='function'){
+          showToast('⚠ تم تعديل البيانات في نافذة أخرى — احفظ ثم حدّث الصفحة لتجنب التعارض', true);
+        }
+      } else {
+        /* لا توجد تغييرات معلقة → إعادة تحميل صامتة */
+        if(typeof showToast==='function'){
+          showToast('تم تحديث البيانات من نافذة أخرى');
+        }
+        try{
+          if(typeof init==='function'){
+            init().then(function(){
+              try{ if(typeof refRep==='function') refRep(); }catch(e){}
+              try{ if(typeof applyF==='function') applyF(); }catch(e){}
+              try{ if(typeof updateHomeStats==='function') updateHomeStats(); }catch(e){}
+            }).catch(function(){});
+          }
+        }catch(e){}
+      }
+    } else if(msg.type === 'session_changed'){
+      /* تبويب آخر سجل دخول/خروج → إعادة تحميل */
+      console.log('[TabSync] session changed in another tab → reloading');
+      setTimeout(function(){ try{ window.location.reload(); }catch(e){} }, 500);
+    }
+  });
+})();
 
 /* تحقق من حالة الاتصال بـ Supabase عند التحميل */
 async function checkSupabaseHealth(){
@@ -11841,7 +12122,9 @@ function showToast(msg,isErr){
     +'box-shadow:0 6px 24px rgba(0,0,0,.25);'
     +'display:flex;align-items:center;gap:9px;max-width:320px;'
     +'animation:toastSlide .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none';
-  t.innerHTML=icon+'<span>'+msg+'</span>';
+  /* [Phase 1 fix] XSS hardening: استخدم escHtml على msg لأن قد يحتوي رسائل خطأ من Supabase */
+  /* SVG icon ثابت في الكود (آمن)، لكن msg ديناميكي */
+  t.innerHTML=icon+'<span>'+_h(msg)+'</span>';
   if(!document.getElementById('toastKeyframes')){
     var s=document.createElement('style');
     s.id='toastKeyframes';
@@ -11877,16 +12160,39 @@ var AUTH_USERS=[];    /* تُحمَّل من Supabase */
 
 /* ── Supabase Auth ── */
 /* تشفير كلمة المرور باستخدام SHA-256 */
-async function hashPassword(pass){
-  /* fallback if crypto.subtle unavailable (HTTP / old browser) */
-  if(!window.crypto||!window.crypto.subtle){
-    /* simple deterministic hash fallback */
-    var h=0;for(var i=0;i<pass.length;i++){h=((h<<5)-h)+pass.charCodeAt(i);h|=0;}
-    return 'fallback_'+Math.abs(h).toString(16);
+/* [Phase 1 fix C2.1] hashPassword محسّنة:
+   - رفض كامل لـ fallback hash الضعيف (32-bit) — يعمل فقط على HTTPS أو localhost
+   - إضافة salt مشتق من email لتجنب rainbow tables
+   - استخدام PBKDF2 مع 100,000 iteration (key stretching) لمقاومة brute force
+   ملاحظة: salt مشتق من email لأن لا يمكننا إرسال salt عشوائي مع
+   التوافق مع البيانات القديمة. PBKDF2 يجعل كل تخمين أبطأ بـ 100K مرة. */
+async function hashPassword(pass, email){
+  if(!window.crypto || !window.crypto.subtle){
+    /* رفض fallback غير الآمن — يحمي المستخدم من نظام بأمان كاذب */
+    throw new Error('متصفحك لا يدعم التشفير الآمن. يرجى استخدام HTTPS أو متصفح محدث.');
   }
-  var enc=new TextEncoder();
-  var buf=await crypto.subtle.digest('SHA-256',enc.encode(pass));
-  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+  var enc = new TextEncoder();
+  /* salt: مشتق من email + ثابت — لكل مستخدم salt فريد */
+  /* ملاحظة هامة: هذا التوقيع يبقى متوافقاً مع pass_hash القديم لأن legacy mode موجود أدناه */
+  if(!email){
+    /* وضع التوافق العكسي: SHA-256 بدون salt (للجلسات/البيانات القديمة) */
+    var bufLegacy = await crypto.subtle.digest('SHA-256', enc.encode(pass));
+    return Array.from(new Uint8Array(bufLegacy))
+      .map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  }
+  /* وضع آمن مع PBKDF2 + email salt */
+  var saltStr = 'lajan_v4_salt:' + String(email).toLowerCase().trim();
+  var salt = enc.encode(saltStr);
+  var keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(pass), {name:'PBKDF2'}, false, ['deriveBits']
+  );
+  var bits = await crypto.subtle.deriveBits(
+    {name:'PBKDF2', salt:salt, iterations:100000, hash:'SHA-256'},
+    keyMaterial, 256
+  );
+  /* بادئة pbk2: للتمييز بين التهشير القديم والجديد */
+  return 'pbk2:' + Array.from(new Uint8Array(bits))
+    .map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
 }
 
 /* ── تحميل المستخدمين من Supabase ── */
@@ -11952,13 +12258,20 @@ async function moveToTrash(type,item_data,item_label){
 
 async function openTrashModal(){
   if(!currentUser||currentUser.role==='viewer'){showToast('ليس لديك صلاحية',true);return;}
+  /* إظهار modal فوراً مع loading */
+  var existingT=document.getElementById('trashModal');if(existingT)existingT.remove();
+  var box=document.createElement('div');
+  box.id='trashModal';
+  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000010;display:flex;align-items:center;justify-content:center;padding:16px';
+  var loadDiv=document.createElement('div');
+  loadDiv.style.cssText='background:#fff;border-radius:16px;padding:40px;text-align:center;font-family:inherit';
+  loadDiv.innerHTML='<div style="font-size:14px;color:#666">جاري التحميل...</div>';
+  box.appendChild(loadDiv);
+  document.body.appendChild(box);
+  box.addEventListener('click',function(ev){if(ev.target===box)box.remove();});
   try{
     var rows=await sbFetch(SB_TABLES[activeSystem].trash+'?restored=is.false&order=deleted_at.desc&limit=60');
-    var modal=document.getElementById('trashModal');
-    if(modal)modal.remove();
-    var box=document.createElement('div');
-    box.id='trashModal';
-    box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px';
+    loadDiv.remove();
     var html='<div style="background:#fff;border-radius:18px;width:100%;max-width:700px;max-height:85vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column">'
       +'<div style="background:linear-gradient(135deg,#922b21,#c0392b);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">'
       +'<div style="color:#fff;font-size:15px;font-weight:700;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> سلة المحذوفات — آخر 30 يوماً</div>'
@@ -11986,8 +12299,8 @@ async function openTrashModal(){
     }
     html+='</div></div>';
     box.innerHTML=html;
-    document.body.appendChild(box);
-    applyDraggable(box);
+    /* box أُضيف لـ body مسبقاً */
+    try{applyDraggable(box);}catch(e){}
     /* wire restore buttons */
     box.querySelectorAll('.trash-restore-btn').forEach(function(btn){
       btn.addEventListener('click',function(){
@@ -12068,13 +12381,23 @@ async function restoreFromTrash(trashId){
 
 async function openAuditModal(){
   if(!currentUser||currentUser.role!=='admin'){showToast('متاح للمدير فقط',true);return;}
+  /* إظهار modal فوراً مع loading */
+  var existingA=document.getElementById('auditModal');if(existingA)existingA.remove();
+  var box=document.createElement('div');
+  box.id='auditModal';
+  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000010;display:flex;align-items:center;justify-content:center;padding:16px';
+  var auditLoad=document.createElement('div');
+  auditLoad.style.cssText='background:#fff;border-radius:16px;padding:40px;text-align:center;font-family:inherit';
+  auditLoad.innerHTML='<div style="font-size:14px;color:#666">جاري تحميل سجل التدقيق...</div>';
+  box.appendChild(auditLoad);
+  document.body.appendChild(box);
+  box.addEventListener('click',function(ev){if(ev.target===box)box.remove();});
+  var rows=null;
   try{
-    var rows=await sbFetch(SB_TABLES[activeSystem].audit+'?select=*&order=created_at.desc&limit=100');
-    var modal=document.getElementById('auditModal');
-    if(modal)modal.remove();
-    var box=document.createElement('div');
-    box.id='auditModal';
-    box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px';
+    var res=await sbFetch(SB_TABLES[activeSystem].audit+'?select=*&order=created_at.desc&limit=100');
+    rows=res;
+  }catch(e2){}
+  auditLoad.remove();
     var html='<div style="background:#fff;border-radius:18px;width:100%;max-width:760px;max-height:88vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column">'
       +'<div style="background:linear-gradient(135deg,#3b83b5,#48a883);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">'
       +'<div style="color:#fff;font-size:15px;font-weight:700;font-family:inherit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg> سجل التدقيق — آخر 100 عملية</div>'
@@ -12113,9 +12436,8 @@ async function openAuditModal(){
     }
     html+='</div></div>';
     box.innerHTML=html;
-    document.body.appendChild(box);
-  applyDraggable(box);
-  }catch(err){alert('خطأ في تحميل السجل: '+err.message);}
+    /* box أُضيف لـ body مسبقاً */
+  try{applyDraggable(box);}catch(e){}
 }
 
 /* Particles for login screen */
@@ -12198,30 +12520,50 @@ function doLogin(){
     }
   }, 6000);
 
-  /* تحقق من المستخدم وكلمة المرور عبر Supabase */
-  hashPassword(pass).then(function(hashedPass){
-    return sbFetch(SB_TABLES[activeSystem].users+'?email=eq.'+encodeURIComponent(email)+'&select=email,role,pass_hash');
-  }).then(function(rows){
+  /* تحقق من المستخدم وكلمة المرور عبر Supabase
+     [Phase 1 fix C2.1] دعم تدريجي:
+     - PBKDF2 جديد: يبدأ بـ "pbk2:" — آمن
+     - SHA-256 قديم: hex مباشر — يُرقى تلقائياً عند نجاح الدخول */
+  sbFetch(SB_TABLES[activeSystem].users+'?email=eq.'+encodeURIComponent(email)+'&select=email,role,pass_hash')
+  .then(function(rows){
     if(!rows||rows.length===0){
-      /* المدير الأول — أضفه تلقائياً إذا كان البريد مطابقاً */
+      /* المدير الأول — أضفه تلقائياً إذا كان البريد مطابقاً
+         ⚠️ تحذير أمني هام: يعتمد على RLS في Supabase لمنع التلاعب
+         يجب تفعيل RLS على جدول users بحيث يمنع INSERT للمستخدمين غير المسجلين */
       if(email===getAdminEmail().toLowerCase()){
-        return hashPassword(pass).then(function(h){
+        return hashPassword(pass, email).then(function(h){
           return sbFetch(SB_TABLES[activeSystem].users,'POST',{email:email,role:'admin',pass_hash:h});
         }).then(function(){clearTimeout(_loginTimeout);finishLogin('admin');});
       }
       throw new Error('هذا البريد غير مسجّل — تواصل مع المدير لإضافتك.');
     }
     var user=rows[0];
-    /* إذا لم تكن هناك كلمة مرور محفوظة بعد (مستخدم قديم) — احفظها */
+    /* إذا لم تكن هناك كلمة مرور محفوظة بعد (مستخدم قديم) — احفظها بصيغة آمنة */
     if(!user.pass_hash){
-      return hashPassword(pass).then(function(h){
+      return hashPassword(pass, email).then(function(h){
         return sbFetch(SB_TABLES[activeSystem].users+'?email=eq.'+encodeURIComponent(email),'PATCH',{pass_hash:h});
       }).then(function(){clearTimeout(_loginTimeout);finishLogin(user.role);});
     }
-    /* تحقق من كلمة المرور */
-    return hashPassword(pass).then(function(h){
-      if(h!==user.pass_hash){throw new Error('كلمة المرور غير صحيحة');}
+    /* [Phase 1 fix C2.1] تحقق من كلمة المرور — يدعم الصيغتين */
+    var isPBKDF2 = String(user.pass_hash).indexOf('pbk2:') === 0;
+    var hashPromise = isPBKDF2
+      ? hashPassword(pass, email)        /* الصيغة الجديدة الآمنة */
+      : hashPassword(pass);              /* SHA-256 القديم بدون salt */
+    return hashPromise.then(function(h){
+      /* مقارنة بطول ثابت لمنع timing attacks */
+      var equal = (h.length === user.pass_hash.length);
+      var diff = 0;
+      var maxLen = Math.max(h.length, user.pass_hash.length);
+      for(var i=0;i<maxLen;i++){
+        diff |= (h.charCodeAt(i)||0) ^ (user.pass_hash.charCodeAt(i)||0);
+      }
+      if(!equal || diff !== 0){
+        throw new Error('كلمة المرور غير صحيحة');
+      }
       clearTimeout(_loginTimeout);
+      /* [Phase 1 fix C2.1] ملاحظة: الترقية التلقائية لـ PBKDF2 معطلة
+         لأن المستخدم طلب صراحة عدم المساس بالبيانات المخزنة.
+         المستخدمون القدامى يستمرون بـ SHA-256، الجدد فقط يحصلون على PBKDF2. */
       finishLogin(user.role);
     });
   }).catch(function(err){
@@ -12320,7 +12662,10 @@ function addUserBadge(){
   badge.style.cssText='display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:5px 12px;cursor:pointer;flex-shrink:0;transition:background .2s';
   badge.onmouseenter=function(){badge.style.background='rgba(255,255,255,.22)';};
   badge.onmouseleave=function(){badge.style.background='rgba(255,255,255,.12)';};
-  badge.innerHTML='<div style="text-align:right"><div style="font-size:10.5px;color:rgba(255,255,255,.85);font-weight:700">'+currentUser.email+'</div>'
+  /* [Phase 1 fix C3] escape currentUser.email لمنع XSS لو احتوت قيمة الإيميل أحرف خاصة
+     (السيناريو: مهاجم سجل بإيميل يحتوي HTML عند bootstrap admin)
+     ملاحظة: roleLabel ثابت في الكود (لا يأتي من المستخدم) ويحتوي SVG مقصودة — لا escape */
+  badge.innerHTML='<div style="text-align:right"><div style="font-size:10.5px;color:rgba(255,255,255,.85);font-weight:700">'+e(currentUser.email)+'</div>'
     +'<div style="font-size:9.5px;color:rgba(255,255,255,.55)">'+roleLabel+'</div></div>'
     +(currentUser.role==='admin'?'<div style="font-size:9px;background:linear-gradient(135deg,#f39c12,#e67e22);color:#fff;border-radius:5px;padding:2px 6px;font-weight:700">ADMIN</div>':'');
   badge.onclick=function(){
@@ -12548,7 +12893,8 @@ document.addEventListener('change',function(e){
     },
     function(err){
       var nm3=document.getElementById(cfg.label);
-      if(nm3){nm3.innerHTML='❌ فشل الرفع: '+err;nm3.style.color='#c0392b';}
+      /* [Phase 1 fix C3] escape رسالة الخطأ لمنع XSS */
+      if(nm3){nm3.innerHTML='❌ فشل الرفع: '+e(String(err));nm3.style.color='#c0392b';}
       showToast('فشل رفع الملف: '+err, true);
     }
   );
@@ -12638,7 +12984,8 @@ function showSqFileStatus(sq){
   if(nm && sq && sq.startsWith('http')){
     /* publicUrl من Supabase Storage */
     var fileName = sq.split('/').pop().replace(/^\d+_[a-z0-9]+_/,'') || 'الملف المرفق';
-    nm.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="20 6 9 17 4 12"/></svg> '+fileName;
+    /* [Phase 1 fix C3] escape اسم الملف لمنع XSS — اسم ملف من URL قد يحوي %3Cscript%3E */
+    nm.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="20 6 9 17 4 12"/></svg> '+e(fileName);
     nm.style.color='#27ae60';
     var clearBtn=document.getElementById('cf_sq_clear');
     if(clearBtn)clearBtn.style.display='inline-block';
@@ -12673,7 +13020,8 @@ function showMeetMinutesStatus(minutes_pdf){
     var dispName=minutes_pdf.startsWith('http')
       ? (minutes_pdf.split('/').pop().replace(/^\d+_[a-z0-9]+_/,'')||'محضر الاجتماع')
       : 'محضر الاجتماع (مرفق)';
-    nm.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="20 6 9 17 4 12"/></svg> '+dispName;
+    /* [Phase 1 fix C3] escape اسم الملف */
+    nm.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="20 6 9 17 4 12"/></svg> '+e(dispName);
     nm.style.color='#27ae60';
   }
   if(vbtn){vbtn.style.display='inline-block';vbtn.onclick=function(){openMinutesPDF(null);};}
@@ -17675,7 +18023,7 @@ function openAdminPanel(){
   if(!_am){console.error('[openAdminPanel] adminModal غير موجود');return;}
   _am.style.display='flex';
   _am.style.pointerEvents='auto';
-  _am.style.zIndex='1000002'; /* أعلى من كل شيء */
+  _am.style.zIndex='1000000'; /* أعلى من كل شيء */
   /* ضمان أن كل أبناء adminModal قابلة للنقر */
   _am.querySelectorAll('*').forEach(function(el){
     el.style.pointerEvents='auto';
@@ -17807,7 +18155,8 @@ function adminAddUser(){
   if(getUserEntry(email)){errEl.textContent='هذا البريد مسجّل مسبقاً';errEl.style.display='block';return;}
   var role=roleEl.value;
   /* 1. إنشاء حساب في Supabase Auth */
-  hashPassword(pass).then(function(h){
+  /* [Phase 1 fix C2.1] تمرير email لاستخدام PBKDF2 الآمن مباشرة (ليس SHA-256 القديم) */
+  hashPassword(pass, email).then(function(h){
     return sbFetch(SB_TABLES[activeSystem].users,'POST',{email:email,role:role,pass_hash:h});
   }).then(function(){
     AUTH_USERS.push({email:email,role:role});
@@ -20863,17 +21212,21 @@ function importShowValidation(){
   /* أخطاء */
   var errHTML='';
   if(errs.length){
+    /* [Phase 1 fix C3] استخدام escH (alias لـ window.SecurityCore.escHtml) لأن e هنا يطغى على دالة e() */
+    var escH = window.SecurityCore.escHtml;
     errHTML='<div style="background:#fdedec;border:1px solid #f5b7b1;border-radius:10px;padding:12px 14px;margin-bottom:14px">'+
       '<div style="font-size:12px;font-weight:700;color:#c0392b;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;margin-bottom:8px">⛔ أخطاء تمنع الاستيراد ('+errs.length+')</div>'+
       '<table style="width:100%;border-collapse:collapse;font-size:10.5px;font-family:inherit">'+
       '<thead><tr style="background:#f5b7b1"><th style="padding:5px 8px;text-align:right">الورقة</th><th>الصف</th><th>الحقل</th><th>الخطأ</th></tr></thead><tbody>'+
-      errs.map(function(e,i){return'<tr style="background:'+(i%2?'#fff':'#fef9f9')+'"><td style="padding:4px 8px;color:#555">'+e.sheet+'</td><td style="text-align:center;color:#555">'+e.row+'</td><td style="color:#c0392b;font-weight:700">'+e.field+'</td><td style="color:#333">'+e.msg+'</td></tr>';}).join('')+
+      errs.map(function(eItem,i){return'<tr style="background:'+(i%2?'#fff':'#fef9f9')+'"><td style="padding:4px 8px;color:#555">'+escH(eItem.sheet)+'</td><td style="text-align:center;color:#555">'+escH(eItem.row)+'</td><td style="color:#c0392b;font-weight:700">'+escH(eItem.field)+'</td><td style="color:#333">'+escH(eItem.msg)+'</td></tr>';}).join('')+
       '</tbody></table></div>';
   }
 
   /* تصحيحات */
   var corrHTML='';
   if(corrs.length){
+    /* [Phase 1 fix C3] escape القيم المستوردة من Excel */
+    var escH2 = window.SecurityCore.escHtml;
     corrHTML='<div style="background:#fef9e7;border:1px solid #f9e79f;border-radius:10px;padding:12px 14px;margin-bottom:14px">'+
       '<div style="font-size:12px;font-weight:700;color:#8e6a00;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;margin-bottom:8px">🔧 تصحيحات مقترحة ('+corrs.length+')</div>'+
       '<table style="width:100%;border-collapse:collapse;font-size:10.5px;font-family:inherit">'+
@@ -20882,11 +21235,11 @@ function importShowValidation(){
         var typeLabel={'fix':'تصحيح','match':'مطابقة','warn':'تنبيه'}[c.type]||c.type;
         var typeCl={'fix':'#1a6a4e','match':'#1a5276','warn':'#8e6a00'}[c.type]||'#555';
         return'<tr style="background:'+(i%2?'#fff':'#fffde7')+'">'+
-          '<td style="padding:4px 8px;color:#555">'+c.sheet+'</td>'+
-          '<td style="color:#555">'+c.field+'</td>'+
-          '<td style="color:#c0392b;text-decoration:line-through">'+c.orig+'</td>'+
-          '<td style="color:#1d6a3b;font-weight:700">'+c.fix+'</td>'+
-          '<td><span style="background:'+typeCl+'22;color:'+typeCl+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+typeLabel+'</span></td>'+
+          '<td style="padding:4px 8px;color:#555">'+escH2(c.sheet)+'</td>'+
+          '<td style="color:#555">'+escH2(c.field)+'</td>'+
+          '<td style="color:#c0392b;text-decoration:line-through">'+escH2(c.orig)+'</td>'+
+          '<td style="color:#1d6a3b;font-weight:700">'+escH2(c.fix)+'</td>'+
+          '<td><span style="background:'+typeCl+'22;color:'+typeCl+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700">'+escH2(typeLabel)+'</span></td>'+
           '</tr>';
       }).join('')+
       '</tbody></table></div>';
@@ -21352,7 +21705,7 @@ function openRLSGuide(){
   if(existing){existing.style.display='flex';return;}
   var box=document.createElement('div');
   box.id='rlsGuideModal';
-  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99990;display:flex;align-items:center;justify-content:center;padding:16px';
+  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000010;display:flex;align-items:center;justify-content:center;padding:16px';
   box.innerHTML='<div style="background:#fff;border-radius:18px;width:100%;max-width:640px;max-height:88vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5);display:flex;flex-direction:column">'
     +'<div style="background:linear-gradient(135deg,#7d3c98,#9b59b6);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">'
     +'<div style="color:#fff;font-size:15px;font-weight:700;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg> دليل تفعيل الأمان (RLS) في Supabase</div>'
@@ -21393,7 +21746,7 @@ async function openChangelogModal(){
   if(existing)existing.remove();
   var box=document.createElement('div');
   box.id='changelogModal';
-  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:8500;display:flex;align-items:center;justify-content:center;padding:16px';
+  box.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000010;display:flex;align-items:center;justify-content:center;padding:16px';
   box.innerHTML='<div style="background:#fff;border-radius:18px;width:100%;max-width:680px;max-height:88vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column">'
     +'<div style="background:linear-gradient(135deg,#1d6a3b,#27ae60);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">'
     +'<div style="color:#fff;font-size:15px;font-weight:700;font-family:inherit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1a5276" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> سجل آخر التغييرات</div>'
@@ -21426,7 +21779,8 @@ async function openChangelogModal(){
     }).join('');
   }catch(err){
     var b2=document.getElementById('changelogBody');
-    if(b2)b2.innerHTML='<div style="text-align:center;padding:20px;color:#e74c3c">خطأ في التحميل: '+err.message+'</div>';
+    /* [Phase 1 fix C3] escape رسالة الخطأ من Supabase قد تحوي محتوى من السيرفر */
+    if(b2)b2.innerHTML='<div style="text-align:center;padding:20px;color:#e74c3c">خطأ في التحميل: '+e(err && err.message ? err.message : String(err))+'</div>';
   }
 }
 
@@ -21508,7 +21862,7 @@ function openPermModal(email){
   var overlay=document.createElement('div');
   overlay.id='permModal';
   overlay.setAttribute('data-email',email);
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9500;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000010;display:flex;align-items:center;justify-content:center;padding:16px';
 
   var box=document.createElement('div');
   box.style.cssText='background:#fff;border-radius:18px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);font-family:inherit';
@@ -22136,7 +22490,7 @@ function goToHome(){
 </script>
 
 <!-- ADMIN PANEL MODAL -->
-<div id="adminModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000001;align-items:center;justify-content:center">
+<div id="adminModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000000;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:18px;padding:0;width:92%;max-width:700px;max-height:90vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)">
     <div style="background:linear-gradient(135deg,#3b83b5,#48a883);padding:16px 22px;display:flex;align-items:center;justify-content:space-between">
       <div style="color:#fff;font-size:15px;font-weight:700;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> لوحة المدير — إدارة المستخدمين</div>
@@ -24633,6 +24987,11 @@ body.dtext-edit-mode [data-dtext-opt]::after{
 (function(){
 'use strict';
 var DT={},DD={},_active=false,_el=null,_key=null,_scanned=false,_isOpt=false,LS='dtext_store_v1';
+/* ── مفتاح ديناميكي حسب النظام الفعال ── */
+function _getLS(){
+  return (typeof window.activeSystem!=='undefined'&&window.activeSystem==='intl'
+    ?'intl':'lajan')+'_dtext_store_v1';
+}
 
 /* ── توليد مفتاح ── */
 function _makeKey(el){
@@ -24656,7 +25015,7 @@ function _isPure(el){
 /* ── تطبيق المحفوظات ── */
 function _applyStored(){
   try{
-    var s=JSON.parse(localStorage.getItem(LS)||'{}');
+    var s=JSON.parse(localStorage.getItem(_getLS())||'{}');
     Object.keys(s).forEach(function(k){
       DT[k]=s[k];
       var el=document.querySelector('[data-dtext-id="'+k+'"]');
@@ -24669,7 +25028,7 @@ function _applyStored(){
 }
 
 function _persist(){
-  try{localStorage.setItem(LS,JSON.stringify(DT));}catch(ex){}
+  try{localStorage.setItem(_getLS(),JSON.stringify(DT));}catch(ex){}
   _updateBadge();
   /* مزامنة تلقائية مع Supabase بعد 1500ms */
   _scheduleSyncToSupabase();
@@ -24724,7 +25083,7 @@ async function _loadFromSupabase(){
       var remote=JSON.parse(rows[0].value);
       /* دمج: Supabase يُقدَّم على localStorage */
       Object.keys(remote).forEach(function(k){DT[k]=remote[k];});
-      try{localStorage.setItem(LS,JSON.stringify(DT));}catch(e){}
+      try{localStorage.setItem(_getLS(),JSON.stringify(DT));}catch(e){}
       /* تطبيق على DOM */
       Object.keys(DT).forEach(function(k){
         if(DT[k]==='__DELETED__'){
@@ -24772,6 +25131,8 @@ function _updateBadge(){
    ══════════════════════════════════════════════════ */
 window.dtextScanDOM=function(){
   if(_scanned)return;_scanned=true;
+  /* تفريغ DT لضمان عدم تسرب تعديلات النظام الآخر */
+  Object.keys(DT).forEach(function(k){delete DT[k];});
 
   /* 1. العناصر النصية الثابتة */
   var sel='h1,h2,h3,h4,h5,h6,th,button,label,span,td,p,li,div,a';
@@ -24937,7 +25298,7 @@ window.dtextResetOne=function(){
 /* ── إعادة ضبط الكل ── */
 window.dtextResetAll=function(){
   if(!confirm('إعادة جميع النصوص والقوائم إلى الوضع الافتراضي؟'))return;
-  localStorage.removeItem(LS);DT={};
+  localStorage.removeItem(_getLS());DT={};
   Object.keys(DD).forEach(function(k){
     var el=document.querySelector('[data-dtext-id="'+k+'"]')||document.querySelector('[data-dtext-opt="'+k+'"]');
     if(el){el.textContent=DD[k];el.style.display='';}
