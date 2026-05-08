@@ -2291,7 +2291,7 @@ body {
       <!-- Logo + Title -->
       <div style="text-align:center;margin-bottom:28px">
         <div style="background:none;border:none;padding:0;display:inline-block;margin-bottom:14px">
-          <img id="loginLogo" src="" alt="" class="adaptive-logo" style="height:180px;display:block">
+          <img id="loginLogo" src="" alt="" class="adaptive-logo" style="height:180px;display:block" loading="lazy">
         </div>
         <div id="loginSysTitle" style="color:#fff;font-size:18px;font-weight:700;margin-bottom:4px;font-family:inherit">نظام إدارة المجالس واللجان</div>
         <div id="loginSysSub" style="color:rgba(255,255,255,.6);font-size:12px;font-family:inherit">وكالة التعاون الدولي — وزارة التعليم</div>
@@ -3741,6 +3741,243 @@ canvas{max-width:100% !important}
 .r-m{background:linear-gradient(135deg,#dbeafe,#bfdbfe) !important;color:#1e40af !important;border:1px solid #3b82f6 !important}
 .r-p{background:linear-gradient(135deg,#f3e8ff,#e9d5ff) !important;color:#6b21a8 !important;border:1px solid #a855f7 !important}
 
+/* [UX-V18] تحسينات شاملة لتجربة المستخدم */
+
+/* [DATE-FILTER-V19] CSS لفلتر التاريخ */
+.df-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#fff;border:1.5px solid #d0d7de;border-radius:7px;
+  padding:5px 10px;font-size:11px;font-family:inherit;
+  color:#333;cursor:pointer;transition:all 0.15s;
+  white-space:nowrap;flex-shrink:0;height:30px;
+}
+.df-btn:hover{
+  border-color:#41939f;background:#f0fbfd;
+}
+.df-btn.df-active{
+  background:linear-gradient(135deg,#41939f,#48a883);
+  color:#fff;border-color:#41939f;
+}
+.df-btn.df-active:hover{
+  background:linear-gradient(135deg,#357580,#3a8d6a);
+}
+.df-btn-text{font-weight:600}
+.df-btn .df-clear-x{
+  background:rgba(255,255,255,0.3);border-radius:50%;
+  width:15px;height:15px;display:inline-flex;
+  align-items:center;justify-content:center;font-size:9px;
+  margin-right:3px;cursor:pointer;
+}
+.df-btn .df-clear-x:hover{background:rgba(255,255,255,0.5)}
+
+.df-popup{
+  position:fixed;z-index:99998;width:320px;
+  background:#fff;border-radius:10px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.15),0 0 0 1px rgba(0,0,0,0.05);
+  font-family:inherit;direction:rtl;
+  animation:dfPopupIn 0.18s ease-out;
+}
+@keyframes dfPopupIn{
+  from{opacity:0;transform:translateY(-6px) scale(0.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.df-popup-header{
+  background:linear-gradient(135deg,#41939f,#48a883);
+  color:#fff;padding:9px 12px;border-radius:10px 10px 0 0;
+  display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
+}
+.df-popup-header span{flex:1}
+.df-popup-header .df-close{
+  background:rgba(255,255,255,0.25);border:none;
+  width:22px;height:22px;border-radius:50%;
+  color:#fff;cursor:pointer;font-size:11px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.df-popup-header .df-close:hover{background:rgba(255,255,255,0.4)}
+.df-popup-body{padding:12px}
+.df-lbl{
+  display:block;font-size:10.5px;font-weight:700;
+  color:#5a6470;margin-bottom:4px;margin-top:8px;
+}
+.df-lbl:first-child{margin-top:0}
+.df-select,.df-input{
+  width:100%;padding:6px 8px;font-size:12px;
+  border:1.5px solid #d0d7de;border-radius:6px;
+  font-family:inherit;background:#fff;color:#333;
+  box-sizing:border-box;
+}
+.df-select:focus,.df-input:focus{
+  border-color:#41939f;outline:none;
+  box-shadow:0 0 0 3px rgba(65,147,159,0.15);
+}
+.df-row{display:flex;gap:8px;margin-top:4px}
+.df-col{flex:1}
+.df-presets{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:4px;
+}
+.df-preset{
+  background:#f0f4f8;border:1px solid #d0d7de;border-radius:5px;
+  padding:5px 7px;font-size:10.5px;font-family:inherit;
+  cursor:pointer;color:#41939f;font-weight:600;
+  transition:all 0.15s;
+}
+.df-preset:hover{
+  background:#41939f;color:#fff;border-color:#41939f;
+}
+.df-popup-footer{
+  display:flex;gap:7px;padding:10px 12px;
+  border-top:1px solid #ebeef2;background:#fafbfc;
+  border-radius:0 0 10px 10px;
+}
+.df-btn-secondary{
+  flex:1;background:#fff;border:1.5px solid #d0d7de;
+  color:#666;padding:7px;border-radius:6px;
+  cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:600;
+}
+.df-btn-secondary:hover{background:#f4f6f8;border-color:#999}
+.df-btn-primary{
+  flex:1.5;background:linear-gradient(135deg,#41939f,#48a883);
+  border:none;color:#fff;padding:7px;border-radius:6px;
+  cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:700;
+  box-shadow:0 2px 6px rgba(65,147,159,0.25);
+}
+.df-btn-primary:hover{
+  background:linear-gradient(135deg,#357580,#3a8d6a);
+  box-shadow:0 3px 9px rgba(65,147,159,0.35);
+}
+
+/* تحميل ناعم للصور (lazy-loaded) */
+img[loading="lazy"]{
+  transition:opacity 0.25s ease;
+}
+img[loading="lazy"]:not([src])
+img[loading="lazy"][src=""]{
+  opacity:0;
+}
+
+/* تحسين أداء التمرير بـ will-change للعناصر المتحركة كثيراً */
+.kanban-card,
+.s1-card,
+.gm-kan-card,
+.modal{
+  will-change:auto;
+}
+.kanban-card:hover,
+.s1-card:hover{
+  will-change:transform;
+}
+
+/* تحسين contrast للنصوص الصغيرة جداً (تحت 11px) - مهم للقراءة */
+[style*="font-size:9"],
+[style*="font-size: 9"],
+[style*="font-size:10"],
+[style*="font-size: 10"]{
+  letter-spacing:0.02em;
+}
+
+/* تحسين focus على الحقول النشطة */
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:#41939f !important;
+  box-shadow:0 0 0 3px rgba(65,147,159,0.15) !important;
+  outline:none !important;
+}
+
+/* تحسين تجاوب الجداول */
+table{
+  border-collapse:collapse;
+  width:100%;
+}
+
+/* تحسين tooltips للموبايل */
+@media (max-width: 768px){
+  [title]{
+    /* على الموبايل لا تظهر title عند اللمس - نحتاج حلاً مختلفاً */
+    -webkit-touch-callout:none;
+  }
+}
+
+/* تحسين النوافذ المنبثقة - حدود أوضح */
+.modal{
+  border:1px solid rgba(0,0,0,0.06);
+}
+
+/* تحسين الانتقال بين الأقسام */
+.section{
+  animation:sectionFadeIn 0.25s ease-out;
+}
+@keyframes sectionFadeIn{
+  from{opacity:0;transform:translateY(4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* دعم prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce){
+  .section{animation:none}
+}
+
+/* تحسين شريط التمرير في النوافذ المنبثقة */
+.modal::-webkit-scrollbar,
+.modal *::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+.modal::-webkit-scrollbar-track,
+.modal *::-webkit-scrollbar-track{
+  background:#f1f5f9;
+  border-radius:4px;
+}
+.modal::-webkit-scrollbar-thumb,
+.modal *::-webkit-scrollbar-thumb{
+  background:#cbd5e1;
+  border-radius:4px;
+  transition:background 0.2s;
+}
+.modal::-webkit-scrollbar-thumb:hover,
+.modal *::-webkit-scrollbar-thumb:hover{
+  background:#94a3b8;
+}
+
+/* تحسين النصوص المقطوعة */
+.truncate{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* تحسين الأزرار المعطّلة */
+button:disabled,
+button[disabled]{
+  opacity:0.5;
+  cursor:not-allowed !important;
+  pointer-events:none;
+}
+
+/* [UX-V18] تحسين رسائل التحقق البصرية */
+input:invalid:not(:placeholder-shown):not(:focus),
+textarea:invalid:not(:placeholder-shown):not(:focus){
+  border-color:#dc2626 !important;
+  background:#fef2f2 !important;
+}
+input:valid:not(:placeholder-shown):not(:focus)[required],
+textarea:valid:not(:placeholder-shown):not(:focus)[required]{
+  border-color:#16a34a !important;
+}
+
+/* تحسين placeholder للظهور بشكل أكثر هدوءاً */
+input::placeholder,
+textarea::placeholder{
+  color:#94a3b8;
+  opacity:1;
+  font-style:normal;
+}
+
+/* انتقال ناعم للحقول */
+input,textarea,select{
+  transition:border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
 /* tooltips المدمجة - لا نغيّر مؤشر الماوس
    تلميح [title] الافتراضي للنظام (الصندوق الأصفر) سيظهر تلقائياً
    عند تمرير الماوس بدون الحاجة لتغيير المؤشر
@@ -4492,10 +4729,11 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
       <div class="s3-sidebar">
         <div class="s3-sidebar-header">
           <div class="s3-sidebar-search"><span class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="s3q" placeholder="ابحث عن لجنة..." id="s3SearchInput"></div>
-          <div class="s3-sidebar-filters">
+          <div class="s3-sidebar-filters" id="s3FiltersHost">
             <select class="s3-sflt" id="s3st"><option value="">كل الحالات</option><option>مستمرة</option><option>منتهية</option><option>لم تبدأ</option><option>متعثرة</option></select>
             <select class="s3-sflt" id="s3sc"><option value="">كل النطاقات</option><option>داخلية</option><option>خارج نطاق الوزارة</option></select>
             <select class="s3-sflt" id="s3hm"><option value="">الكل</option><option value="yes">لديها اجتماعات</option><option value="no">بدون اجتماعات</option></select>
+            <span id="s3DfHost"></span>
             <!-- [V15-RESET] زر إعادة تعيين فلاتر s3 -->
             <button onclick="s3ResetFilters()" style="background:linear-gradient(135deg,#636e72,#7f8c8d);color:#fff;border:none;border-radius:6px;padding:5px 9px;font-size:10px;font-family:inherit;cursor:pointer;font-weight:700;flex-shrink:0" title="إعادة تعيين الفلاتر">↺</button>
           </div>
@@ -4573,6 +4811,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
           </select>
           <input type="text" id="s4Search" placeholder="⌕ بحث..." oninput="renS4()"
             style="width:100%;background:#fff;color:#1a1a2e;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 6px;font-size:11px;font-family:inherit;direction:rtl;outline:none">
+          <span id="s4DfHost"></span>
           <button onclick="s4ResetFilters()"
             style="width:100%;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Sakkal Majalla','Sakkal Majalla 2',serif;margin-top:2px">
             ↺ إعادة تعيين
@@ -4640,6 +4879,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
           <option value="">كل المسؤولين</option>
         </select>
         <input type="text" class="gm-search" id="gmSearch" placeholder="⌕ بحث..." oninput="gmRender()">
+        <span id="gmDfHost"></span>
         <button class="gm-reset" onclick="gmResetFilters()">↺ إعادة تعيين</button>
       </div>
       <div class="gm-main">
@@ -4700,6 +4940,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
           <option value="">كل المجالس</option>
         </select>
         <input id="initSearch" type="text" placeholder="⌕ بحث..." style="border:1.5px solid #d4b8f0;border-radius:8px;padding:5px 10px;font-size:11px;font-family:inherit;min-width:120px;flex:1">
+        <span id="s5DfHost"></span>
         <!-- [V15-RESET] زر إعادة تعيين فلاتر المبادرات -->
         <button onclick="initResetFilters()" title="إعادة تعيين الفلاتر" style="background:linear-gradient(135deg,#636e72,#7f8c8d);color:#fff;border:none;border-radius:8px;padding:5px 11px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;flex-shrink:0">↺ إعادة تعيين</button>
         <div style="margin-right:auto;display:flex;gap:5px;flex-shrink:0">
@@ -8582,7 +8823,7 @@ function printSelectedReport(){
     +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif,Arial;font-size:16px;direction:rtl;padding:20px;color:#1a1a2e}table{width:100%;border-collapse:collapse}td{border:1px solid #e0d5f5}@media print{@page{margin:12mm 10mm;size:A4 portrait;orphans:3;widows:3}.np,.toolbar,.no-print{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}table{width:100%!important;border-collapse:collapse!important;page-break-inside:auto}thead{display:table-header-group!important}tr{page-break-inside:avoid}td,th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}canvas,img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}h1,h2,h3,h4{page-break-after:avoid!important;break-after:avoid!important}.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}</style>'
     +'</head><body>'
     +'<div style="background:linear-gradient(135deg,#0d3b66,#41939f);padding:14px 20px;border-radius:10px;margin-bottom:18px;display:flex;align-items:center;gap:14px">'
-    +'<img src="'+LOGO2_SRC+'" style="height:52px;object-fit:contain;filter:brightness(0) invert(1)"><div style="flex:1">'
+    +'<img src="'+LOGO2_SRC+'" style="height:52px;object-fit:contain;filter:brightness(0) invert(1)" alt="شعار وزارة التعليم" loading="lazy"><div style="flex:1">'
     +'<div style="color:rgba(255,255,255,.7);font-size:11px;font-family:inherit">وزارة التعليم — وكالة التعاون الدولي</div>'
     +'<div style="color:#fff;font-size:18px;font-weight:700;font-family:inherit">'+(activeSystem==='intl'?'تقرير المجالس والهيئات المحددة':'تقرير اللجان المحددة')+'</div>'
     +'<div style="color:rgba(255,255,255,.7);font-size:12px;font-family:inherit">'+items.length+' '+(activeSystem==="intl"?"مجلس/لجنة":"لجنة")+' — '+new Date().toLocaleDateString("ar-SA")+'</div>'
@@ -8600,7 +8841,8 @@ function printSelectedReport(){
 function refRep(){/* Reps are now populated in buildS1Filters() via MS system */}
 function resetS1Filters(){
   var el=document.getElementById('srch');if(el)el.value='';
-  ['fSt','fSc','fTy','fDu','fRo','fRp'].forEach(function(id){
+  /* [V17-RESET] أضفت fOr (الأصل/التصنيف) المفقود */
+  ['fSt','fSc','fTy','fDu','fRo','fRp','fOr'].forEach(function(id){
     MSF[id]=[];
     var checks=document.querySelectorAll('#mslist_'+id+' input[type=checkbox]');
     checks.forEach(function(c){c.checked=false;});
@@ -8650,6 +8892,8 @@ function applyF(){
     if(roF.length&&roF.indexOf(d.ro)<0)return false;
     if(rpF.length&&rpF.indexOf(d.r)<0)return false;
     if(orF.length&&orF.indexOf(d.orig||'')<0)return false;
+    /* [DATE-FILTER-V19] فلتر التاريخ s1 */
+    if(typeof dfPasses==='function'&&!dfPasses('s1',d))return false;
     return true;
   });
   /* تمييز نتائج البحث */
@@ -8870,7 +9114,7 @@ function buildCoverPage(opts){
   if(bgImg){
     bgHtml += '<img src="'+bgImg+'" style="position:absolute;inset:0;width:100%;height:100%;'
       +'object-fit:cover;object-position:center top;'
-      +'-webkit-print-color-adjust:exact;print-color-adjust:exact">';
+      +'-webkit-print-color-adjust:exact;print-color-adjust:exact" alt="صورة الخلفية" loading="lazy">';
   }
   /* تدرج داكن من الأسفل للأعلى يضمن قراءة النص */
   bgHtml += '<div style="position:absolute;inset:0;'
@@ -8905,7 +9149,7 @@ function buildCoverPage(opts){
       +'-webkit-print-color-adjust:exact;print-color-adjust:exact">'
       +'<img src="'+logoSrc+'" style="height:90px;width:auto;'
       +'filter:brightness(0) invert(1);object-fit:contain;'
-      +'-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+      +'-webkit-print-color-adjust:exact;print-color-adjust:exact" alt="شعار وزارة التعليم" loading="lazy">'
       +'</div>'
     : '';
 
@@ -9100,11 +9344,14 @@ function getDashFiltered(){
     if(roF.length&&roF.indexOf(d.ro)<0)return false;
     if(rpF.length&&rpF.indexOf(d.r)<0)return false;
     if(orF.length&&orF.indexOf(d.orig||'')<0)return false;
+    /* [DATE-FILTER-V19] فلتر التاريخ dashboard */
+    if(typeof dfPasses==='function'&&!dfPasses('dash',d))return false;
     return true;
   });
 }
 function resetDashFilters(){
-  ['df_st','df_sc','df_ty','df_du','df_ro','df_rp'].forEach(function(id){
+  /* [V17-RESET] أضفت df_or (الأصل/التصنيف) المفقود */
+  ['df_st','df_sc','df_ty','df_du','df_ro','df_rp','df_or'].forEach(function(id){
     MSF[id]=[];
     var checks=document.querySelectorAll('#mslist_'+id+' input[type=checkbox]');
     checks.forEach(function(c){c.checked=false;});
@@ -9881,7 +10128,7 @@ function dashPrint(printMode){
     /* شريط علوي شفاف */
     +'<div class="v2-cover-top">'
       +'<div class="v2-cover-emblem">'
-        +(LOGO2_SRC?'<img src="'+LOGO2_SRC+'" style="width:62px;height:62px;object-fit:contain;display:block">':
+        +(LOGO2_SRC?'<img src="'+LOGO2_SRC+'" style="width:62px;height:62px;object-fit:contain;display:block" alt="شعار وزارة التعليم" loading="lazy">':
           '<svg viewBox="0 0 62 62" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="31" cy="31" r="29" fill="#1a4d3e"/><path d="M31 11 L35 24 L49 24 L38 33 L42 46 L31 38 L20 46 L24 33 L13 24 L27 24 Z" fill="#4FC3F7"/></svg>')
       +'</div>'
       +'<div class="v2-cover-ministry">'
@@ -9906,7 +10153,7 @@ function dashPrint(printMode){
   ══════════════════════════════════════════════════════════════ */
   html+='<div class="v2-hdr" style="margin:0 0 14px 0;border-radius:8px">'
     +'<div class="v2-hdr-logo">'
-      +(LOGO2_SRC?'<img src="'+LOGO2_SRC+'" style="width:32px;height:32px;object-fit:contain">':
+      +(LOGO2_SRC?'<img src="'+LOGO2_SRC+'" style="width:32px;height:32px;object-fit:contain" alt="شعار وزارة التعليم" loading="lazy">':
         '<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="15" fill="#1a4d3e"/><path d="M16 6 L19 13 L26 13 L20 17 L22 24 L16 20 L10 24 L12 17 L6 13 L13 13 Z" fill="#2EC4B6"/></svg>')
     +'</div>'
     +'<div class="v2-hdr-brand">'
@@ -10791,7 +11038,7 @@ function getTaskStats(){var total=0,done=0,wip=0,wait=0,late=0;D.forEach(functio
 function renS3KPIs(){var wm=D.filter(function(d,i){return GM(i).length>0;}).length;var tm=0;D.forEach(function(d,i){tm+=GM(i).length;});var s=getTaskStats();var pp=s.total?Math.round(s.done/s.total*100):0;var kr=document.getElementById('s3kpiRow');if(!kr)return;kr.innerHTML=[['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M2 22h20M12 2 2 7h20z"/><rect x="4" y="7" width="2" height="11"/><rect x="11" y="7" width="2" height="11"/><rect x="18" y="7" width="2" height="11"/></svg>',wm,'⛁ لجان لها اجتماعات','all'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>',tm,'اجتماع','all'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',s.total,'تكليف كلي','all'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M5 3h14"/><path d="m17 3-5 7-5-7"/><path d="M5 21h14"/><path d="m17 21-5-7-5 7"/></svg>',s.wait,'انتظار','قيد الانتظار'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',s.wip,'جارية','جارٍ'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="20 6 9 17 4 12"/></svg>',s.done+' ('+pp+'%)','✓ منجز — '+pp+'% إنجاز','منجز'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',s.late,'⚠️ متأخر — يستدعي متابعة','متأخر']].map(function(k){return'<div class="s3-kpi clickable'+(taskFilter===k[3]?' active-kpi':'')+'" data-tf="'+k[3]+'"><span class="s3-kpi-icon">'+k[0]+'</span><div><div class="s3-kpi-val">'+k[1]+'</div><div class="s3-kpi-lbl">'+k[2]+'</div></div></div>';}).join('');kr.querySelectorAll('.s3-kpi.clickable').forEach(function(kp){kp.addEventListener('click',function(){taskFilter=kp.getAttribute('data-tf');syncChipToFilter();renS3KPIs();renS3Sidebar();renS3Main();});});}
 function syncChipToFilter(){document.querySelectorAll('.task-chip').forEach(function(c){c.classList.remove('on');if(c.getAttribute('data-ts')===taskFilter)c.classList.add('on');});}
 
-function s3SideFiltered(){var q=(document.getElementById('s3q').value||'').toLowerCase().trim();var st=document.getElementById('s3st').value,sc=document.getElementById('s3sc').value,hm=document.getElementById('s3hm').value;return D.map(function(d,i){return{d:d,di:i};}).filter(function(x){var d=x.d,i=x.di;if(q&&!d.n.toLowerCase().includes(q))return false;if(st&&d.st!==st)return false;if(sc&&d.sc!==sc)return false;if(hm==='yes'&&!GM(i).length)return false;if(hm==='no'&&GM(i).length>0)return false;if(taskFilter!=='all'){var hasTF=GM(i).some(function(m){return m.tasks.some(function(t){return t.status===taskFilter;});});if(!hasTF)return false;}return true;});}
+function s3SideFiltered(){var q=(document.getElementById('s3q').value||'').toLowerCase().trim();var st=document.getElementById('s3st').value,sc=document.getElementById('s3sc').value,hm=document.getElementById('s3hm').value;return D.map(function(d,i){return{d:d,di:i};}).filter(function(x){var d=x.d,i=x.di;if(q&&!d.n.toLowerCase().includes(q))return false;if(st&&d.st!==st)return false;if(sc&&d.sc!==sc)return false;if(hm==='yes'&&!GM(i).length)return false;if(hm==='no'&&GM(i).length>0)return false;if(taskFilter!=='all'){var hasTF=GM(i).some(function(m){return m.tasks.some(function(t){return t.status===taskFilter;});});if(!hasTF)return false;}/* [DATE-FILTER-V19] فلتر التاريخ - يمر إذا كان للجنة اجتماع ضمن النطاق */if(typeof dfPasses==='function'&&typeof DF_STATE!=='undefined'&&DF_STATE.s3&&(DF_STATE.s3.from||DF_STATE.s3.to)){var hasMatchingMeeting=false;var s3State=DF_STATE.s3;GM(i).forEach(function(m){var mDate=m[s3State.field]||m.date;if(typeof dfInRange==='function'&&dfInRange(mDate,s3State.from,s3State.to))hasMatchingMeeting=true;});if(!hasMatchingMeeting)return false;}return true;});}
 
 function renS3Sidebar(){
   var items=s3SideFiltered();
@@ -11010,7 +11257,7 @@ function renS3Main(){
         var _tts=taskTimeStatus(t);
         var _rowStyle=_tts?(_tts.type==='overdue'?'background:rgba(239,68,68,.06);border-right:3px solid #ef4444':_tts.type==='dueSoon'?'background:rgba(245,158,11,.06);border-right:3px solid #f59e0b':''):'';
         var _taskAlert=_tts?(_tts.type==='overdue'?'<span class="task-alert-badge task-overdue-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> '+_tts.label+'</span>':_tts.type==='dueSoon'?'<span class="task-alert-badge task-duesoon-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><line x1="7" y1="3" x2="4.5" y2="5.5"/><line x1="17" y1="3" x2="19.5" y2="5.5"/></svg> '+_tts.label+'</span>':''):'';
-        return'<tr style="'+_rowStyle+'"><td style="text-align:center;width:24px;color:#b0a8c8;font-size:9px">'+(ti+1)+(t.agendaRef?'<br><span style="font-size:8px;background:#e8f0fd;color:#41939f;border-radius:3px;padding:0 3px">ب'+t.agendaRef+'</span>':'')+'</td><td><div style="font-weight:600;line-height:1.5">'+e(t.task||'—')+_taskAlert+'</div>'+(t.notes?'<div class="task-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#41939f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+e(t.notes)+'</div>':'')+'<div style="margin-top:4px"><textarea class="task-update-inp" data-di="'+di+'" data-mi="'+realSi+'" data-ti="'+globalTi+'" rows="2" placeholder="أضف تحديثاً..." style="width:100%;border:1.5px solid #e0d5f5;border-radius:6px;padding:4px 8px;font-size:10.5px;font-family:inherit;resize:vertical;background:#faf8ff;color:#1f4c3a;direction:rtl;outline:none">'+e(cleanUpdateField(t.update||''))+'</textarea></div></td><td style="font-size:10.5px;font-weight:700;white-space:nowrap;width:120px">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="font-size:9.5px;color:#5a4a8a;width:110px;white-space:nowrap">'+(t.dateFrom?'<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#41939f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+e(t.dateFrom)+'</span><br>':'')+(t.dateTo?'<span style="color:#888">حتى: '+e(t.dateTo)+'</span>':'')+'</td>':'<td style="color:#ccc">—</td>')+'<td style="text-align:center;width:85px"><span class="sp '+spCls(t.status)+'"><span class="sp-dot"></span>'+t.status+'</span></td></tr>';
+        return'<tr style="'+_rowStyle+'"><td style="text-align:center;width:24px;color:#b0a8c8;font-size:9px">'+(ti+1)+(t.agendaRef?'<br><span style="font-size:9px;background:#e8f0fd;color:#41939f;border-radius:3px;padding:0 3px">ب'+t.agendaRef+'</span>':'')+'</td><td><div style="font-weight:600;line-height:1.5">'+e(t.task||'—')+_taskAlert+'</div>'+(t.notes?'<div class="task-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#41939f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+e(t.notes)+'</div>':'')+'<div style="margin-top:4px"><textarea class="task-update-inp" data-di="'+di+'" data-mi="'+realSi+'" data-ti="'+globalTi+'" rows="2" placeholder="أضف تحديثاً..." style="width:100%;border:1.5px solid #e0d5f5;border-radius:6px;padding:4px 8px;font-size:10.5px;font-family:inherit;resize:vertical;background:#faf8ff;color:#1f4c3a;direction:rtl;outline:none">'+e(cleanUpdateField(t.update||''))+'</textarea></div></td><td style="font-size:10.5px;font-weight:700;white-space:nowrap;width:120px">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="font-size:9.5px;color:#5a4a8a;width:110px;white-space:nowrap">'+(t.dateFrom?'<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#41939f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+e(t.dateFrom)+'</span><br>':'')+(t.dateTo?'<span style="color:#888">حتى: '+e(t.dateTo)+'</span>':'')+'</td>':'<td style="color:#ccc">—</td>')+'<td style="text-align:center;width:85px"><span class="sp '+spCls(t.status)+'"><span class="sp-dot"></span>'+t.status+'</span></td></tr>';
       }).join('');
       /* تحديد class التنبيه وشارة الوقت */
       var _cardClass='s3-meet-card';
@@ -11341,7 +11588,7 @@ function blobDL(title,body,meta){
     +'</div>'
     +'<div class="page-wrap">'
     +'<div style="background:linear-gradient(135deg,#3b83b5,#48a883);padding:12px 18px;border-radius:9px;margin-bottom:13px;display:flex;align-items:center;gap:14px">'
-    +'<img src="'+LOGO2_SRC+'" alt="" style="height:52px;object-fit:contain;flex-shrink:0;filter:brightness(0) invert(1)">'
+    +'<img src="'+LOGO2_SRC+'" alt="" style="height:52px;object-fit:contain;flex-shrink:0;filter:brightness(0) invert(1)" loading="lazy">'
     +'<div style="flex:1">'
     +'<div style="color:rgba(255,255,255,.7);font-size:12px;font-family:inherit">وزارة التعليم — وكالة التعاون الدولي</div>'
     +'<div style="color:#fff;font-size:16px;font-weight:700;margin-top:2px;font-family:inherit">'+e(meta.hdr||'ملخص تحضيري')+'</div>'
@@ -11351,7 +11598,7 @@ function blobDL(title,body,meta){
     +body
     +'<div style="margin-top:20px;border-top:2px solid #41939f;padding-top:10px;display:flex;align-items:center;justify-content:space-between">'
     +'<div style="display:flex;align-items:center;gap:10px">'
-    +'<img src="'+LOGO2_SRC+'" alt="" style="height:32px;object-fit:contain;opacity:.8;filter:brightness(0) invert(1)">'
+    +'<img src="'+LOGO2_SRC+'" alt="" style="height:32px;object-fit:contain;opacity:.8;filter:brightness(0) invert(1)" loading="lazy">'
     +'<div style="font-size:13px;color:#41939f;font-weight:700;font-family:inherit">وحدة المجالس واللجان — وكالة التعاون الدولي</div>'
     +'</div>'
     +'<div style="font-size:11px;color:#aaa">'+new Date().toLocaleDateString('en-GB')+'</div>'
@@ -11485,7 +11732,7 @@ function printAll(di){
     +'</div>'
     +'<div style="padding:18px">'
     +'<div style="background:linear-gradient(135deg,#3b83b5,#48a883);padding:14px 20px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;gap:16px">'
-    +'<img src="'+LOGO2_SRC+'" style="height:48px;object-fit:contain;filter:brightness(0) invert(1);flex-shrink:0">'
+    +'<img src="'+LOGO2_SRC+'" style="height:48px;object-fit:contain;filter:brightness(0) invert(1);flex-shrink:0" alt="شعار وزارة التعليم" loading="lazy">'
     +'<div><div style="color:rgba(255,255,255,.7);font-size:12px;font-family:inherit">وزارة التعليم — وكالة التعاون الدولي</div>'
     +'<div style="color:#fff;font-size:16px;font-weight:700;font-family:inherit">'+(activeSystem==="intl"?"تقرير اجتماعات المجلس / اللجنة":"تقرير اجتماعات اللجنة")+'</div>'
     +'<div style="color:rgba(255,255,255,.8);font-size:13px;font-family:inherit">'+e(d.n)+'</div></div></div>'
@@ -11716,7 +11963,7 @@ function printFullReport(fi){
     +chartsHtml
     +'<div style="margin-top:28px;border-top:1px solid #ddd;padding-top:12px;display:flex;align-items:center;justify-content:space-between">'
     +'<div style="display:flex;align-items:center;gap:8px">'
-    +'<img src="'+LOGO2_SRC+'" alt="" style="height:30px;object-fit:contain;filter:brightness(0)">'
+    +'<img src="'+LOGO2_SRC+'" alt="" style="height:30px;object-fit:contain;filter:brightness(0)" loading="lazy">'
     +'<span style="font-size:10px;color:#888;font-family:inherit">'+(activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي</span></div>'
     +'<span style="font-size:10px;color:#aaa;font-family:inherit">'+new Date().toLocaleDateString('en-GB')+'</span></div>'
     +chartScript
@@ -12119,7 +12366,10 @@ function umStartResize(e, handle, inner){
 function clAll(){['addModal','viewModal','editModal','smModal','pickModal'].forEach(function(id){document.getElementById(id).style.display='none';});document.body.style.overflow='';}
 function confirmDel(msg,cb){var box=document.createElement('div');box.className='confirm-box';box.innerHTML='<div class="confirm-inner"><p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> هل تريد حذف:<span class="ci-name">'+e(msg)+'</span></p><div class="confirm-btns"><button class="cb-yes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> نعم</button><button class="cb-no">إلغاء</button></div></div>';document.body.appendChild(box);box.querySelector('.cb-yes').onclick=function(){document.body.removeChild(box);cb(true);};box.querySelector('.cb-no').onclick=function(){document.body.removeChild(box);cb(false);};box.onclick=function(ev){if(ev.target===box){document.body.removeChild(box);cb(false);}}}
 
-['addModal','viewModal','editModal','smModal','pickModal'].forEach(function(id){document.getElementById(id).addEventListener('click',function(ev){if(ev.target===this)clAll();});});
+/* [V16-LOCK] تعطيل إغلاق النوافذ عند النقر على الخلفية
+   النوافذ تبقى ثابتة حتى يُغلقها المستخدم يدوياً من زر ✕ أو زر إلغاء
+   هذا يمنع فقدان البيانات المُدخلة عند نقر خارج النافذة بالخطأ */
+['addModal','viewModal','editModal','smModal','pickModal'].forEach(function(id){var _m=document.getElementById(id);if(_m)_m.addEventListener('click',function(ev){/* لا نُغلق - النوافذ ثابتة */});});
 document.getElementById('xAdd').addEventListener('click',function(){clM('addModal');});
 document.getElementById('xView').addEventListener('click',function(){clM('viewModal');});
 document.getElementById('xEdit').addEventListener('click',function(){clM('editModal');});
@@ -12437,6 +12687,324 @@ async function forceReloadEmbedded(){
   });
 }
 /* Toast notification — بديل لـ alert() المحجوب */
+/* ══════════════════════════════════════════════════════════
+   [DATE-FILTER-V19] مكتبة فلتر التاريخ المركزية
+   ══════════════════════════════════════════════════════════
+   - تستخدم في كل أقسام النظام
+   - تدعم نطاق (من/إلى) + فترات جاهزة
+   - حقول مرجعية مختلفة لكل قسم
+   - الحالة مؤقتة (لا تحفظ)
+   ══════════════════════════════════════════════════════════ */
+
+/* الحالة المؤقتة لكل قسم */
+window.DF_STATE = {};
+/* مثال: DF_STATE.s1 = { field: '_addedAt', from: '2025-01-01', to: '2025-12-31' } */
+
+/* تعريف الحقول المرجعية لكل قسم */
+window.DF_FIELDS = {
+  s1: [
+    { key: '_addedAt', label: 'تاريخ الإضافة' },
+    { key: '_modifiedAt', label: 'تاريخ التعديل' },
+    { key: 'rd', label: 'تاريخ الترشيح' }
+  ],
+  s3: [
+    { key: 'date', label: 'تاريخ الاجتماع' },
+    { key: '_addedAt', label: 'تاريخ الإضافة' },
+    { key: '_modifiedAt', label: 'تاريخ التعديل' }
+  ],
+  s4: [
+    { key: 'dateTo', label: 'تاريخ الاستحقاق' },
+    { key: 'dateFrom', label: 'تاريخ البدء' },
+    { key: '_addedAt', label: 'تاريخ الإضافة' },
+    { key: '_modifiedAt', label: 'تاريخ التعديل' }
+  ],
+  gm: [
+    { key: 'date', label: 'تاريخ الاجتماع' },
+    { key: '_addedAt', label: 'تاريخ الإضافة' }
+  ],
+  s5: [
+    { key: 'startDate', label: 'تاريخ البدء' },
+    { key: 'endDate', label: 'تاريخ النهاية' },
+    { key: '_addedAt', label: 'تاريخ الإضافة' }
+  ]
+};
+
+/* تحويل تاريخ ISO إلى YYYY-MM-DD */
+window.dfToISODate = function(d){
+  if(!d) return '';
+  if(typeof d === 'string'){
+    /* لو كان YYYY-MM-DD بالفعل */
+    if(/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    /* لو كان timestamp ISO */
+    var m = d.match(/^(\d{4}-\d{2}-\d{2})/);
+    if(m) return m[1];
+    /* محاولة تحويل */
+    try {
+      var dt = new Date(d);
+      if(!isNaN(dt.getTime())) return dt.toISOString().slice(0,10);
+    } catch(e){}
+  }
+  return '';
+};
+
+/* فحص: هل التاريخ ضمن النطاق؟ */
+window.dfInRange = function(dateValue, from, to){
+  var iso = dfToISODate(dateValue);
+  if(!iso) return false; /* لا يوجد تاريخ → لا يمر الفلتر */
+  if(from && iso < from) return false;
+  if(to && iso > to) return false;
+  return true;
+};
+
+/* الحصول على الفترات الجاهزة */
+window.dfGetPresets = function(){
+  var today = new Date();
+  var iso = function(d){return d.toISOString().slice(0,10);};
+  
+  /* بداية الأسبوع (الأحد في السعودية) */
+  var weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+  
+  /* بداية الشهر */
+  var monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  
+  /* بداية الربع الحالي */
+  var q = Math.floor(today.getMonth() / 3);
+  var quarterStart = new Date(today.getFullYear(), q*3, 1);
+  
+  /* بداية السنة */
+  var yearStart = new Date(today.getFullYear(), 0, 1);
+  
+  return [
+    { id:'today', label:'اليوم', from: iso(today), to: iso(today) },
+    { id:'week', label:'هذا الأسبوع', from: iso(weekStart), to: iso(today) },
+    { id:'month', label:'هذا الشهر', from: iso(monthStart), to: iso(today) },
+    { id:'quarter', label:'الربع الحالي', from: iso(quarterStart), to: iso(today) },
+    { id:'year', label:'هذه السنة', from: iso(yearStart), to: iso(today) },
+    { id:'all', label:'كل الوقت', from:'', to:'' }
+  ];
+};
+
+/* بناء زر الفلتر التاريخي */
+window.dfBuildButton = function(sectionId){
+  var state = DF_STATE[sectionId] || {};
+  var hasFilter = !!(state.from || state.to);
+  var lblIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  var btnText = 'فلتر تاريخي';
+  if(hasFilter){
+    var fromShort = state.from ? state.from.slice(5) : '...';
+    var toShort = state.to ? state.to.slice(5) : '...';
+    btnText = fromShort + ' → ' + toShort;
+  }
+  return '<button class="df-btn'+(hasFilter?' df-active':'')+'" '
+    + 'onclick="dfOpenPopup(\''+sectionId+'\', this)" '
+    + 'title="فلترة حسب التاريخ" '
+    + 'data-df-section="'+sectionId+'">'
+    + lblIcon
+    + '<span class="df-btn-text">'+btnText+'</span>'
+    + (hasFilter ? '<span class="df-clear-x" onclick="event.stopPropagation();dfClear(\''+sectionId+'\')">✕</span>' : '')
+    + '</button>';
+};
+
+/* فتح نافذة الفلتر */
+window.dfOpenPopup = function(sectionId, btn){
+  /* إغلاق أي popup مفتوح */
+  dfClosePopup();
+  
+  var state = DF_STATE[sectionId] || {};
+  var fields = DF_FIELDS[sectionId] || [{key:'_addedAt', label:'تاريخ الإضافة'}];
+  
+  /* اختيار الحقل الأول إن لم يكن محدّداً */
+  if(!state.field || !fields.find(function(f){return f.field===state.field;})){
+    state.field = fields[0].key;
+  }
+  
+  var presets = dfGetPresets();
+  var presetsHtml = presets.map(function(p){
+    return '<button class="df-preset" onclick="dfApplyPreset(\''+sectionId+'\', \''+p.id+'\')">'+p.label+'</button>';
+  }).join('');
+  
+  var fieldsHtml = fields.map(function(f){
+    return '<option value="'+f.key+'"'+(state.field===f.key?' selected':'')+'>'+f.label+'</option>';
+  }).join('');
+  
+  var popup = document.createElement('div');
+  popup.id = 'dfPopup';
+  popup.className = 'df-popup';
+  popup.setAttribute('data-section', sectionId);
+  popup.innerHTML = 
+     '<div class="df-popup-header">'
+    +  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+    +  '<span>الفلتر التاريخي</span>'
+    +  '<button class="df-close" onclick="dfClosePopup()">✕</button>'
+    +'</div>'
+    +'<div class="df-popup-body">'
+    +  '<label class="df-lbl">الحقل المرجعي:</label>'
+    +  '<select id="dfField" class="df-select">'+fieldsHtml+'</select>'
+    +  '<div class="df-row">'
+    +    '<div class="df-col">'
+    +      '<label class="df-lbl">من:</label>'
+    +      '<input type="date" id="dfFrom" class="df-input" value="'+(state.from||'')+'">'
+    +    '</div>'
+    +    '<div class="df-col">'
+    +      '<label class="df-lbl">إلى:</label>'
+    +      '<input type="date" id="dfTo" class="df-input" value="'+(state.to||'')+'">'
+    +    '</div>'
+    +  '</div>'
+    +  '<label class="df-lbl">فترات جاهزة:</label>'
+    +  '<div class="df-presets">'+presetsHtml+'</div>'
+    +'</div>'
+    +'<div class="df-popup-footer">'
+    +  '<button class="df-btn-secondary" onclick="dfClear(\''+sectionId+'\')">✕ مسح</button>'
+    +  '<button class="df-btn-primary" onclick="dfApply(\''+sectionId+'\')">✓ تطبيق</button>'
+    +'</div>';
+  
+  document.body.appendChild(popup);
+  
+  /* تموضع النافذة قرب الزر */
+  var rect = btn.getBoundingClientRect();
+  var popupW = 320;
+  var top = rect.bottom + 8;
+  var left = rect.right - popupW;
+  if(left < 10) left = 10;
+  if(left + popupW > window.innerWidth - 10) left = window.innerWidth - popupW - 10;
+  if(top + 380 > window.innerHeight){
+    top = rect.top - 380 - 8;
+    if(top < 10) top = 10;
+  }
+  popup.style.top = top + 'px';
+  popup.style.left = left + 'px';
+  
+  /* إغلاق عند النقر خارج */
+  setTimeout(function(){
+    document.addEventListener('mousedown', dfClickOutside, true);
+  }, 50);
+};
+
+window.dfClickOutside = function(e){
+  var popup = document.getElementById('dfPopup');
+  if(!popup) return;
+  if(popup.contains(e.target)) return;
+  /* تجاهل النقر على زر الفلتر نفسه */
+  if(e.target.closest('.df-btn')) return;
+  dfClosePopup();
+};
+
+window.dfClosePopup = function(){
+  var p = document.getElementById('dfPopup');
+  if(p) p.remove();
+  document.removeEventListener('mousedown', dfClickOutside, true);
+};
+
+/* تطبيق فترة جاهزة */
+window.dfApplyPreset = function(sectionId, presetId){
+  var preset = dfGetPresets().find(function(p){return p.id===presetId;});
+  if(!preset) return;
+  var fromInp = document.getElementById('dfFrom');
+  var toInp = document.getElementById('dfTo');
+  if(fromInp) fromInp.value = preset.from;
+  if(toInp) toInp.value = preset.to;
+};
+
+/* تطبيق الفلتر */
+window.dfApply = function(sectionId){
+  var fieldSel = document.getElementById('dfField');
+  var fromInp = document.getElementById('dfFrom');
+  var toInp = document.getElementById('dfTo');
+  
+  var field = fieldSel ? fieldSel.value : '';
+  var from = fromInp ? fromInp.value : '';
+  var to = toInp ? toInp.value : '';
+  
+  /* تحقق: from يجب أن يسبق to */
+  if(from && to && from > to){
+    if(typeof showToast==='function') showToast('تاريخ "من" يجب أن يسبق "إلى"', true);
+    return;
+  }
+  
+  DF_STATE[sectionId] = { field: field, from: from, to: to };
+  dfClosePopup();
+  
+  /* تحديث زر الفلتر */
+  dfRefreshButton(sectionId);
+  
+  /* استدعاء دالة إعادة العرض حسب القسم */
+  dfTriggerRender(sectionId);
+};
+
+/* مسح الفلتر */
+window.dfClear = function(sectionId){
+  DF_STATE[sectionId] = null;
+  delete DF_STATE[sectionId];
+  dfClosePopup();
+  dfRefreshButton(sectionId);
+  dfTriggerRender(sectionId);
+  if(typeof showToast==='function') showToast('تم مسح الفلتر التاريخي');
+};
+
+/* تحديث ظهور الزر */
+window.dfRefreshButton = function(sectionId){
+  document.querySelectorAll('[data-df-section="'+sectionId+'"]').forEach(function(btn){
+    var wrap = document.createElement('div');
+    wrap.innerHTML = dfBuildButton(sectionId);
+    var newBtn = wrap.firstChild;
+    btn.parentNode.replaceChild(newBtn, btn);
+  });
+};
+
+/* استدعاء إعادة العرض حسب القسم */
+window.dfTriggerRender = function(sectionId){
+  try {
+    if(sectionId === 's1' && typeof applyF === 'function') applyF();
+    else if(sectionId === 's3'){
+      if(typeof renS3Sidebar==='function') renS3Sidebar();
+      if(typeof renS3Main==='function') renS3Main();
+      if(typeof renS3KPIs==='function') renS3KPIs();
+    }
+    else if(sectionId === 's4' && typeof renS4 === 'function') renS4();
+    else if(sectionId === 'gm' && typeof gmRender === 'function') gmRender();
+    else if(sectionId === 's5'){
+      /* s5 يستخدم تبويبات - نُعيد عرض التبويب النشط */
+      if(typeof s5SwitchTab==='function' && typeof S5_ACTIVE_TAB!=='undefined'){
+        s5SwitchTab(S5_ACTIVE_TAB || 'dash');
+      }
+      else if(typeof renS5Dashboard==='function') renS5Dashboard();
+    }
+    else if(sectionId === 'dash' && typeof renDash === 'function') renDash();
+  } catch(e){ console.warn('[df]', e); }
+};
+
+/* فحص هل التاريخ يمر الفلتر */
+window.dfPasses = function(sectionId, item){
+  var state = DF_STATE[sectionId];
+  if(!state || (!state.from && !state.to)) return true;
+  var dateVal = item[state.field];
+  return dfInRange(dateVal, state.from, state.to);
+};
+
+/* حقن أزرار الفلتر التاريخي في الأقسام */
+window.dfInjectButtons = function(){
+  var sections = [
+    {host:'s3DfHost', section:'s3'},
+    {host:'s4DfHost', section:'s4'},
+    {host:'gmDfHost', section:'gm'},
+    {host:'s5DfHost', section:'s5'}
+  ];
+  sections.forEach(function(s){
+    var host = document.getElementById(s.host);
+    if(host && !host.querySelector('.df-btn')){
+      host.innerHTML = dfBuildButton(s.section);
+    }
+  });
+};
+
+/* تشغيل تلقائي عند تحميل الصفحة */
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    if(typeof dfInjectButtons === 'function') dfInjectButtons();
+  }, 800);
+});
+
 function showToast(msg,isErr){
   var t=document.createElement('div');
   var icon=isErr
@@ -13811,6 +14379,8 @@ function s4FilterTasks(){
     if(fStatus&&t.status!==fStatus) return false;
     if(fResp&&t.responsible!==fResp) return false;
     if(fSearch&&!(t.task.toLowerCase().includes(fSearch)||t.responsible.toLowerCase().includes(fSearch))) return false;
+    /* [DATE-FILTER-V19] فلتر التاريخ */
+    if(typeof dfPasses==='function'&&!dfPasses('s4',t)) return false;
     return true;
   });
   /* [TIMESTAMPS-V2] ترتيب ذكي: المعدَّلة حديثاً أولاً، التي بلا طابع زمني تبقى بترتيبها */
@@ -14855,7 +15425,7 @@ function ecExportPDF(){if(isViewerBlocked('تصدير PDF'))return;
     +'}';
   
   var headerHTML='<div class="report-header">'
-    +(logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم">':'')
+    +(logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم" loading="lazy">':'')
     +'<div class="agency-name">وكالة التعاون الدولي</div>'
     +'<h1>'+(activeSystem==='intl'?'التقرير التنفيذي — المجالس واللجان الدولية':'التقرير التنفيذي — المجالس واللجان')+'</h1>'
     +'<div class="report-meta">◷ '+today2+'</div>'
@@ -17345,7 +17915,7 @@ function s4DashExportPDF(){if(isViewerBlocked('تصدير PDF'))return;
     +'}';
   
   var headerHTML='<div class="report-header">'
-    +(logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم">':'')
+    +(logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم" loading="lazy">':'')
     +'<div class="agency-name">وكالة التعاون الدولي</div>'
     +'<h1>لوحة الرقمات التنفيذية — التكليفات والمهام</h1>'
     +'<div class="report-meta">◷ '+today2+'</div>'
@@ -17716,7 +18286,7 @@ function s4ExportTasksReport(){
 
   /* === شعار الوزارة === */
   var logoSrc=(typeof LOGO_SITE_SRC!=='undefined')?LOGO_SITE_SRC:'';
-  var logoImg=logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم">':'';
+  var logoImg=logoSrc?'<img src="'+logoSrc+'" alt="وزارة التعليم" loading="lazy">':'';
 
   /* === HTML النهائي === */
   var html='<!DOCTYPE html>'
@@ -18585,7 +19155,8 @@ function _findModal(el){
 function _appendModal(box){
   document.body.appendChild(box);
   document.body.style.overflow='hidden';
-  box.addEventListener('click',function(ev){ if(ev.target===box) _removeModal(box); });
+  /* [V16-LOCK] لا نُغلق عند النقر على الخلفية - النافذة ثابتة حتى يُغلقها المستخدم */
+  /* تم تعطيل: box.addEventListener('click',function(ev){ if(ev.target===box) _removeModal(box); }); */
 }
 function _removeModal(box){
   if(box&&box.parentNode){ box.parentNode.removeChild(box); }
@@ -19542,6 +20113,8 @@ function renderInitiatives(){
       (it.desc||'').toLowerCase().includes(q)||
       (it.councilId||'').toLowerCase().includes(q)
     )) return false;
+    /* [DATE-FILTER-V19] فلتر التاريخ */
+    if(typeof dfPasses==='function'&&!dfPasses('s5',it)) return false;
     return true;
   });
 
@@ -20720,7 +21293,7 @@ function printPrepSummary(overrideDi,overrideMi){
 
     /* الترويسة */
     +'<div style="background:linear-gradient(135deg,#3b83b5,#48a883);padding:18px 22px;border-radius:12px;margin-bottom:20px;display:flex;align-items:center;gap:16px">'
-    +'<img src="'+LOGO2_SRC+'" style="height:54px;object-fit:contain;filter:brightness(0) invert(1)">'
+    +'<img src="'+LOGO2_SRC+'" style="height:54px;object-fit:contain;filter:brightness(0) invert(1)" alt="شعار وزارة التعليم" loading="lazy">'
     +'<div>'
     +'<div style="color:rgba(255,255,255,.65);font-size:11pt">وزارة التعليم — وكالة التعاون الدولي</div>'
     +'<div style="color:#fff;font-size:18pt;font-weight:700;margin-top:3px">الملخص التحضيري للاجتماع</div>'
@@ -20830,7 +21403,7 @@ function printExecSummary(){
     +'<div class="page">'
     /* Header */
     +'<div style="background:linear-gradient(135deg,#3b83b5,#48a883);padding:20px 24px;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;gap:18px">'
-    +'<img src="'+LOGO2_SRC+'" style="height:58px;object-fit:contain;filter:brightness(0) invert(1)">'
+    +'<img src="'+LOGO2_SRC+'" style="height:58px;object-fit:contain;filter:brightness(0) invert(1)" alt="شعار وزارة التعليم" loading="lazy">'
     +'<div><div style="color:rgba(255,255,255,.65);font-size:12pt">وزارة التعليم — وكالة التعاون الدولي</div>'
     +'<div style="color:#fff;font-size:20pt;font-weight:700;margin-top:4px">الملخص التنفيذي للاجتماع</div>'
     +'<div style="color:rgba(255,255,255,.75);font-size:13pt;margin-top:3px">'+e(d.n)+'</div></div></div>'
@@ -20929,6 +21502,11 @@ function buildMS(containerId, filters, onChangeCallback){
       }
       updateMSBtn(fid,f.label);
       onChangeCallback();
+      /* [V17-CLOSE-FILTER] إغلاق dropdown بعد الاختيار */
+      var dd=document.getElementById('msd_'+fid);
+      var btn=document.getElementById('msb_'+fid);
+      if(dd)dd.classList.remove('open');
+      if(btn)btn.classList.remove('open');
     });
 
     /* Search within dropdown */
@@ -21054,6 +21632,15 @@ function buildS1Filters(){
       {v:'منبثقة',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7b2d8b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> منبثقة'}
     ]}
   ],applyF);
+  /* [DATE-FILTER-V19] إضافة زر فلتر التاريخ */
+  if(typeof dfBuildButton==='function'){
+    var bar=document.getElementById('s1FiltersBar');
+    if(bar){
+      var dfWrap=document.createElement('span');
+      dfWrap.innerHTML=dfBuildButton('s1');
+      bar.appendChild(dfWrap.firstChild);
+    }
+  }
   setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},200);
 }
 
@@ -22267,7 +22854,7 @@ function openPermModal(email){
     /* [EXEC-DASH-V1] صلاحية اللوحة التنفيذية */
     {key:'view_exec_dashboard', label:'⭐ لوحة الحوكمة التنفيذية', def:true},
     /* [EXEC-DASH-DEFAULT-V1] فتح تلقائياً بعد الدخول */
-    {key:'default_exec_dashboard', label:'◎ افتح اللوحة التنفيذية تلقائياً', def:true},
+    {key:'default_exec_dashboard', label:'◎ افتح اللوحة التنفيذية تلقائياً', def:false},
   ];
 
   /* بناء النافذة بـ createElement بدلاً من innerHTML لتجنب تعارض الاقتباسات */
@@ -23722,6 +24309,8 @@ function gmRenderList(container){
   var meetings = window.GM_DATA.meetings || [];
   var q = ((document.getElementById('gmSearch')||{}).value || '').toLowerCase().trim();
   var filtered = meetings.filter(function(m){
+    /* [DATE-FILTER-V19] فلتر التاريخ */
+    if(typeof dfPasses==='function'&&!dfPasses('gm',m)) return false;
     if(!q) return true;
     // بحث عالمي متقدم في كل الحقول
     var attNames = (m.attendees||[]).map(function(a){return a.name+' '+(a.role||'')+' '+(a.email||'');}).join(' ');
@@ -24613,7 +25202,7 @@ function gmPrintReport(){if(isViewerBlocked('الطباعة'))return;
   /* الترويسة: شعار الوزارة + وكالة التعاون الدولي */
   html += '<div class="report-header">';
   if(logoSrc){
-    html += '<img src="'+logoSrc+'" alt="وزارة التعليم">';
+    html += '<img src="'+logoSrc+'" alt="وزارة التعليم" loading="lazy">';
   }
   html += '<div class="agency-name">وكالة التعاون الدولي</div>';
   html += '</div>';
@@ -26556,7 +27145,7 @@ setInterval(function(){
   <div id="execDashContainer">
     <div class="exec-topbar">
       <div class="exec-topbar-title">
-        <div class="exec-logo"><img id="execLogoImg" alt="شعار" /></div>
+        <div class="exec-logo"><img id="execLogoImg" alt="شعار"  loading="lazy" /></div>
         <div>
           <h1>لوحة الحوكمة التنفيذية</h1>
           <div class="subtitle">منظومة إدارة المجالس واللجان وفرق العمل</div>
@@ -26631,9 +27220,10 @@ function execCanView(){
 function execShouldOpenByDefault(){
   if(!execCanView())return false;
   if(typeof currentUser==='undefined'||!currentUser)return false;
-  /* [EXEC-DASH-DEFAULT-V12] افتراضي true إلا إذا أُوقفت صراحة */
-  if(currentUser.permissions && currentUser.permissions.default_exec_dashboard===false)return false;
-  return true;
+  /* [EXEC-DASH-DEFAULT-V16] افتراضي false (لا تفتح تلقائياً)
+     إلا إذا فُعّلت صراحة لمستخدم معيّن في الصلاحيات */
+  if(currentUser.permissions && currentUser.permissions.default_exec_dashboard===true)return true;
+  return false;
 }
 function execComputeData(){
   if(typeof D==='undefined'||!Array.isArray(D))return null;
@@ -27399,7 +27989,7 @@ function execPrint(){
   html+='<div class="pg">';
   /* الرأس */
   html+='<div class="hdr"><div class="hdr-l">';
-  if(logoSrc)html+='<div class="hdr-logo"><img src="'+logoSrc+'" alt="شعار"/></div>';
+  if(logoSrc)html+='<div class="hdr-logo"><img src="'+logoSrc+'" alt="شعار" loading="lazy" /></div>';
   html+='<div class="hdr-t"><h1>لوحة الحوكمة التنفيذية</h1><div class="sub">منظومة إدارة المجالس واللجان وفرق العمل</div></div></div>';
   html+='<div class="hdr-r">';
   html+='<div>'+todayTime+'</div>';
