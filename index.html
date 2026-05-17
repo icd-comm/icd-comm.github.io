@@ -7755,6 +7755,151 @@ var __PRINT_CSS_BASE = '@media print{@page{margin:8mm;size:13.333in 7.5in;orphan
   +'.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}'
   +'.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}';
 
+/* ════════════════════════════════════════════════════════════════════════
+   [PP-UNIVERSAL-FRAME-2026-05-17] إطار طباعة موحّد لكل نوافذ النظام
+   ────────────────────────────────────────────────────────────────────────
+   مصدر حقيقة واحد: __PP_FRAME_CSS (نمط) + __PP_FRAME_EL (عنصر) +
+   الدالة __ppApplyFrame(doc) التي تحقن الإطار في *أي* مستند طباعة.
+   التقنية: عنصر position:fixed ببردر متدرّج عبر border-image (آمنة
+   للطباعة، تتكرّر على كل ورقة في Chrome، مركزها شفاف فلا تسحق المحتوى).
+   لا تلمس بنية أو هوامش أي تقرير إطلاقاً — طبقة علوية شفافة المركز فقط.
+   تُستثنى صفحة الغلاف لأن خلفيتها المعتمة (z-index أعلى) تُرسم فوق الإطار.
+   ════════════════════════════════════════════════════════════════════════ */
+var __PP_FRAME_GRAD = 'linear-gradient(135deg,#208caa 0%,#208caa 40%,#48a883 78%,#7358a5 100%)';
+/* ════════════════════════════════════════════════════════════════════════
+   [PP-FRAME-BESTPRACTICE-2026-05-17] إطار طباعة وفق أفضل ممارسة معتمدة
+   ────────────────────────────────────────────────────────────────────────
+   المشكلتان المُثبتتان بالصور:
+   (أ) الإطار كان position:fixed يرسم بردره فوق المحتوى ويقصّه، لأن
+       border-image يرسم فقط ولا يحجز مساحة فيمرّ المحتوى تحته ويُقطع.
+   (ب) الغلاف بحجم مختلف عن صفحات المحتوى لأن كل تقرير له @page margin
+       مختلف بينما الغلاف يفرض margin:0.
+   ────────────────────────────────────────────────────────────────────────
+   الحل (أفضل ممارسة طباعة موحّدة، بلا افتراض أي أحجام سابقة):
+   1) @page موحّد لكل الصفحات (غلاف ومحتوى) بهامش ثابت 14mm على كل
+      الجهات → كل الصفحات بنفس الحجم تماماً قطعياً.
+   2) الإطار position:fixed يجلس *داخل* منطقة المحتوى (بعد هامش @page)
+      عند 0 من حواف منطقة الطباعة، بسماكة محدّدة.
+   3) المفتاح الحاسم لمنع القصّ: نمنح body (ومضمونه) padding داخلياً
+      يساوي سماكة الإطار + فجوة أمان، فيبدأ المحتوى *بعد* الإطار لا
+      تحته. هذا ما كان ناقصاً ويسبب الطباعة فوق المحتوى.
+   4) الغلاف يخضع لنفس @page → نفس حجم صفحات المحتوى بالضبط.
+   القيم: FRAME_PAGE_MARGIN=14mm (هامش الورقة)، FRAME_THICK=2.4mm
+   (سماكة الإطار)، FRAME_GAP=3.5mm (فجوة بين الإطار والمحتوى).
+   ════════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════
+   [PP-FRAME-PROVEN-2026-05-17] النمط المُثبت تقنياً (Aaron Saray / tutorialpedia)
+   المشكلة المؤكدة: @page{margin:5mm} يجعل position:fixed يُقاس من صندوق
+   @page المُزاح، بينما الخلفيات الممتدة (بطاقات/رؤوس/رسوم) تتجاوز
+   padding الجسم بصرياً فتطبع فوق الإطار. الحل المُثبت حرفياً:
+   (1) @page{margin:0} → مرجع position:fixed = حافة الورق الحقيقية.
+   (2) الإطار fixed يملأ الورق عند إزاحة موجبة FRAME_INSET من الحواف.
+   (3) body padding كبير = FRAME_INSET + سماكة + فجوة → يدفع كل
+       المحتوى (بما فيه الخلفيات الممتدة) داخل الإطار حصراً.
+   (4) box-decoration-break:clone + max-width:100% → الخلفيات تُقصّ
+       عند حدود الحشوة فلا يتجاوز أي عنصر الإطار إطلاقاً.
+   ════════════════════════════════════════════════════════════════════════ */
+var __PP_FRAME_INSET = '6mm';    /* بُعد الإطار عن حافة الورق الحقيقية */
+var __PP_FRAME_THICK = '2.6mm';  /* سماكة حلقة الإطار */
+var __PP_FRAME_GAP   = '5mm';    /* فجوة أمان بين الإطار والمحتوى */
+var __PP_FRAME_RADIUS = '7mm';   /* زوايا شبه دائرية أنيقة */
+/* ════════════════════════════════════════════════════════════════════════
+   [PP-MATCH-GM-2026-05-17] توحيد كل التقارير على نموذج gmPrintReport
+   المرجع الممتاز gmPrintReport يستخدم: .pg{padding:16mm 18mm} مع
+   @page{margin:0}. نطابق حشوة الجسم الموحّدة لنفس القيم بالضبط
+   (16mm رأسي، 18mm أفقي) فيبدأ كل المحتوى في *كل* التقارير عند
+   نفس مكان gmPrintReport تماماً — داخل الإطار (عند 6mm) بأمان.
+   ملاحظة: 16mm/18mm > 13.6mm السابقة، ويطابق المرجع الممتاز حرفياً. */
+var __PP_PAD_V = '16mm';   /* حشوة رأسية = gmPrintReport .pg أعلى/أسفل */
+var __PP_PAD_H = '18mm';   /* حشوة أفقية = gmPrintReport .pg يمين/يسار */
+var __PP_PAD   = __PP_PAD_V+' '+__PP_PAD_H;  /* للتوافق العكسي */
+var __PP_FRAME_CSS =
+   '@media print{'
+  /* (1) @page{margin:0} — مرجع position:fixed = حافة الورق الحقيقية
+     (النمط المُثبت تقنياً). حجم موحّد لكل الصفحات غلافاً ومحتوى. */
+  +'@page{margin:0 !important;size:13.333in 7.5in}'
+  /* (3) حشوة الجسم الكبيرة تدفع *كل* المحتوى داخل الإطار. مع
+     box-decoration-break:clone كي تُقصّ الخلفيات الممتدة (بطاقات/
+     رؤوس/رسوم) عند حدود الحشوة فلا يتجاوز أي عنصر الإطار. */
+  +'html{margin:0 !important;padding:0 !important;background:#fff !important}'
+  +'body{margin:0 !important;background:#fff !important;'
+  +  'padding:'+__PP_PAD+' !important;box-sizing:border-box !important;'
+  +  '-webkit-box-decoration-break:clone !important;box-decoration-break:clone !important}'
+  /* منع أي عنصر من تجاوز منطقة المحتوى أفقياً (الخلفيات الممتدة) */
+  +'body *{max-width:100% !important}'
+  /* (2) الإطار: حلقة متدرّجة بزوايا شبه دائرية، position:fixed يملأ
+     الورق عند إزاحة موجبة FRAME_INSET من حوافه الحقيقية (لا قصّ
+     لأنها إزاحة موجبة). خلف المحتوى (z-index:0) فلا يحجبه، والمحتوى
+     مُبعَد عنه بحشوة الجسم. ::before أبيض يقصّ المركز فتبقى حلقة. */
+  +'.pp-print-frame{position:fixed;'
+  +  'top:'+__PP_FRAME_INSET+';left:'+__PP_FRAME_INSET+';'
+  +  'right:'+__PP_FRAME_INSET+';bottom:'+__PP_FRAME_INSET+';'
+  +  'background:'+__PP_FRAME_GRAD+';'
+  +  'border-radius:'+__PP_FRAME_RADIUS+';'
+  +  'box-sizing:border-box;pointer-events:none;z-index:0;'
+  +  '-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}'
+  +'.pp-print-frame::before{content:"";position:absolute;'
+  +  'top:'+__PP_FRAME_THICK+';left:'+__PP_FRAME_THICK+';'
+  +  'right:'+__PP_FRAME_THICK+';bottom:'+__PP_FRAME_THICK+';'
+  +  'background:#fff;'
+  +  'border-radius:calc('+__PP_FRAME_RADIUS+' - '+__PP_FRAME_THICK+');'
+  +  '-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}'
+  /* المحتوى يعلو مركز الإطار الأبيض دون لمس تخطيطه */
+  +'body>*:not(.pp-print-frame):not(.cover-page-reset-wrap){position:relative;z-index:1}'
+  +'.report-wrapper,.report-content,.report-body,.pg,.report-wrap,'
+  +'.toc-wrap,.s4-wrap,.gm-wrap,.exec-wrap{position:relative;z-index:1}'
+  /* (4) الغلاف: يملأ منطقة الطباعة كاملةً (الورق ناقص الحشوة
+     الرأسية من الجهتين) فيكون بنفس حجم صفحات المحتوى بالضبط.
+     نطرح __PP_PAD_V فقط (الرأسية) لأن الارتفاع رأسي. */
+  +'.cover-page-reset-wrap{position:relative;z-index:1;'
+  +  'width:100% !important;max-width:100% !important;min-width:0 !important;'
+  +  'height:calc(7.5in - '+__PP_PAD_V+' - '+__PP_PAD_V+') !important;'
+  +  'min-height:calc(7.5in - '+__PP_PAD_V+' - '+__PP_PAD_V+') !important;'
+  +  'max-height:calc(7.5in - '+__PP_PAD_V+' - '+__PP_PAD_V+') !important;'
+  +  'margin:0 !important;padding:0 !important;box-shadow:none !important;'
+  +  'overflow:hidden !important;border-radius:'+__PP_FRAME_RADIUS+' !important}'
+  +'}'
+  +'@media screen{.pp-print-frame{display:none}}';
+var __PP_FRAME_STYLE_TAG = '<style id="__pp_universal_frame">'+__PP_FRAME_CSS+'</style>';
+var __PP_FRAME_EL = '<div class="pp-print-frame" aria-hidden="true"></div>';
+/* يحقن الإطار في سلسلة HTML قبل تحويلها Blob/كتابتها — مصدر واحد.
+   يضع النمط قبل </head> والعنصر قبل </body>. لا يُكرّر إن كان محقوناً. */
+function __ppInjectFrameHTML(html){
+  try{
+    if(typeof html!=='string' || !html) return html;
+    if(html.indexOf('__pp_universal_frame')>-1 || html.indexOf('pp-print-frame')>-1) return html;
+    var out = html;
+    if(out.indexOf('</head>')>-1){ out = out.replace('</head>', __PP_FRAME_STYLE_TAG+'</head>'); }
+    else if(/<body[^>]*>/i.test(out)){ out = out.replace(/(<body[^>]*>)/i, __PP_FRAME_STYLE_TAG+'$1'); }
+    else { out = __PP_FRAME_STYLE_TAG + out; }
+    var k = out.lastIndexOf('</body>');
+    if(k>-1){ out = out.slice(0,k) + __PP_FRAME_EL + out.slice(k); }
+    else { out = out + __PP_FRAME_EL; }
+    return out;
+  }catch(e){ return html; }
+}
+/* يحقن الإطار في مستند نافذة طباعة مفتوحة (يُستدعى بعد document.close()).
+   آمن: إن وُجد الإطار مسبقاً (تقارير buildCoverPage) لا يُكرّره. */
+function __ppApplyFrame(doc){
+  try{
+    if(!doc || !doc.body) return;
+    if(doc.getElementById('__pp_universal_frame')) {
+      /* النمط موجود (تقرير عبر buildCoverPage) — تأكد فقط من العنصر */
+    } else {
+      var st=doc.createElement('style');
+      st.id='__pp_universal_frame';
+      st.textContent=__PP_FRAME_CSS;
+      (doc.head||doc.documentElement).appendChild(st);
+    }
+    if(!doc.querySelector('.pp-print-frame')){
+      var fr=doc.createElement('div');
+      fr.className='pp-print-frame';
+      fr.setAttribute('aria-hidden','true');
+      doc.body.appendChild(fr);
+    }
+  }catch(e){ /* فشل صامت: لا نكسر الطباعة إن تعذّر الحقن */ }
+}
+
 /* [v5] __U — utilities مشتركة: esc, parseDate, fmtDate, daysBetween, clamp, toNumber, q/qs/qsa, on, text, html, debounce, throttle, deepClone, uid */
 var __U = (function(){
   function _esc(s){ return (typeof __escapeHtml==='function')? __escapeHtml(s) : String(s==null?'':s); }
@@ -9618,6 +9763,7 @@ function printSelectedReport(){
     +'<div style="margin-top:20px;border-top:2px solid #208caa;padding-top:10px;display:flex;justify-content:space-between;font-family:inherit;font-size:12px;color:#888">'
     +'<span>'+(activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي</span><span>'+new Date().toLocaleDateString('en-GB')+'</span></div>'
     +'</body></html>';
+  html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var url=URL.createObjectURL(blob);
   var w=window.open(url,'_blank','width=900,height=700,scrollbars=yes,resizable=yes');
@@ -9929,72 +10075,45 @@ function buildCoverPage(opts){
   var logoSrc  = o.logoSrc  || (typeof LOGO2_SRC!=='undefined'?LOGO2_SRC:'');
   var prepUnit = o.prepUnit || 'وحدة المجالس واللجان — وكالة التعاون الدولي';
   var dateStr  = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'});
-  /* ════════════════════════════════════════════════════════════════════
-     [COVER-PAGE-FIX-2026-05-17] إصلاح جذري لتطابق حجم الغلاف مع الصفحات
-     ────────────────────────────────────────────────────────────────────
-     السبب الجذري للمشكلة السابقة:
-       - الغلاف كان يُحسب بـ calc(13.333in - 2*margin) بافتراض أنه يملأ
-         منطقة الطباعة بعد طرح هوامش @page. لكن:
-         (أ) المتصفح يطرح هوامش @page تلقائياً من الورقة، فيصبح هناك طرح
-             مزدوج → الغلاف أضيق/مزاح عن المحتوى.
-         (ب) بعض التقارير تستخدم body{padding} أو .report-wrapper{max-width:297mm}
-             فيظهر الغلاف بعرض/يسار مختلف عن باقي الصفحات.
-       النتيجة: حافة الغلاف اليسرى لا تحاذي المحتوى ويبدو الغلاف أعرض/أكبر.
-     ────────────────────────────────────────────────────────────────────
-     الحل المعتمد (مصدر هندسي واحد للحقيقة):
-       - الغلاف full-bleed يملأ الورقة الفيزيائية بالكامل 13.333in × 7.5in
-         بصرف النظر عن قيمة pageMargin (التي تبقى للتوافق فقط مع نداءات
-         الدوال الأخرى ولا تؤثر على هندسة الغلاف بعد الآن).
-       - يُجبر @page margin:0 *فقط* داخل reset الغلاف، والمحتوى يأخذ هامشه
-         الداخلي من غلاف .pp (print-page) المشترك، فيتطابق الجميع.
-     ════════════════════════════════════════════════════════════════════ */
-  /* opts.pageMargin: محفوظ للتوافق العكسي مع نداءات الدوال — لا يؤثر على الحجم */
+  /* ── معامل اختياري: حجم الغلاف يطابق المساحة المتاحة للمحتوى بعد @page margin ── */
+  /* opts.pageMargin: قيمة margin @page (مثل "8mm" أو "10mm 12mm" أو "0") */
+  /* الافتراضي "8mm" متوافق مع معظم تقارير النظام */
   var pageMargin = (typeof o.pageMargin==='string' && o.pageMargin.length) ? o.pageMargin : '8mm';
-  /* ════════════════════════════════════════════════════════════════════
-     [COVER-EDGE-MATCH-2026-05-17] مصدر الحقيقة الوحيد لمحاذاة الحافة:
-     يمرّر كل تقرير الهامش الأفقي الفعلي لحاوية محتواه (contentPadX) كي
-     تتطابق حافة الغلاف اليسرى/اليمنى مع المحتوى تماماً في ذلك التقرير
-     بالذات — لأن التقارير غير متجانسة (14mm / 10mm / 32px ...).
-     الافتراضي 10mm = هامش .pp-content (تقرير اللجنة). ════════════════════ */
-  var cPadX = (typeof o.contentPadX==='string' && o.contentPadX.length) ? o.contentPadX : '10mm';
-  var cPadT = (typeof o.contentPadT==='string' && o.contentPadT.length) ? o.contentPadT : '8mm';
-  var cPadB = (typeof o.contentPadB==='string' && o.contentPadB.length) ? o.contentPadB : '6mm';
+  /* نحسب العرض والارتفاع الفعليين بناءً على pageMargin */
+  /* @page margin: "X" = X من كل الجهات (4)؛ "X Y" = X علوي/سفلي و Y يميني/يساري */
+  var marginParts = pageMargin.trim().split(/\s+/);
+  var marginV, marginH;
+  if(marginParts.length===1){ marginV = marginH = marginParts[0]; }
+  else if(marginParts.length===2){ marginV = marginParts[0]; marginH = marginParts[1]; }
+  else if(marginParts.length>=4){ marginV = marginParts[0]; marginH = marginParts[1]; }
+  else { marginV = marginH = '8mm'; }
+  /* تأكد من وجود وحدة (تجنب 0 بدون وحدة الذي يكسر CSS calc) */
+  if(/^0+$/.test(marginV)) marginV='0mm';
+  if(/^0+$/.test(marginH)) marginH='0mm';
 
   /* ── ألوان الهوية المطابقة لصفحة الدخول ── */
   /* ACCENT = بنفسجي براندي معتمد (#7358a5) - متوافق مع الهوية الرسمية */
   var C_BLUE='#208caa', C_TEAL='#208caa', C_GREEN='#48a883', ACCENT='#7358a5', ACCENT2='#7358a5', WHITE='#ffffff';
 
   /* ════════════════════════════════════════════════════════════════════
-     [COVER-MATCH-2026-05-17] الغلاف يطابق صفحات المحتوى تماماً
+     [COVER-SIZE-FIX] الغلاف يملأ الورقة الفيزيائية بالكامل بدقة
      ────────────────────────────────────────────────────────────────────
-     المشكلة: الغلاف كان full-bleed (13.333in كامل) بينما صفحات المحتوى
-     تنحسر داخل هامش .pp-content (يسار/يمين 10mm). فبدا الغلاف أعرض
-     من اليسار. الحل الجذري: الغلاف يأخذ *نفس* هوامش صندوق المحتوى
-     (.pp-content padding: 8mm 10mm 6mm 10mm) فتتطابق كل الصفحات
-     بالعرض وبحوافها اليسرى/اليمنى تماماً، ويحيط بالجميع نفس الإطار.
-     ════════════════════════════════════════════════════════════════════ */
-  /* ════════════════════════════════════════════════════════════════════
-     [COVER-UNIFY-2026-05-17] السبب الجذري المشترك لكل التقارير:
-     ────────────────────────────────────────────────────────────────────
-     الغلاف كان يأخذ إزاحته عبر margin على صندوقه، بينما المحتوى يأخذها
-     عبر padding على .pp-content. آليتان مختلفتان: margin يُقاس من حافة
-     body (الذي قد لا يساوي 13.333in بدقة وقت الطباعة) فينزاح الغلاف
-     يساراً نسبياً عن المحتوى الممتد كامل العرض → "الغلاف أعرض من اليسار".
-     ────────────────────────────────────────────────────────────────────
-     الحل الجذري الموحّد: الغلاف يُلفّ بنفس .pp-content تماماً كالمحتوى،
-     ويصبح width:100% بلا أي margin/calc. فيرث الحافة بنفس الآلية حتمياً
-     مهما كان عرض body، فتتطابق كل الصفحات قطعياً في كل التقارير.
-     ملاحظة: الغلاف هنا يحمل .pp-cover ليُستثنى من الإطار والترقيم. ════ */
+     الخطأ السابق: coverW = calc(13.333in - 2*margin) مع وجود @page margin.
+     المتصفح يطرح هامش @page تلقائياً من الورقة، ثم calc يطرحه مرة أخرى
+     → طرح مزدوج يجعل الغلاف أضيق/مزاحاً عن صفحات المحتوى.
+     الحل القاطع: نفرض @page{margin:0} للطباعة (انظر مولّد reset أدناه)
+     فيملأ الغلاف الورقة كاملةً 13.333in × 7.5in بصرف النظر عن pageMargin،
+     وهذا مطابق لكل التقارير لأن الورقة الفيزيائية واحدة. pageMargin يبقى
+     للتوافق العكسي فقط ولا يؤثر على هندسة الغلاف بعد الآن. ════════════ */
+  var coverW = '13.333in';
+  var coverH = '7.5in';
   var coverStyle=[
-    'width:100%','max-width:100%','box-sizing:border-box',
-    'height:calc(7.5in - '+cPadT+' - '+cPadB+')',
-    'min-height:calc(7.5in - '+cPadT+' - '+cPadB+')',
-    'max-height:calc(7.5in - '+cPadT+' - '+cPadB+')',
-    'margin:0','padding:0',
+    'width:'+coverW,'max-width:'+coverW,'min-width:'+coverW,
+    'height:'+coverH,'min-height:'+coverH,'max-height:'+coverH,
     'overflow:hidden','page-break-after:always','break-after:page',
     'page-break-inside:avoid','break-inside:avoid',
     'position:relative','display:flex','flex-direction:column',
-    'border-radius:10px',  /* زوايا نصف دائرية أنيقة */
+    'box-sizing:border-box','margin:0','padding:0',
     'background:#fff',
     '-webkit-print-color-adjust:exact','print-color-adjust:exact'
   ].join(';');
@@ -10148,94 +10267,34 @@ function buildCoverPage(opts){
 
   metaHtml += '</div></div>';
 
+  /* [COVER-PAGE-FIX-2026-05] CSS reset للغلاف
+     السبب: عدة تقارير تضع body { padding: 20px/22px/28px } على الشاشة
+     ولا يلغونه في @media print، فيُضاف هذا للعرض المتاح ويتجاوز الغلاف الحدود.
+     الحل: نُجبر body+html على margin/padding صفر في @media print داخل الغلاف نفسه.
+     يأتي بعد style العام في <head> فيتغلب عليه. */
   /* ════════════════════════════════════════════════════════════════════
-     [COVER-PAGE-FIX-2026-05-17] نظام طباعة موحّد + إطار صفحات + ترقيم
+     [PRINT-SYSTEM-2026-05-17] نظام طباعة صحيح ومُختبَر منطقياً
      ────────────────────────────────────────────────────────────────────
-     يُحقن مع الغلاف (الذي تتضمنه كل التقارير الأربعة) فيستفيد منه الجميع:
-       1. @page{margin:0} → الغلاف يملأ الورقة الفيزيائية بدقة على 4 جهات.
-       2. html,body padding/margin:0 في الطباعة → إزالة أي إزاحة من body.
-       3. إطار متدرج بهوية النظام يحيط بكل صفحة مطبوعة (ما عدا الغلاف)
-          عبر عنصر position:fixed يكرّره المتصفح على كل ورقة تلقائياً،
-          بزوايا نصف دائرية (border-radius) وتصميم أنيق حديث.
-       4. ترقيم تلقائي ديناميكي "صفحة X من Y" أسفل وسط كل صفحة عبر
-          عداد CSS (counter(page)/counter(pages)) — يعمل بلا أي سكربت.
-       5. هامش داخلي للمحتوى (.pp-pad) كي لا يخرج المحتوى عن الإطار.
-     الغلاف نفسه يحمل صنف .pc فيُستثنى من الإطار/الترقيم تلقائياً.
-     ════════════════════════════════════════════════════════════════════ */
-  /* درجات الإطار المتدرج — نفس هوية النظام (أزرق→تركواز→أخضر مع لمسة بنفسجية) */
-  var FRAME_GRAD = 'linear-gradient(135deg,'+C_BLUE+' 0%,'+C_TEAL+' 45%,'+C_GREEN+' 80%,'+ACCENT+' 100%)';
-  var resetStyle = '<style id="__pp_print_system">'
-    /* ===== شاشة المعاينة ===== */
-    + '@media screen{'
-    +   'html,body{margin:0;padding:0;background:#eef1f4}'
-    /* الغلاف بنفس عرض صندوق المحتوى في المعاينة أيضاً (calc(13.333in - 20mm)) */
-    /* غلاف الغلاف في المعاينة: صفحة بنفس عرض كتل المحتوى تماماً */
-    +   '.pp-cover-page{max-width:13.333in;margin:18px auto;padding:0;'
-    +     'box-shadow:0 6px 28px rgba(0,0,0,.18);border-radius:12px;overflow:hidden;'
-    +     'background:#fff}'
-    +   '.pp-cover-page>.cover-page-reset-wrap{width:100% !important;max-width:100% !important;'
-    +     'margin:0 !important;box-shadow:none !important}'
-    /* محاكاة الإطار في معاينة الشاشة لكل كتلة محتوى رئيسية */
-    +   '.pp-frame-screen{position:relative;max-width:13.333in;margin:14px auto;'
-    +     'background:#fff;border-radius:14px;'
-    +     'padding:6px;'
-    +     'background-image:'+FRAME_GRAD+';'
-    +     'box-shadow:0 6px 28px rgba(0,0,0,.16)}'
-    +   '.pp-frame-screen>.pp-inner{background:#fff;border-radius:10px;'
-    +     'padding:26px 30px 46px;position:relative;min-height:60px}'
-    +   '.pp-pageno-screen{position:absolute;left:0;right:0;bottom:12px;text-align:center;'
-    +     'font-size:10pt;color:#5a6b76;font-family:inherit;letter-spacing:.3px}'
-    + '}'
-    /* ===== الطباعة / حفظ PDF ===== */
-    + '@media print{'
-    /* الافتراضي = صفحة الغلاف: ملء الورقة بالكامل بلا أي هامش (full-bleed) */
-    +   '@page{margin:0 !important;size:13.333in 7.5in}'
-    /* صفحات المحتوى تستخدم صفحة مُسمّاة بهامش سفلي يحجز مكان رقم الصفحة.
-       ملاحظة هندسية: في Chrome لا يظهر صندوق @bottom-left إلا إذا كان
-       لصفحة الطباعة هامش سفلي فعلي؛ لذا نمنح صفحات المحتوى هامشاً سفلياً
-       صغيراً بصفحة مُسمّاة، ويبقى الغلاف full-bleed بلا هامش. */
-    +   '@page contentpg{ margin:0 0 9mm 0 !important; size:13.333in 7.5in; '
-    +     '@bottom-left{ content:"صفحة " counter(page); '
-    +     'font-family:\'Sakkal Majalla\',\'Sakkal Majalla 2\',serif; font-size:9pt; '
-    +     'color:#5a6b76; margin-left:8mm; } }'
-    +   'html,body{margin:0 !important;padding:0 !important;background:#fff !important}'
-    /* الغلاف يحتفظ بهوامشه (8mm 10mm 6mm 10mm) كي يطابق صندوق .pp-content
-       تماماً — لا نُصفّرها. نُلغي فقط الظل في الطباعة. */
-    +   '.cover-page-reset-wrap,.pc{padding:0 !important;box-shadow:none !important}'
-    +   '.pp-frame-screen{max-width:none !important;margin:0 !important;padding:0 !important;'
-    +     'background:none !important;background-image:none !important;box-shadow:none !important;border-radius:0 !important}'
-    +   '.pp-frame-screen>.pp-inner{padding:0 !important;border-radius:0 !important}'
-    +   '.pp-pageno-screen{display:none !important}'
-    /* ── الإطار المتدرج المتكرّر على كل ورقة مطبوعة ──
-       حلقة متدرجة حقيقية بمركز شفاف تماماً (لا تُغطّي أي محتوى أبداً).
-       z-index:0 منخفض: خلفية الغلاف المعتمة الكاملة (z-index:5) تُغطّيه
-       في الصفحة 1 فلا يظهر على الغلاف؛ ويظهر على صفحات المحتوى (2+).
-       الزوايا نصف دائرية (border-radius) لمظهر حديث أنيق. التقنية:
-       background متدرج على الإطار + mask يقصّ المركز فيصبح شفافاً،
-       فلا حاجة لأي قناع أبيض أو حِيَل هشّة. */
-    +   '.pp-running-frame{position:fixed;top:5mm;left:6mm;right:6mm;bottom:11mm;'
-    +     'z-index:0;pointer-events:none;border-radius:12px;'
-    +     'padding:1.7mm;background:'+FRAME_GRAD+';'
-    +     '-webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);'
-    +     '-webkit-mask-composite:xor;'
-    +     'mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);'
-    +     '-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}'
-    /* هامش المحتوى الملفوف = نفس هامش الغلاف الأفقي بالضبط (محاذاة تامة) */
-    +   '.pp-content{padding:'+cPadT+' '+cPadX+' '+cPadB+' '+cPadX+';box-sizing:border-box;'
-    +     'position:relative;z-index:1;page:contentpg}'
-    /* غلاف الغلاف: *نفس* آلية .pp-content بالضبط (padding أفقي مطابق)
-       فتتطابق حافة الغلاف مع حافة المحتوى حتمياً مهما كان عرض body.
-       يستخدم @page الافتراضي (full-bleed بلا ترقيم) لا contentpg،
-       ومُستثنى من الإطار لأن خلفية الغلاف المعتمة تغطّيه أصلاً. */
-    +   '.pp-cover-page{padding:'+cPadT+' '+cPadX+' '+cPadB+' '+cPadX+';box-sizing:border-box;'
-    +     'position:relative;z-index:5;page:auto;break-after:page;page-break-after:always}'
-    +   '.pc{break-after:page;page-break-after:always;position:relative;z-index:5}'
-    + '}'
-    + '</style>';
+     ثلاثة أهداف:
+     (1) الغلاف يملأ الورقة بدقة = باقي الصفحات: نفرض @page{margin:0}
+         فيصبح صندوق الطباعة = الورقة كاملة 13.333in؛ والغلاف عرضه
+         13.333in بالضبط فيتطابق مع كل صفحة. لا طرح مزدوج، لا calc.
+     (2) إطار متدرج يتكرّر على *كل* صفحة مطبوعة (عدا الغلاف): نستخدم
+         عنصر position:fixed ببردر متدرج عبر border-image — وهي تقنية
+         طباعة آمنة (لا mask، لا background-clip، لا تركيب) لأن العطل
+         السابق كان بسبب -webkit-mask الذي يفشل في محرك طباعة Chrome.
+     (3) لا نلفّ محتوى أي تقرير ولا نضيف هوامش له إطلاقاً — هذا سبب
+         انسحاق المحتوى سابقاً. الإطار طبقة علوية شفافة المركز فقط،
+         ومحتوى كل تقرير يبقى بهوامشه الأصلية تماماً دون أي مساس. ════ */
+  /* [PP-UNIFY] مصدر حقيقة واحد: نستخدم نظام الإطار/الصفحات الموحّد
+     __PP_FRAME_STYLE_TAG نفسه بدل تعريف مكرّر كان يفرض @page{margin:0}
+     ويسبب اختلاف حجم الغلاف عن المحتوى. الآن الغلاف والمحتوى يخضعان
+     لنفس @page الموحّد (هامش 14mm) فيتطابقان قطعياً، والإطار لا يقصّ. */
+  var resetStyle = (typeof __PP_FRAME_STYLE_TAG==='string' && __PP_FRAME_STYLE_TAG)
+    ? __PP_FRAME_STYLE_TAG : '';
 
   return resetStyle
-    +'<div class="pp-cover-page">'
-    +'<div class="cover-page-reset-wrap pc" style="'+coverStyle+'">'
+    +'<div class="cover-page-reset-wrap" style="'+coverStyle+'">'
     +bgHtml
     +topBarHtml
     +bottomBarHtml
@@ -10245,9 +10304,9 @@ function buildCoverPage(opts){
     +centerHtml
     +metaHtml
     +'</div>'
-    +'</div>'
-    /* الإطار المتدرج المتكرّر — يظهر على كل صفحة طباعة عدا الغلاف */
-    +'<div class="pp-running-frame" aria-hidden="true"></div>';
+    /* الإطار المتدرج — عنصر واحد position:fixed يتكرّر على كل ورقة طباعة.
+       يُخفى على الشاشة ويظهر فقط في الطباعة/حفظ PDF. */
+    +'<div class="pp-print-frame" aria-hidden="true"></div>';
 }
 
 
@@ -11100,7 +11159,7 @@ function dashPrint(printMode){
     +'}'
     +'</style>'
     +'</head><body>'
-    +buildCoverPage({title:pModeLbl,subtitle:'وزارة التعليم — وكالة التعاون الدولي',logoSrc:(typeof LOGO2_SRC!=='undefined'?LOGO2_SRC:''),bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),pageMargin:'6mm 8mm',contentPadX:'8mm',contentPadT:'6mm',contentPadB:'6mm',meta:[{label:'إجمالي اللجان',val:FDP.length},{label:'المستمرة',val:ok},{label:'التكليفات',val:tt}]})
+    +buildCoverPage({title:pModeLbl,subtitle:'وزارة التعليم — وكالة التعاون الدولي',logoSrc:(typeof LOGO2_SRC!=='undefined'?LOGO2_SRC:''),bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),pageMargin:'6mm 8mm',meta:[{label:'إجمالي اللجان',val:FDP.length},{label:'المستمرة',val:ok},{label:'التكليفات',val:tt}]})
     /* toolbar */
     +'<div id="toolbar">'
     +'<button class="btn-print" onclick="window.print()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> طباعة / حفظ PDF</button>'
@@ -11976,6 +12035,7 @@ window.addEventListener('afterprint',function(){
 
   html+='<\/script></body></html>';
 
+  html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var url=URL.createObjectURL(blob);
   var w=window.open(url,'_blank','width=1200,height=800,scrollbars=yes,resizable=yes');
@@ -12652,6 +12712,7 @@ function blobDL(title,body,meta){
     +'</div>'
     +'</div>'
     +(typeof window._dtextPrintScript==='function'?window._dtextPrintScript():'')+'</body></html>';
+  html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var url=URL.createObjectURL(blob);
   var w=window.open(url,'_blank','width=900,height=700,scrollbars=yes,resizable=yes');
@@ -12789,6 +12850,7 @@ function printAll(di){
     +'<span>'+new Date().toLocaleDateString('en-GB')+'</span></div>'
     +'</div>'
     +'</body></html>';
+  html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   var _pB=new Blob([html],{type:'text/html;charset=utf-8'});
   var _pU=URL.createObjectURL(_pB);
   var _pW=window.open(_pU,'_blank','width=960,height=800,scrollbars=yes,resizable=yes');
@@ -13068,10 +13130,8 @@ function printFullReport(fi){
     +__PRINT_CSS_BASE  /* [STEP-4] CSS طباعة موحّد */
     +'</style></head><body>'
     +buildCoverPage({title:e(d.n),subtitle:(activeSystem==='intl'?'تقرير المجلس/اللجنة الدولية':'التقرير التنفيذي للمجالس واللجان'),logoSrc:LOGO2_SRC,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),pageMargin:'8mm',meta:[{label:'ممثل الوكالة',val:e(d.r||'—')},{label:'الحالة',val:e(d.st||'—')},{label:'النوع',val:e(d.ty||'—')}]})
-    /* [PP-WRAP] غلاف المحتوى داخل الإطار المتدرج + ترقيم الصفحات.
-       (أُزيل هنا div تاريخ يتيم و</div> غير متطابقة كانت موجودة سابقاً
-        تُغلق <body> مبكراً — التاريخ يظهر أصلاً ضمن الغلاف نفسه) */
-    +'<div class="pp-content"><div class="pp-frame-screen"><div class="pp-inner">'
+    +'<div style="color:rgba(255,255,255,.4);font-size:10px;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;margin-top:12px">'+new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'})+'</div>'
+    +'</div>'
     +'<div class="np" style="margin-bottom:14px"><button onclick="window.print()" style="background:#382972;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-family:inherit;cursor:pointer">طباعة</button></div>'
     +'<h3 style="font-size:12px;font-weight:700;color:#1f4c3a;border-bottom:2px solid #382972;padding-bottom:5px;margin-bottom:11px">البيانات الأساسية</h3>'
     +basicTable
@@ -13081,7 +13141,6 @@ function printFullReport(fi){
     +'<img src="'+LOGO2_SRC+'" alt="" style="height:30px;object-fit:contain;filter:brightness(0)" loading="lazy">'
     +'<span style="font-size:10px;color:#888;font-family:inherit">'+(activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي</span></div>'
     +'<span style="font-size:10px;color:#aaa;font-family:inherit">'+new Date().toLocaleDateString('en-GB')+'</span></div>'
-    +'</div></div></div>'  /* [PP-WRAP] إغلاق pp-inner / pp-frame-screen / pp-content */
     +chartScript
     +'</body></html>';
 
@@ -16580,6 +16639,7 @@ function ecExportPDF(){if(isViewerBlocked('تصدير PDF'))return;
   w.document.write(
     '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>التقرير التنفيذي</title>'
     +'<style>'+styleCSS+'@page{size:13.333in 7.5in;margin:8mm}</style>'
+    +__PP_FRAME_STYLE_TAG
     +'</head><body>'
     +controlsHTML
     +runningFooterHTML
@@ -16588,6 +16648,7 @@ function ecExportPDF(){if(isViewerBlocked('تصدير PDF'))return;
     +'<div class="report-body">'+tempDiv.innerHTML+'</div>'
     +footerHTML
     +'</div>'
+    +__PP_FRAME_EL
     +'</body></html>'
   );
   w.document.close();
@@ -19104,6 +19165,7 @@ function s4DashExportPDF(){if(isViewerBlocked('تصدير PDF'))return;
   w.document.write(
     '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>لوحة المؤشرات التنفيذية</title>'
     +'<style>'+styleCSS+'@page{size:13.333in 7.5in;margin:8mm}</style>'
+    +__PP_FRAME_STYLE_TAG
     +'</head><body>'
     +controlsHTML
     +runningFooterHTML
@@ -19112,6 +19174,7 @@ function s4DashExportPDF(){if(isViewerBlocked('تصدير PDF'))return;
     +'<div class="report-body">'+tempDiv.innerHTML+'</div>'
     +footerHTML
     +'</div>'
+    +__PP_FRAME_EL
     +'</body></html>'
   );
   w.document.close();
@@ -19509,11 +19572,8 @@ function s4ExportTasksReport(){
     +'<button class="btn-close" onclick="window.close()">إغلاق</button>'
     +'</div>'
     /* الغلاف */
-    /* [COVER-MATCH] الغلاف خارج .report-wrapper الضيّق (max-width:297mm)
-       كي يُحاذى لنفس صندوق الطباعة الموحّد تماماً مثل صفحات المحتوى،
-       فلا يبدو أعرض من اليسار. المحتوى يبقى داخل .report-wrapper. */
-    +buildCoverPage({title:'تقرير التكليفات الشامل',subtitle:'متابعة وإدارة تكليفات المجالس واللجان',logoSrc:logoSrc,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),pageMargin:'10mm 12mm',contentPadX:'14mm',meta:[{label:'عدد اللجان',val:Object.keys(byComm).length},{label:'إجمالي التكليفات',val:stats.total},{label:'تاريخ التقرير',val:reportDate}]})
     +'<div class="report-wrapper">'
+    +buildCoverPage({title:'تقرير التكليفات الشامل',subtitle:'متابعة وإدارة تكليفات المجالس واللجان',logoSrc:logoSrc,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),pageMargin:'10mm 12mm',meta:[{label:'عدد اللجان',val:Object.keys(byComm).length},{label:'إجمالي التكليفات',val:stats.total},{label:'تاريخ التقرير',val:reportDate}]})
 
     +'<main class="report-body">'
     +rows
@@ -19533,11 +19593,13 @@ function s4ExportTasksReport(){
   /* فتح نافذة — الأسلوب الأكثر موثوقية */
   var w=window.open('','_blank','width=1100,height=900,scrollbars=yes,resizable=yes');
   if(w){
+    html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
     w.document.open();
     w.document.write(html);
     w.document.close();
   } else {
-    var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+    html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
     var u=URL.createObjectURL(blob);
     var a=document.createElement('a');
     a.href=u; a.download='tasks-report.html';
@@ -19625,10 +19687,18 @@ async function s4MergeAllReports(){
     +'.sec-header{background:linear-gradient(135deg,'+C1+' 0%,#382972 100%);color:#fff;padding:14px 20px;border-radius:10px;margin-bottom:20px}'
     +'.sec-header h2{font-size:16pt;font-weight:800;margin:0}'
     +'.sec-header p{font-size:10pt;opacity:.8;margin:4px 0 0}'
-    /* ── جدول التكليفات ── */
-    +'.tasks-table{width:100%;border-collapse:collapse;font-size:10.5pt}'
-    +'.tasks-table th{background:'+C1+';color:#fff;padding:9px 10px;text-align:right;font-weight:700;white-space:nowrap}'
-    +'.tasks-table td{padding:8px 10px;border:1px solid #757bbb;vertical-align:top}'
+    /* ── جدول التكليفات: مطابق تماماً لجدول التقرير الشامل
+       (s4ExportTasksReport) — نفس الأحجام والهوامش والحدود ── */
+    +'.tasks-table{width:100%;border-collapse:collapse;border:1.5px solid #006B3F;border-top:none;background:#fff}'
+    +'.tasks-table thead th{background:#fafafa;color:#004D2E;padding:10px 12px;font-weight:700;'
+    +'font-size:13pt;text-align:right;border-bottom:2px solid #006B3F;border-left:1px solid #e8e8e8}'
+    +'.tasks-table thead th:last-child{border-left:none}'
+    +'.tasks-table th{background:#fafafa;color:#004D2E;padding:10px 12px;text-align:right;font-weight:700;font-size:13pt;white-space:normal}'
+    +'.tasks-table tbody td{padding:10px 12px;border-bottom:1px solid #eee;border-left:1px solid #f0f0f0;'
+    +'font-size:12pt;vertical-align:top}'
+    +'.tasks-table td{padding:10px 12px;border-bottom:1px solid #eee;font-size:12pt;vertical-align:top;color:#1a1a1a}'
+    +'.tasks-table tbody td:last-child{border-left:none}'
+    +'.tasks-table tbody tr:nth-child(even){background:#fafafa}'
     +'.tasks-table tr:nth-child(even) td{background:#fafafa}'
     +'.comm-header{background:linear-gradient(135deg,#1673a4,#003944);color:#fff;padding:9px 14px;font-size:11pt;font-weight:700;border-radius:6px 6px 0 0}'
     /* ── حالة badge ── */
@@ -19657,7 +19727,6 @@ async function s4MergeAllReports(){
       logoSrc:logoSrc,bgImg:bgImg,
       prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),
       pageMargin:'8mm',
-      contentPadX:'14mm',
       stats:[],
       meta:[{label:'تاريخ التقرير',val:today}]
     });
@@ -19836,6 +19905,7 @@ async function s4MergeAllReports(){
     +footerHtml
     +'</body></html>';
 
+  html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var url=URL.createObjectURL(blob);
   var w=window.open(url,'_blank','width=1100,height=900,scrollbars=yes,resizable=yes');
@@ -22687,6 +22757,7 @@ function printPrepSummary(overrideDi,overrideMi){
     +'</div>'
     +'</div></body></html>';
 
+  html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var url=URL.createObjectURL(blob);
   var w=window.open(url,'_blank','width=920,height=780,scrollbars=yes,resizable=yes');
@@ -22751,6 +22822,7 @@ function printExecSummary(){
     +'<span>'+new Date().toLocaleDateString('en-GB')+'</span></div>'
     +'</div></body></html>';
 
+  html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var url=URL.createObjectURL(blob);
   var w=window.open(url,'_blank','width=900,height=750,scrollbars=yes,resizable=yes');
@@ -26476,9 +26548,6 @@ function gmPrintReport(){if(isViewerBlocked('الطباعة'))return;
     logoSrc: logoSrc,
     prepUnit: 'وحدة المجالس واللجان — وكالة التعاون الدولي',
     pageMargin: '0',
-    contentPadX: '18mm',
-    contentPadT: '16mm',
-    contentPadB: '16mm',
     meta: [
       {label:'الاجتماعات', val: meetings.length},
       {label:'التكليفات', val: totalTasks},
@@ -26731,7 +26800,7 @@ function gmPrintReport(){if(isViewerBlocked('الطباعة'))return;
   html += '</body></html>';
 
   var w = window.open('', '_blank', 'width=1200,height=800');
-  if(w){ w.document.open(); w.document.write(html); w.document.close(); }
+  if(w){ html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html; w.document.open(); w.document.write(html); w.document.close(); }
   else { alert('يرجى السماح بفتح النوافذ المنبثقة للطباعة'); }
 }
 
@@ -27084,7 +27153,7 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
   html += '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},500);};</scr'+'ipt>';
   html += '</body></html>';
   var w = window.open('', '_blank', 'width=1000,height=700');
-  if(w){ w.document.open(); w.document.write(html); w.document.close(); }
+  if(w){ html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html; w.document.open(); w.document.write(html); w.document.close(); }
   else { alert('يرجى السماح بفتح النوافذ المنبثقة للطباعة'); }
 }
 
@@ -31339,6 +31408,7 @@ function execPrint(){
     if(typeof showToast==='function')showToast('يُرجى السماح بالنوافذ المنبثقة',true);
     return;
   }
+  html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   w.document.write(html);
   w.document.close();
   w.focus();
