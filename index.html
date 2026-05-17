@@ -13301,48 +13301,19 @@ async function _initCore(){
   }
   /* مسح البيانات القديمة قبل تحميل النظام الجديد */
   /* فحص: هل البيانات تحتاج تحديثاً؟ */
-  var _ck2=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
-  var _cacheTs=0;
-  try{var _c2=localStorage.getItem(_ck2);if(_c2)_cacheTs=JSON.parse(_c2).ts||0;}catch(ex){}
   D.length=0; M={}; flt=[];
   SB_ROW_C=null; SB_ROW_M=null; SB_LAST_UPDATED_C=null;
   /* حفظ النظام الذي يعمل به هذه الـ init لمنع التداخل */
   var _initSys=activeSystem;
   setSyncUI('syncing','جاري التحميل من Supabase...');
   try{
-    /* فحص updated_at أولاً — إذا لم تتغير البيانات نتجاوز التحميل الكامل */
-    var _metaResults=await Promise.all([
-      sbFetch(SB_TABLES[activeSystem].committees+'?select=id,updated_at&limit=1&order=id.asc'),
-      sbFetch(SB_TABLES[activeSystem].meetings+'?select=id,updated_at&limit=1&order=id.asc')
-    ]).catch(function(){return[null,null];});
-    var _remoteTs=Math.max(
-      _metaResults[0]&&_metaResults[0][0]?new Date(_metaResults[0][0].updated_at||0).getTime():0,
-      _metaResults[1]&&_metaResults[1][0]?new Date(_metaResults[1][0].updated_at||0).getTime():0
-    );
-    /* إذا الـ cache أحدث من Supabase → تخطَّ التحميل */
-    if(_cacheTs>0&&_remoteTs>0&&_cacheTs>=_remoteTs&&D.length===0){
-      try{
-        var _ck3=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
-        var _cd3=JSON.parse(localStorage.getItem(_ck3)||'null');
-        if(_cd3&&Array.isArray(_cd3.data)&&_cd3.data.length>0){
-          D.length=0;_cd3.data.forEach(function(x){D.push(x);});
-          if(_cd3.meetings)Object.keys(_cd3.meetings).forEach(function(k){M[k]=_cd3.meetings[k];});
-          SB_ROW_C=_metaResults[0]&&_metaResults[0][0]?_metaResults[0][0].id:null;
-          SB_ROW_M=_metaResults[1]&&_metaResults[1][0]?_metaResults[1][0].id:null;
-          flt=[...D];
-          setSyncUI('ok','متزامن من cache ✓ ('+D.length+' سجل)');
-          console.log('[init] ✓ cache محدَّث — تخطي التحميل من Supabase');
-          refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
-          /* [SECTION-REDRAW-2026-05] إعادة رسم القسم الحالي بعد cache hit */
-          if(typeof window._redrawCurrentSection==='function'){
-            setTimeout(window._redrawCurrentSection, 50);
-          }
-          if(typeof _loadFromSupabase==='function')setTimeout(_loadFromSupabase,500);
-          return;
-        }
-      }catch(ex){}
-    }
-    /* جلب committees و meetings بشكل متوازٍ — يوفر 50% من وقت التحميل */
+    /* [v5.5 STALE-FIX] أُزيل فحص _metaResults (updated_at) ومنطق التخطّي.
+       كان يجلب updated_at في استدعاءين شبكيين زائدين ثم يقارن
+       _cacheTs (وقت العميل) مع _remoteTs (Supabase) — مقياسان غير
+       متجانسين سبّبا عرض بيانات قديمة (161 بدل 141) لثوانٍ.
+       الآن: Supabase مصدر الحقيقة دائماً، وإزالة الاستدعاءين الزائدين
+       تُسرّع التحميل الفعلي (تقليل نافذة عرض الـ cache القديم). */
+    /* جلب committees و meetings بشكل متوازٍ مباشرةً — أسرع تحميل */
     var _results=await Promise.all([
       sbFetch(SB_TABLES[activeSystem].committees+'?select=id,data,data_compressed&limit=1&order=id.asc'),
       sbFetch(SB_TABLES[activeSystem].meetings+'?select=id,data,data_compressed&limit=1&order=id.asc')
@@ -13486,6 +13457,28 @@ async function _initCore(){
         }
       } catch(e2){ console.error('[Init] فشل استعادة النسخة المحلية:', e2); }
     }
+    /* [v5.6 CACHE-FALLBACK] إصلاح ثغرة: لو لم توجد local_backup لكن يوجد
+       D_cache_v1 صالح (من جلسة سابقة على نفس المتصفح) — نستعيد منه بدل
+       ترك D فارغاً. هذا يعالج حالة "جهاز فيه cache فقط على شبكة محجوبة".
+       الـ cache صالح كبيانات عرض (سيُزامَن مع Supabase عند عودة الاتصال). */
+    if(D.length === 0 && !_restoredFromLocal){
+      try {
+        var _cbKey=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
+        var _cbRaw=localStorage.getItem(_cbKey);
+        if(_cbRaw){
+          var _cbData=JSON.parse(_cbRaw);
+          if(_cbData && Array.isArray(_cbData.data) && _cbData.data.length>0){
+            D.length=0;
+            _cbData.data.forEach(function(x){ D.push(x); });
+            if(_cbData.meetings && typeof _cbData.meetings==='object'){
+              Object.keys(_cbData.meetings).forEach(function(k){ M[k]=_cbData.meetings[k]; });
+            }
+            _restoredFromLocal = true;
+            console.log('[Init] استعيدت البيانات من D_cache_v1 ('+D.length+' سجل) — لا local_backup');
+          }
+        }
+      } catch(e3){ console.error('[Init] فشل استعادة cache fallback:', e3); }
+    }
 
     if(D.length > 0 && _restoredFromLocal){
       /* البيانات موجودة من النسخة المحلية — لا نقفل الحفظ */
@@ -13548,8 +13541,11 @@ async function _initCore(){
       localStorage.setItem(_cacheKey,_cacheData);
     }
   }catch(ex){ console.warn('[cache] فشل حفظ D:',ex.message); }
-  /* تحميل تعديلات النصوص من Supabase */
-  if(typeof _loadFromSupabase==='function')setTimeout(_loadFromSupabase,500);
+  /* [v5.5 STALE-FIX] تحميل تعديلات النصوص من Supabase فوراً (كان 500ms)
+     لتقليل نافذة ظهور النصوص القديمة من localStorage cache */
+  if(typeof _loadFromSupabase==='function'){
+    _loadFromSupabase().catch(function(_e){ console.warn('[DText] تحميل فوري فشل:',_e&&_e.message); });
+  }
 } /* end _initCore */
 async function forceReloadEmbedded(){
   confirmDel('سيتم مسح بيانات Supabase واستبدالها ببيانات الملف الأصلية ('+getEmbeddedCount()+' سجل). متابعة؟',async function(ok){
@@ -22102,7 +22098,8 @@ document.addEventListener('input', function(ev){
               if(_cp.meetings&&typeof _cp.meetings==='object'){
                 Object.keys(_cp.meetings).forEach(function(k){M[k]=_cp.meetings[k];});
               }
-              console.log('[cache] ✓ تحميل من cache: '+D.length+' سجل (عمر: '+Math.round(_age/60000)+' دقيقة)');
+              console.log('[cache] عرض مؤقت من cache: '+D.length+' سجل (عمر: '+Math.round(_age/60000)+' دقيقة) — جارٍ التحديث من Supabase...');
+              try{ if(typeof setSyncUI==='function') setSyncUI('syncing','عرض مؤقت — جارٍ تحديث البيانات...'); }catch(_e){}
             }
           }
         }catch(ex){ console.warn('[cache] فشل تحميل cache'); }
