@@ -950,33 +950,40 @@ html,body{max-width:100vw;overflow-x:hidden}
 .ms-clear{background:#fee;color:#e74c3c}
 
 input[type="date"]{color:#333;direction:ltr;-webkit-locale:"en";font-family:'Helvetica Neue W23 for SKY Bd','HelveticaNeueW23forSKYBd','Helvetica Neue',Helvetica,Tahoma,Arial,sans-serif,monospace;position:relative}
-input[type="date"]::-webkit-datetime-edit{color:#333;direction:ltr;unicode-bidi:bidi-override}
-input[type="date"]::-webkit-datetime-edit-fields-wrapper{direction:ltr}
-input[type="date"]::-webkit-datetime-edit-text{color:#555;direction:ltr}
-input[type="date"]::-webkit-datetime-edit-month-field{color:#208caa}
-input[type="date"]::-webkit-datetime-edit-day-field{color:#208caa}
-input[type="date"]::-webkit-datetime-edit-year-field{color:#208caa}
-input[type="date"]::-webkit-inner-spin-button{display:none}
+/* ════════════════════════════════════════════════════════════════════════
+   [DATE-FIELD-ROOT-FIX-2026-05-17] حذف placeholder "يوم/شهر/سنة" جذرياً
+   ────────────────────────────────────────────────────────────────────────
+   السبب الجذري: "يوم/شهر/سنة" نصٌّ يرسمه المتصفح افتراضياً داخل
+   ::-webkit-datetime-edit عندما الحقل فارغ — ليس من الكود.
+   العيب في الحل السابق: كان "ظاهراً افتراضياً، يُخفى بـ JS عند الفراغ"
+   فأي فجوة زمنية/فشل JS = النص يظهر. الحل الجذري: قلب المنطق ليكون
+   "مخفياً افتراضياً بـ CSS خالص غير مشروط، يُظهر فقط متى امتلأ".
+   هكذا أي فشل = يبقى مخفياً (السلوك المطلوب) بلا اعتماد على JS.
+   ════════════════════════════════════════════════════════════════════════ */
+/* (1) إخفاء النص الافتراضي دائماً وبلا شرط — لا يعتمد على أي سمة/JS */
+input[type="date"]::-webkit-datetime-edit{color:transparent !important}
+input[type="date"]::-webkit-datetime-edit-fields-wrapper{color:transparent !important}
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-year-field{color:transparent !important}
+/* (2) عند التركيز (المستخدم يُدخل التاريخ) نُظهر الحقول ليراها ويعدّلها */
+input[type="date"]:focus::-webkit-datetime-edit{color:#333 !important}
+input[type="date"]:focus::-webkit-datetime-edit-text{color:#555 !important}
+input[type="date"]:focus::-webkit-datetime-edit-day-field,
+input[type="date"]:focus::-webkit-datetime-edit-month-field,
+input[type="date"]:focus::-webkit-datetime-edit-year-field{color:#208caa !important}
+/* (3) عندما الحقل ممتلئ (data-filled="1" من JS، طبقة تحسين فقط)
+   نُظهر القيمة بلون مرئي. غياب JS لا يُظهر placeholder الفارغ
+   إطلاقاً لأن الافتراضي شفاف — أسوأ حالة: قيمة ممتلئة تبدو شفافة
+   حتى التركيز، وهذا أهون بكثير من ظهور "يوم/شهر/سنة". */
+input[type="date"][data-filled="1"]::-webkit-datetime-edit{color:#333 !important}
+input[type="date"][data-filled="1"]::-webkit-datetime-edit-text{color:#555 !important}
+input[type="date"][data-filled="1"]::-webkit-datetime-edit-day-field,
+input[type="date"][data-filled="1"]::-webkit-datetime-edit-month-field,
+input[type="date"][data-filled="1"]::-webkit-datetime-edit-year-field{color:#208caa !important}
+/* (4) أيقونة التقويم تبقى دائماً ظاهرة (لم تُمسّ) */
 input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
-
-/* [DATE-FIELD-FIX-2026-05] إخفاء placeholder النصي العربي المعكوس "ةنس/رهش/موي"
-   البديل: عرض النص باللون الشفاف عندما الحقل فارغ + إضافة أيقونة تقويم في الزاوية
-   الآلية: نستخدم data-is-empty="1" مع JavaScript بسيط لتحديد الحالة */
-input[type="date"][data-is-empty="1"]::-webkit-datetime-edit{
-  color:transparent !important;
-}
-input[type="date"][data-is-empty="1"]::-webkit-datetime-edit-fields-wrapper{
-  color:transparent !important;
-}
-input[type="date"][data-is-empty="1"]:focus::-webkit-datetime-edit{
-  color:#bbb !important;
-}
-input[type="date"][data-is-empty="1"]{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23208caa' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 32px center;
-  background-size:14px 14px;
-}
 
 /* ══ القسم S4 - لوحة متابعة التكليفات ══ */
 #panel-s4{flex-direction:row;height:100%;overflow:hidden;width:100%;max-width:100%;position:absolute;inset:0;display:none}
@@ -31452,19 +31459,17 @@ document.addEventListener('DOMContentLoaded',function(){
      ============================================================ -->
 
 <script>
-/* [DATE-FIELD-FIX-2026-05] إدارة data-is-empty لحقول التاريخ
-   الهدف: إخفاء النص العربي المعكوس "ةنس/رهش/موي" واستبداله بأيقونة
-   الآلية:
-   1. عند تحميل الصفحة: نُجري فحصاً أولياً لكل حقول التاريخ
-   2. عند تغيّر الحقل (input/change): نحدّث الحالة فوراً
-   3. عند ظهور حقول جديدة في DOM: MutationObserver يلتقطها */
+/* [DATE-FIELD-ROOT-FIX-2026-05-17] طبقة تحسين فقط: تضع data-filled="1"
+   على الحقول الممتلئة لإظهار قيمتها بلون مرئي. ليست ضرورية لإخفاء
+   placeholder (CSS الخالص يخفيه دائماً) — فأي فشل هنا لا يُظهر
+   "يوم/شهر/سنة" إطلاقاً، فقط قد يجعل قيمة ممتلئة شفافة حتى التركيز. */
 (function(){
   function _updateDateField(inp){
     if(!inp || inp.type !== 'date') return;
     if(inp.value){
-      inp.removeAttribute('data-is-empty');
+      inp.setAttribute('data-filled','1');
     }else{
-      inp.setAttribute('data-is-empty','1');
+      inp.removeAttribute('data-filled');
     }
   }
   function _scanAllDateFields(){
@@ -31483,7 +31488,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.addEventListener('change', function(e){
     if(e.target && e.target.type === 'date') _updateDateField(e.target);
   }, true);
-  /* مراقبة DOM لإضافة data-is-empty للحقول الجديدة (تظهر مع modals الديناميكية) */
+  /* مراقبة DOM للحقول الجديدة (modals الديناميكية) */
   if(window.MutationObserver){
     var debounceTimer = null;
     var obs = new MutationObserver(function(muts){
