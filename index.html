@@ -8632,6 +8632,12 @@ async function sbFetch(path,method,body){
       var msg = e.message || '';
       /* لا تعيد المحاولة على أخطاء 401/403 (مصادقة/صلاحيات) */
       if(msg.indexOf('Supabase 401')===0 || msg.indexOf('Supabase 403')===0) throw e;
+      /* [SCHEMA-ERR-NORETRY] أخطاء البنية دائمة (عمود/جدول مفقود) — إعادة
+         المحاولة عبث (العمود لن يُخلق بالإعادة) وتُؤخّر منطق الاحتياط في
+         المستدعي وتملأ Console بـ retry فاشلة. نرميها فوراً مثل 401/403. */
+      if(msg.indexOf('42703')>=0 || msg.indexOf('42P01')>=0
+         || msg.indexOf('does not exist')>=0 || msg.indexOf('PGRST20')>=0
+         || msg.indexOf('SCHEMA_ERR')>=0) throw e;
       /* لا تعيد المحاولة على أخطاء الحماية الداخلية */
       if(msg.indexOf('PROTECTION:')===0 || msg.indexOf('SAVE_LOCKED:')===0) throw e;
       if(lastErr._noRetry) throw e;
@@ -14651,23 +14657,58 @@ async function hashPassword(pass, email){
 }
 
 /* ── تحميل المستخدمين من Supabase ── */
+/* [PERM-PERSIST-FIX] مساعد مركزي: حفظ صلاحيات مستخدم في نسخة محلية احتياطية
+   تبقى الهوية (خاصة "مخصّص") حتى لو فشل تحميل عمود permissions من Supabase. */
+function _persistPermLocal(email,perms){
+  if(!email||!perms)return;
+  try{
+    var k='_authPermsBackup_'+activeSystem;
+    var bk=JSON.parse(localStorage.getItem(k)||'{}')||{};
+    bk[(email||'').toLowerCase()]=perms;
+    localStorage.setItem(k,JSON.stringify(bk));
+  }catch(e){}
+}
 async function loadAuthUsers(){
-  /* تجرب الأعمدة بشكل تدريجي — تتعامل مع الـ schema بمرونة */
+  /* [PERM-PERSIST-FIX] السبب الجذري: الاستعلام البديل كان يُسقط permissions
+     صامتاً عند فشل الأول (شبكة/schema) فتضيع هوية "مخصّص" بعد التحديث.
+     الإصلاح: (أ) لا نقبل نتيجة بلا permissions إن كان لدينا أفضل منها،
+     (ب) نحفظ نسخة احتياطية محلية لـ permissions تُسترجَع عند فشل التحميل. */
   var queries=[
     SB_TABLES[activeSystem].users+'?select=email,role,permissions&order=email.asc',
     SB_TABLES[activeSystem].users+'?select=email,role&order=email.asc'
   ];
+  var _permBkKey='_authPermsBackup_'+activeSystem;
+  var _localPerms={};
+  try{ _localPerms=JSON.parse(localStorage.getItem(_permBkKey)||'{}')||{}; }catch(e){ _localPerms={}; }
   for(var qi=0;qi<queries.length;qi++){
     try{
       var rows=await sbFetch(queries[qi]);
       if(rows&&rows.length>=0){
+        var _hasPerms=(qi===0); /* الاستعلام الأول فقط يجلب permissions */
         AUTH_USERS=rows.map(function(u){
-          return {email:u.email,role:u.role||'viewer',permissions:u.permissions||{},name:u.name||''};
+          /* permissions: من الخادم إن وُجد، وإلا من النسخة المحلية (لا تضيع الهوية) */
+          var p=(u.permissions&&typeof u.permissions==='object')?u.permissions:null;
+          if(!p||Object.keys(p).length===0){
+            var lk=(u.email||'').toLowerCase();
+            if(_localPerms[lk])p=_localPerms[lk];
+          }
+          p=p||{};
+          return {email:u.email,role:u.role||'viewer',permissions:p,name:u.name||''};
         });
+        /* حدّث النسخة الاحتياطية المحلية فقط من استعلام يحمل permissions حقيقية */
+        if(_hasPerms){
+          try{
+            var bk={};
+            AUTH_USERS.forEach(function(u){
+              if(u.permissions&&Object.keys(u.permissions).length>0)
+                bk[(u.email||'').toLowerCase()]=u.permissions;
+            });
+            localStorage.setItem(_permBkKey,JSON.stringify(bk));
+          }catch(e){}
+        }
         return;
       }
     }catch(e){
-      /* تجاهل خطأ العمود غير الموجود والمحاولة بأعمدة أقل */
       if(qi===queries.length-1) console.warn('[loadAuthUsers] فشل تحميل المستخدمين:',e&&e.message||e);
     }
   }
@@ -19681,19 +19722,34 @@ function s4OpenTaskFromKanban(ev, di, mi, ti){
 function s4OpenMail(t){if(isViewerBlocked('إرسال البريد'))return;
   s4MailTask=t;
   var subject='متابعة التكليف: '+t.task;
-  /* نص الرسالة — فقط تفاصيل التكليف، بدون تحية (تُضاف في s4SendMail) */
-  var taskDetails='تجدون سعادتكم أدناه بيانات التكليف المسند...\n\n'
-    +'التكليف: '+t.task+'\n'+(activeSystem==='intl'?'المجلس: ':'اللجنة: ')+t.committee+'\nالحالة الحالية: '+t.status+(t.dateTo?'\nتاريخ الاستحقاق: '+t.dateTo:'')+'\n\nنأمل تلطف سعادتكم بالاطلاع وإكمال ما يلزم والإفادة بما يتم.';
+  /* [MAIL-TABLE] نص الرسالة كجدول نصي محاذى — يصل فعلياً عبر mailto */
+  var taskDetails='تجدون سعادتكم أدناه بيانات التكليف المسند:\n\n'
+    +_s4MailTable(t)
+    +'\n\nنأمل تلطف سعادتكم بالاطلاع وإكمال ما يلزم وتعبئة عمود (الإفادة) بما يتم.';
   s4ShowMailModal('إرسال التكليف بالبريد الإلكتروني', '', subject, taskDetails, false);
+}
+/* [MAIL-TABLE-V2] قائمة عمودية مرتّبة — الجدول النصي المحاذى ينكسر مع العربية
+   (RTL + عرض محارف غير ثابت + mailto نص خام). القائمة العمودية تُعرض مرتّبة
+   في النافذة وتصل مرتّبة في أي بريد ولا تنكسر. عمود (الإفادة) فارغ للرد. */
+function _s4MailTable(t){
+  var isIntl=(activeSystem==='intl');
+  var L='──────────────────────────────────────';
+  return L+'\n'
+    +'• التكليف: '+(t.task||'—')+'\n'
+    +'• '+(isIntl?'المجلس/الموضوع':'اللجنة/الموضوع')+': '+(t.committee||'—')+'\n'
+    +'• الحالة الحالية: '+(t.status||'—')+'\n'
+    +'• تاريخ الاستحقاق: '+(t.dateTo||'—')+'\n'
+    +'• الإفادة: ......................................\n'
+    +L;
 }
 
 function s4OpenRemind(t){if(isViewerBlocked('إرسال تذكير'))return;
   s4MailTask=t;
   var subject='تذكير: '+t.task;
   /* نص الرسالة — بدون تحية (تُضاف كحقل ثابت في النافذة) */
-  var taskDetails='تجدون سعادتكم أدناه بيانات التكليف المسند...\n\n'
-    +'التكليف: '+t.task+'\n'+(activeSystem==='intl'?'المجلس: ':'اللجنة: ')+t.committee+'\nالحالة: '+t.status
-    +(t.dateTo?'\nالاستحقاق: '+t.dateTo:'')+'\n\nنأمل تلطف سعادتكم بالاطلاع وتحديث حالة التكليف والإفادة بما يتم.';
+  var taskDetails='تجدون سعادتكم أدناه بيانات التكليف المسند:\n\n'
+    +_s4MailTable(t)
+    +'\n\nنأمل تلطف سعادتكم بالاطلاع وتحديث حالة التكليف وتعبئة عمود (الإفادة) بما يتم.';
   s4ShowMailModal('تذكير بالتكليف', '', subject, taskDetails, true);
 }
 
@@ -20529,7 +20585,37 @@ function s4ShowMailModal(title, toEmail, subject, bodyText, isRemind){
     /* ── نص الرسالة ── */
     '<div class="mail-field">'+
       '<label style="font-family:inherit;font-size:15px">نص الرسالة</label>'+
-      '<textarea id="mailBody" rows="7" style="min-height:150px;font-family:inherit;font-size:16px!important;line-height:1.8">'+e(buildBody(''))+'</textarea>'+
+      /* [MAIL-HTML-TABLE] جدول HTML حقيقي + زر نسخ — للّصق المنسّق في Outlook.
+         لا يُرسَل عبر mailto (لا يدعم HTML)؛ صندوق النص أدناه يبقى للإرسال النصي. */
+      (function(){
+        var _mt=(typeof s4MailTask!=='undefined'&&s4MailTask)?s4MailTask:{};
+        var _isI=(activeSystem==='intl');
+        var _esc=function(x){return e(x==null?'':String(x));};
+        var _rows=[
+          ['التكليف', _mt.task],
+          [(_isI?'المجلس/الموضوع':'اللجنة/الموضوع'), _mt.committee],
+          ['الحالة الحالية', _mt.status],
+          ['تاريخ الاستحقاق', _mt.dateTo],
+          ['الإفادة', '']
+        ];
+        var _th='style="border:1px solid #1673a4;padding:7px 12px;background:#208caa;color:#fff;font-weight:700;font-size:13px;text-align:right"';
+        var _td='style="border:1px solid #b8d4e0;padding:7px 12px;font-size:13px;text-align:right;background:#fff"';
+        var _tbl='<table id="mailHtmlTable" dir="rtl" style="border-collapse:collapse;width:100%;font-family:inherit;margin:4px 0">'
+          +'<thead><tr>'+_rows.map(function(r){return '<th '+_th+'>'+_esc(r[0])+'</th>';}).join('')+'</tr></thead>'
+          +'<tbody><tr>'+_rows.map(function(r){return '<td '+_td+'>'+(r[0]==='الإفادة'?'&nbsp;':_esc(r[1]||'—'))+'</td>';}).join('')+'</tr></tbody>'
+          +'</table>';
+        return '<div class="mail-field">'
+          +'<label style="font-family:inherit;font-size:15px;display:flex;justify-content:space-between;align-items:center">'
+          +'<span>جدول التكليف (للّصق في بريد يدعم HTML مثل Outlook)</span>'
+          +'<button type="button" id="copyHtmlTableBtn" style="border:none;background:linear-gradient(135deg,#208caa,#48a883);color:#fff;border-radius:7px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">&#128203; نسخ الجدول</button>'
+          +'</label>'
+          +'<div style="overflow-x:auto;border:1px dashed #b8d4e0;border-radius:8px;padding:8px;background:#f7fbfd">'+_tbl+'</div>'
+          +'<div style="font-size:11px;color:#888;margin-top:4px">انسخ الجدول ثم الصقه في الإيميل (Outlook/Gmail) ليظهر منسّقاً. عمود (الإفادة) فارغ يملؤه المستلم.</div>'
+          +'</div>';
+      })()+
+      '<div class="mail-field">'+
+      '<label style="font-family:inherit;font-size:15px">نص الرسالة (للإرسال النصي عبر زر فتح في البريد)</label>'+
+      '<textarea id="mailBody" rows="7" style="min-height:150px;font-family:inherit;font-size:15px!important;line-height:1.9;direction:rtl;text-align:right">'+e(buildBody(''))+'</textarea>'+
     '</div>';
 
   inner.appendChild(body2);
@@ -20554,6 +20640,47 @@ function s4ShowMailModal(title, toEmail, subject, bodyText, isRemind){
   box.appendChild(inner);
   document.body.appendChild(box);
   applyDraggable(box);
+  /* [MAIL-HTML-TABLE] ربط زر نسخ الجدول — ينسخه كـ HTML (يُلصق منسّقاً في Outlook) */
+  (function(){
+    var _cb=document.getElementById('copyHtmlTableBtn');
+    var _tb=document.getElementById('mailHtmlTable');
+    if(!_cb||!_tb)return;
+    _cb.onclick=function(ev){
+      if(ev&&ev.preventDefault)ev.preventDefault();
+      var _html=_tb.outerHTML;
+      var _txt=(function(){
+        var out=[];
+        _tb.querySelectorAll('tr').forEach(function(tr){
+          var cells=[];
+          tr.querySelectorAll('th,td').forEach(function(c){cells.push((c.textContent||'').trim());});
+          out.push(cells.join(' \u2014 '));
+        });
+        return out.join('\n');
+      })();
+      function _done(ok){
+        _cb.textContent = ok ? '\u2713 \u0646\u064f\u0633\u062e' : '\u2717 \u062a\u0639\u0630\u0651\u0631';
+        setTimeout(function(){ _cb.innerHTML='&#128203; \u0646\u0633\u062e \u0627\u0644\u062c\u062f\u0648\u0644'; },1800);
+      }
+      try{
+        if(navigator.clipboard && window.ClipboardItem){
+          var item=new ClipboardItem({
+            'text/html': new Blob([_html],{type:'text/html'}),
+            'text/plain': new Blob([_txt],{type:'text/plain'})
+          });
+          navigator.clipboard.write([item]).then(function(){_done(true);},function(){
+            navigator.clipboard.writeText(_txt).then(function(){_done(true);},function(){_done(false);});
+          });
+        }else if(navigator.clipboard){
+          navigator.clipboard.writeText(_txt).then(function(){_done(true);},function(){_done(false);});
+        }else{
+          var r=document.createRange(); r.selectNode(_tb);
+          var sg=window.getSelection(); sg.removeAllRanges(); sg.addRange(r);
+          var ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
+          sg.removeAllRanges(); _done(ok);
+        }
+      }catch(e){ _done(false); }
+    };
+  })();
 
   /* ── منطق القائمة المنسدلة ── */
   var sel=document.getElementById('mailRecipientSel');
@@ -20781,6 +20908,7 @@ function renderUsersList(){
         .then(function(){
           u.role=_dbRole;
           u.permissions=_np;
+          _persistPermLocal(email,_np);
           sel.style.color=roleColor[_scoped?'scoped':_dbRole]||roleColor['viewer'];
           auditLog('تغيير دور',email,'صلاحية جديدة: '+(_scoped?'مخصّص':newRole));
         })
@@ -20841,6 +20969,16 @@ function adminAddUser(){
     var _u={email:email,role:_dbRole};
     if(_newPerms)_u.permissions=_newPerms;
     AUTH_USERS.push(_u);
+    /* [PERM-PERSIST-FIX] احفظ permissions محلياً فوراً — تبقى هوية المخصّص
+       حتى لو فشل تحميل عمود permissions من Supabase لاحقاً (شبكة/schema). */
+    if(_newPerms){
+      try{
+        var _bkK='_authPermsBackup_'+activeSystem;
+        var _bk=JSON.parse(localStorage.getItem(_bkK)||'{}')||{};
+        _bk[(email||'').toLowerCase()]=_newPerms;
+        localStorage.setItem(_bkK,JSON.stringify(_bk));
+      }catch(e){}
+    }
     emailEl.value='';if(passEl)passEl.value='';roleEl.value='viewer';
     renderUsersList();
     auditLog('إضافة مستخدم',email,'دور: '+(_isScoped?'مخصّص':role));
@@ -24900,6 +25038,7 @@ async function savePermissions(email){
     /* تحديث AUTH_USERS محلياً */
     var u=AUTH_USERS.find(function(x){return x.email.toLowerCase()===email.toLowerCase();});
     if(u)u.permissions=perms;
+    _persistPermLocal(email,perms);
     /* إذا كان هو المستخدم الحالي — حدّث صلاحياته فوراً */
     if(currentUser&&currentUser.email.toLowerCase()===email.toLowerCase()){
       currentUser.permissions=perms;
@@ -26352,6 +26491,43 @@ function gmRenderList(container){
 }
 
 // ── عرض Kanban ──
+/* [GEN-KANBAN-BTNS] دالتان للأقسام العامة — تعملان على GM_DATA (المصدر الصحيح)
+   وتُعيدان استخدام نافذة العرض المشتركة s4ShowMailModal (نفس التصميم/الحقول). */
+function _gmFindTask(mid,tid){
+  var ms=(window.GM_DATA&&window.GM_DATA.meetings)||[];
+  for(var i=0;i<ms.length;i++){
+    if(String(ms[i].id)===String(mid)){
+      var ts=ms[i].tasks||[];
+      for(var j=0;j<ts.length;j++){ if(String(ts[j].id)===String(tid)) return {m:ms[i],t:ts[j]}; }
+    }
+  }
+  return null;
+}
+function gmToggleEscalate(mid,tid){
+  if(typeof isViewerBlocked==='function'&&isViewerBlocked('التصعيد'))return;
+  var f=_gmFindTask(mid,tid); if(!f){ if(typeof showToast==='function')showToast('تعذّر إيجاد التكليف',true); return; }
+  f.t.escalated=!f.t.escalated;
+  if(f.t.escalated){
+    f.t.update='تم التصعيد للقيادة: '+new Date().toLocaleDateString('en-GB');
+    if(typeof showToast==='function')showToast('تم تصعيد التكليف للقيادة');
+  }else{
+    if(typeof showToast==='function')showToast('تم إلغاء التصعيد');
+  }
+  if(typeof gmSaveData==='function')gmSaveData();
+  if(typeof gmRender==='function')gmRender();
+}
+function gmShowMailLog(t){
+  /* بيانات حيّة من GM_DATA لا من GM() */
+  var live=_gmFindTask(t._genMid,t._genTid);
+  var log=(live&&live.t&&Array.isArray(live.t.mailLog))?live.t.mailLog:(Array.isArray(t.mailLog)?t.mailLog:[]);
+  if(typeof s4RenderMailLog==='function'){ s4RenderMailLog(t,log); return; }
+  /* احتياط: نافذة بسيطة بنفس نمط s4ShowMailModal إن لم تتوفّر دالة العرض */
+  var body=log.length
+    ? log.map(function(x){return (x.date||'')+' — '+(x.type||'مراسلة')+' — '+(x.to||'');}).join('\n')
+    : 'لا توجد مراسلات مسجّلة لهذا التكليف.';
+  if(typeof s4ShowMailModal==='function')
+    s4ShowMailModal('سجل مراسلات التكليف','', (t.task||''), body, false);
+}
 function gmRenderKanban(container){
   var tasks = gmFilteredTasks();
   var statuses = ['معلق','قيد الانتظار','جارٍ','متأخر','منجز'];
@@ -26382,6 +26558,27 @@ function gmRenderKanban(container){
         '<div class="gm-progress-wrap"><div class="gm-progress-bar" data-pct="'+progress+'" style="width:'+progress+'%"></div></div>'+
         '<div class="gm-progress-lbl">الإنجاز: '+progress+'%</div>'+
         '<div class="gm-kan-card-mtg">من: '+gmEsc(t.meetingName||'—')+'</div>'+
+        /* [GEN-KANBAN-BTNS] أزرار البريد/التذكير/السجل/التصعيد — لي ولفريقي في الأقسام العامة.
+           نُعيد استخدام دوال s4 نفسها بكائن تكليف متوافق (نفس النوافذ والحقول تماماً). */
+        (function(){
+          var _gt={
+            di:t.meetingId, mi:0, ti:gmEsc(t.task.id),
+            task:t.task.task||'', committee:t.meetingName||'',
+            responsible:t.task.responsible||'', status:t.task.status||'قيد الانتظار',
+            dateTo:t.task.dueDate||'', notes:t.task.notes||'',
+            escalated:t.task.escalated===true,
+            mailLog:Array.isArray(t.task.mailLog)?t.task.mailLog:[],
+            _genMid:t.meetingId, _genTid:t.task.id
+          };
+          var _j=JSON.stringify(_gt).replace(/"/g,'&quot;');
+          var done=(t.task.status==='منجز');
+          return '<div class="kanban-card-btns" onclick="event.stopPropagation()" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">'
+            +(!done?'<button class="k-btn k-btn-mail" onclick="s4OpenMail('+_j+')"> إرسال</button>':'')
+            +(!done?'<button class="k-btn k-btn-remind" onclick="s4OpenRemind('+_j+')"> تذكير</button>':'')
+            +'<button class="k-btn" style="background:#e8f0fe;color:#208caa" onclick="gmShowMailLog('+_j+')"> سجل</button>'
+            +(!done?'<button class="k-btn" style="background:'+(_gt.escalated?'#fff3e0':'#fce4ec')+';color:'+(_gt.escalated?'#e65100':'#c62828')+';border:1px solid '+(_gt.escalated?'#ffcc02':'#ef9a9a')+'" onclick="gmToggleEscalate(&quot;'+t.meetingId+'&quot;,&quot;'+t.task.id+'&quot;)">'+(_gt.escalated?' مُصعَّد':' تصعيد')+'</button>':'')
+            +'</div>';
+        })()+
       '</div>';
     });
     html += '</div></div>';
@@ -29316,7 +29513,7 @@ async function fmgrLoadSettings(){
   }catch(err){
     var em=err&&err.message||String(err);
     /* [FIELDMGR-2026-05-EDITLABEL] إذا custom_label column مفقود، جرّب بدونه */
-    if(em.indexOf('custom_label')>=0||em.indexOf('column')>=0){
+    if(em.indexOf('custom_label')>=0||em.indexOf('column')>=0||em.indexOf('42703')>=0||em.indexOf('does not exist')>=0){
       try{
         var rows2=await window.sbFetch(tbl+'?select=field_key,visible,sort_order,deleted,updated_at');
         if(rows2&&rows2.length>0){
@@ -29436,7 +29633,7 @@ async function fmgrSyncToSupabase(specificKey,backupValue){
     _fmgrSetSyncStatus('err');
     var em=err&&err.message||String(err);
     /* [FIELDMGR-2026-05-EDITLABEL] إذا custom_label column مفقود، جرّب بدونه */
-    if(em.indexOf('custom_label')>=0||em.indexOf('column')>=0){
+    if(em.indexOf('custom_label')>=0||em.indexOf('column')>=0||em.indexOf('42703')>=0||em.indexOf('does not exist')>=0){
       try{
         var fallback={
           field_key:specificKey,
