@@ -7501,6 +7501,21 @@ function govScopeNames(){
 }
 /* [SCOPE-V8] تصنيف صريح: هل المستخدم "مخصّص" (خارج الفريق)؟
    يعترف بعلامة is_scoped الصريحة أو بوجود لجان مخصّصة (توافق رجعي). */
+
+/* [SCOPED-FIX] دالة مركزية: هل المستخدم viewer حقيقي (وليس مخصّصاً)؟
+   المخصّص يُخزَّن role='viewer'+is_scoped (لقيد القاعدة)، فيجب استثناؤه
+   من كل فحوص "viewer" التي تحجب الكتابة/التعديل/الإضافة. */
+function isRealViewer(){
+  try{
+    if(!currentUser)return false;
+    if(currentUser.role!=='viewer')return false;
+    var p=currentUser.permissions||{};
+    /* المخصّص: ليس viewer حقيقياً — يخضع لـ canDo بفرع scoped */
+    if(p.is_scoped===true)return false;
+    if(Array.isArray(p.allowed_committees)&&p.allowed_committees.length>0)return false;
+    return true;
+  }catch(e){return false;}
+}
 function isScopedUser(u){
   try{
     var x = u || (typeof currentUser!=='undefined'?currentUser:null);
@@ -8122,7 +8137,7 @@ var __U = (function(){
     return (Date.now().toString(36) + Math.random().toString(36).slice(2,8));
   }
   function _isViewer(){
-    return !!(typeof currentUser!=='undefined' && currentUser && currentUser.role==='viewer');
+    return !!(typeof currentUser!=='undefined' && isRealViewer());
   }
   function _sysIs(k){
     return (typeof SYS!=='undefined' && SYS.is) ? SYS.is(k) : (typeof activeSystem!=='undefined' && activeSystem===k);
@@ -9058,7 +9073,7 @@ function scheduleSave(){
   /* [VIEWER-GUARD-V13] خط الدفاع الأخير الحاسم
      حتى لو تجاوز المشاهد كل واجهات HTML والـ onclick handlers،
      هذه البوابة تمنعه من حفظ أي تغيير */
-  if(typeof currentUser!=='undefined' && currentUser && currentUser.role==='viewer'){
+  if(typeof currentUser!=='undefined' && isRealViewer()){
     if(typeof showToast==='function')showToast('⚿ حساب المشاهدة لا يستطيع حفظ التغييرات',true);
     /* نُلغي أي تعديلات محلية بإعادة التحميل */
     return;
@@ -10078,7 +10093,7 @@ function updateSelBar(){
 }
 function clearSelection(){selectedItems.clear();updateSelBar();renCards();}
 function printSelectedReport(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   if(!selectedItems.size){alert('لم تحدد أي '+(activeSystem==='intl'?'مجلس/لجنة':'لجنة'));return;}
   var items=[];
   selectedItems.forEach(function(di){items.push(D[di]);});
@@ -10306,7 +10321,7 @@ document.getElementById('s1Grid').addEventListener('click',function(ev){
     openCF(fi);
     showToast('لا توجد صورة قرار — يمكنك إضافتها هنا');
   }
-}else if(a==='del'){if(currentUser&&currentUser.role==='viewer')return;confirmDel(d.n,function(ok){if(!ok)return;var delItem=Object.assign({},d);var delMeet=M[di]?JSON.parse(JSON.stringify(M[di])):[];moveToTrash('committee',{committee:delItem,meetings:delMeet},d.n);D.splice(di,1);var nm={};Object.keys(M).forEach(function(k){var ki=parseInt(k);if(ki<di)nm[ki]=M[k];else if(ki>di)nm[ki-1]=M[k];});M=nm;refRep();applyF();upTop();saveImmediately();});}});
+}else if(a==='del'){if(isRealViewer())return;confirmDel(d.n,function(ok){if(!ok)return;var delItem=Object.assign({},d);var delMeet=M[di]?JSON.parse(JSON.stringify(M[di])):[];moveToTrash('committee',{committee:delItem,meetings:delMeet},d.n);D.splice(di,1);var nm={};Object.keys(M).forEach(function(k){var ki=parseInt(k);if(ki<di)nm[ki]=M[k];else if(ki>di)nm[ki-1]=M[k];});M=nm;refRep();applyF();upTop();saveImmediately();});}});
 
 document.getElementById('srch').addEventListener('input',applyF);
 
@@ -10931,7 +10946,7 @@ async function exportPPTX(pMode){
   if(!_PptxCls){
     showToast('مكتبة PPTX لم تُحمَّل بعد، انتظر ثانية وحاول مجدداً',true);return;
   }
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التصدير',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية التصدير',true);return;}
 
   showToast('جاري إنشاء ملف PowerPoint...');
 
@@ -11215,7 +11230,7 @@ async function exportPPTX(pMode){
 }
 
 function dashPrint(printMode){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var pMode=printMode||'all';
   var modeLabels=activeSystem==='intl'?{'committees':'تقرير المجالس التنسيقية والدولية','tasks':'تقرير التكليفات الدولية','all':'التقرير الشامل الدولي'}:{'committees':'تقرير المجالس واللجان','tasks':'تقرير التكليفات','all':'التقرير الشامل'};
   var pModeLbl=modeLabels[pMode]||'التقرير الشامل';
@@ -12395,7 +12410,12 @@ window.addEventListener('afterprint',function(){
    ترجع true لو كان المشاهد (فيمنع العملية) مع رسالة واضحة */
 function isViewerBlocked(action){
   if(typeof currentUser==='undefined'||!currentUser)return false;
-  if(currentUser.role!=='viewer')return false;
+  /* [SCOPED-FIX] استثناء المخصّص: يُخزَّن viewer لكن سلوكه يخضع لـ canDo بفرع scoped */
+  if(typeof isRealViewer==='function'){
+    if(!isRealViewer())return false;
+  }else{
+    if(currentUser.role!=='viewer')return false;
+  }
   var msg=action||'هذه العملية';
   if(typeof showToast==='function'){
     showToast('⚿ حساب المشاهدة لا يسمح بـ '+msg+'. للحصول على صلاحية إضافية تواصل مع المسؤول.',true);
@@ -12724,13 +12744,13 @@ function renS3Main(){
   }
   content.innerHTML=html;
   /* Disable update textarea for viewers */
-  if(currentUser&&currentUser.role==='viewer'){
+  if(isRealViewer()){
     content.querySelectorAll('.task-update-inp').forEach(function(ta){
       ta.setAttribute('readonly','');ta.style.background='#f8f8f8';ta.style.cursor='not-allowed';ta.title='ليس لديك صلاحية التعديل';
     });
   }
-  content.querySelectorAll('.task-update-inp').forEach(function(ta){if(currentUser&&currentUser.role==='viewer')return;ta.addEventListener('input',function(){var tdi=parseInt(ta.getAttribute('data-di')),tmi=parseInt(ta.getAttribute('data-mi')),tti=parseInt(ta.getAttribute('data-ti'));if(M[tdi]&&M[tdi][tmi]&&M[tdi][tmi].tasks[tti]){M[tdi][tmi].tasks[tti].update=ta.value;/* [FRESH-MODIFIED-V4] تحديث طابع التعديل مع ضمان modifiedAt > addedAt */if(!M[tdi][tmi].tasks[tti]._addedAt){/* تكليف قديم بلا _addedAt — نضعه قبل modifiedAt بثانية ليظهر كـ"معدّل" */var _legacyAdded=new Date(Date.now()-1000).toISOString();M[tdi][tmi].tasks[tti]._addedAt=_legacyAdded;}M[tdi][tmi].tasks[tti]._modifiedAt=_bumpModifiedAt(M[tdi][tmi].tasks[tti]);/* [MODBY-V10] اسم المعدّل */var _mbk=(typeof getModByShort==='function')?getModByShort():'';M[tdi][tmi].tasks[tti]._modifiedBy=_mbk;if(!M[tdi][tmi].tasks[tti]._addedBy)M[tdi][tmi].tasks[tti]._addedBy=_mbk;scheduleSave();}});});
-  if(currentUser&&currentUser.role==='viewer'){
+  content.querySelectorAll('.task-update-inp').forEach(function(ta){if(isRealViewer())return;ta.addEventListener('input',function(){var tdi=parseInt(ta.getAttribute('data-di')),tmi=parseInt(ta.getAttribute('data-mi')),tti=parseInt(ta.getAttribute('data-ti'));if(M[tdi]&&M[tdi][tmi]&&M[tdi][tmi].tasks[tti]){M[tdi][tmi].tasks[tti].update=ta.value;/* [FRESH-MODIFIED-V4] تحديث طابع التعديل مع ضمان modifiedAt > addedAt */if(!M[tdi][tmi].tasks[tti]._addedAt){/* تكليف قديم بلا _addedAt — نضعه قبل modifiedAt بثانية ليظهر كـ"معدّل" */var _legacyAdded=new Date(Date.now()-1000).toISOString();M[tdi][tmi].tasks[tti]._addedAt=_legacyAdded;}M[tdi][tmi].tasks[tti]._modifiedAt=_bumpModifiedAt(M[tdi][tmi].tasks[tti]);/* [MODBY-V10] اسم المعدّل */var _mbk=(typeof getModByShort==='function')?getModByShort():'';M[tdi][tmi].tasks[tti]._modifiedBy=_mbk;if(!M[tdi][tmi].tasks[tti]._addedBy)M[tdi][tmi].tasks[tti]._addedBy=_mbk;scheduleSave();}});});
+  if(isRealViewer()){
     content.querySelectorAll('[data-ma="e"],[data-ma="d"]').forEach(function(b){b.style.display='none';});
   }
   content.querySelectorAll('[data-ma]').forEach(function(btn){btn.addEventListener('click',function(ev){ev.stopPropagation();var a=btn.getAttribute('data-ma'),bdi=parseInt(btn.getAttribute('data-di')),bmi=parseInt(btn.getAttribute('data-mi'));if(a==='e')openSM(bdi,bmi);else if(a==='p')printPrepSummary(bdi,bmi);else if(a==='exec')openExecSum(bdi,bmi);else if(a==='xl')exportMeetingExcel(bdi,bmi);else if(a==='d'){confirmDel('هذا الاجتماع',function(ok2){if(!ok2)return;var _m=GM(bdi)[bmi];var _d=D[bdi];var _label=(_d?_d.n:'لجنة')+' — اجتماع '+((_m&&_m.meetNum)||bmi+1);moveToTrash('meeting',{meeting:JSON.parse(JSON.stringify(_m)),di:bdi,committee_name:_d?_d.n:''},_label);GM(bdi).splice(bmi,1);renS3Sidebar();renS3Main();renderS3Cal();upTop();saveImmediately();});}});});
@@ -12814,7 +12834,7 @@ function openPickModal(){
 
 /* MEETING MODAL */
 function openSM(di,mi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التعديل',true);return;}var m=mi===-1?NM():GM(di)[mi];var isNew=mi===-1;var wt=m.tasks.map(function(t){return Object.assign({},t);});var wA=m.agendaItems&&m.agendaItems.length?m.agendaItems.map(function(x){return{text:x.text||x||'',type:x.type||''};}):(m.agenda?[{text:m.agenda,type:''}]:[]);var _aiTypes=['افتتاحية','عرض','تقرير','افتتاحية','عرض','تقرير','مناقشة','قرار','متابعة','توصية','إحاطة','ما يستجد من أعمال','للاطلاع','ما يستجد من أعمال','للاطلاع'];var _aiTypeClass={'افتتاحية':'t-briefing','عرض':'t-discuss','تقرير':'t-discuss','مناقشة':'t-discuss','قرار':'t-decision','متابعة':'t-followup','توصية':'t-recommend','إحاطة':'t-briefing','ما يستجد من أعمال':'t-followup','للاطلاع':'t-briefing'};function _aiTypeSel(ai,cur){return'<select class="ai-type-select" data-ai="'+ai+'" title="نوع البند">'+_aiTypes.map(function(t){return'<option'+(t===cur?' selected':'')+'>'+t+'</option>';}).join('')+'</select>';};document.getElementById('smTitle').innerHTML=(isNew?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> اجتماع جديد — ':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل — ')+D[di].n;function aH(){
+  if(isRealViewer()){showToast('ليس لديك صلاحية التعديل',true);return;}var m=mi===-1?NM():GM(di)[mi];var isNew=mi===-1;var wt=m.tasks.map(function(t){return Object.assign({},t);});var wA=m.agendaItems&&m.agendaItems.length?m.agendaItems.map(function(x){return{text:x.text||x||'',type:x.type||''};}):(m.agenda?[{text:m.agenda,type:''}]:[]);var _aiTypes=['افتتاحية','عرض','تقرير','افتتاحية','عرض','تقرير','مناقشة','قرار','متابعة','توصية','إحاطة','ما يستجد من أعمال','للاطلاع','ما يستجد من أعمال','للاطلاع'];var _aiTypeClass={'افتتاحية':'t-briefing','عرض':'t-discuss','تقرير':'t-discuss','مناقشة':'t-discuss','قرار':'t-decision','متابعة':'t-followup','توصية':'t-recommend','إحاطة':'t-briefing','ما يستجد من أعمال':'t-followup','للاطلاع':'t-briefing'};function _aiTypeSel(ai,cur){return'<select class="ai-type-select" data-ai="'+ai+'" title="نوع البند">'+_aiTypes.map(function(t){return'<option'+(t===cur?' selected':'')+'>'+t+'</option>';}).join('')+'</select>';};document.getElementById('smTitle').innerHTML=(isNew?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> اجتماع جديد — ':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل — ')+D[di].n;function aH(){
   var el=document.getElementById('agendaList');
   if(!el)return;
   if(!wA.length){el.innerHTML='<div style="text-align:center;padding:7px;color:#757bbb;font-size:10px">لا توجد بنود</div>';return;}
@@ -13010,7 +13030,7 @@ function rdF(){return{n:gv('fn'),r:gv('fr'),ar:gv('far'),ro:gv('fro'),st:gv('fst
 
 function openView(fi){var d=flt[fi];document.getElementById('vTitle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> '+d.n;function item(l,v,f){return v?'<div class="di'+(f?' full':'')+'"><div class="dlbl">'+l+'</div><div class="dval">'+v+'</div></div>':'';}document.getElementById('vBody').innerHTML='<div class="dg">'+item('ممثل الوكالة',e(d.r))+item('الدور','<span class="rb '+RC(d.ro)+'">'+e(d.ro)+'</span>')+item('الحالة','<span class="badge '+SC(d.st)+'">'+d.st+'</span>')+item('النطاق','<span class="badge '+SCC(d.sc)+'">'+d.sc+'</span>')+item('النوع',d.ty)+item('المدة','<span class="badge '+DC(d.du)+'">'+d.du+'</span>')+item('الرئاسة',e(d.ch))+item('أمين اللجنة',e(d.go),true)+item('سند التشكيل',e(d.ba),true)+(d.no?item('ملاحظات','<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#382972" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m10.29 3.86-8.7 15.05A1 1 0 0 0 2.45 20h17.1a1 1 0 0 0 .86-1.51L11.71 3.86a1 1 0 0 0-1.72-.01z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> '+e(d.no),true):'')+item('رقم خطاب الترشيح',e(d.rn))+item('تاريخ الخطاب',e(d.rd))+'</div><div style="display:flex;gap:7px;margin-top:11px"><button style="flex:1;background:linear-gradient(135deg,#d68910,#e67e22);color:#fff;border:none;border-radius:9px;padding:8px;font-size:11.5px;cursor:pointer;font-family:inherit" id="vEdit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل</button><button style="flex:1;background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;border:none;border-radius:9px;padding:8px;font-size:11.5px;cursor:pointer;font-family:inherit" id="vMeet"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> الاجتماعات</button></div>';document.getElementById('vEdit').onclick=function(){clM('viewModal');openEdit(fi);};document.getElementById('vMeet').onclick=function(){clM('viewModal');var di=D.indexOf(flt[fi]);goTo('s3');setTimeout(function(){selectS3(di);},200);};shM('viewModal');}
 function openEdit(fi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التعديل',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية التعديل',true);return;}
   var d=flt[fi]; cfEditI=D.indexOf(d);
   cfSet(d);
   document.getElementById('cfModalTitle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> '+d.n;
@@ -13025,7 +13045,7 @@ function openEdit(fi){
 }
 
 function openAdd(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الإضافة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الإضافة',true);return;}
   /* Reset form */
   cfSet({});
   document.getElementById('cfModalTitle').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'+(activeSystem==='intl'?' إضافة مجلس / لجنة دولية':' إضافة لجنة جديدة');
@@ -13129,7 +13149,7 @@ if(m.decisionNum)meetMeta+='<span style="background:#e8f4fd;color:#208caa;border
     if(m.loc)meetMeta+='<span style="background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:2px 9px;font-size:11px;font-family:inherit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> '+e(m.loc)+'</span>';
 var items=m.agendaItems&&m.agendaItems.length?m.agendaItems:(m.agenda?[{text:m.agenda}]:[]);var rows=m.tasks.map(function(t,i){return'<tr><td style="text-align:center;color:#999;font-size:9px;padding:6px 7px;width:25px;border:1px solid #e8e0ff">'+(i+1)+'</td><td style="padding:6px 9px;font-size:11px;border:1px solid #e8e0ff">'+e(t.task||'—')+(t.notes?'<div style="font-size:9.5px;color:#888;margin-top:3px;background:#f9f6ff;border-right:2px solid #757bbb;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> '+e(t.notes)+'</div>':'')+(t.update?'<div style="font-size:9.5px;color:#208caa;margin-top:3px;background:#e8f4fd;border-right:2px solid #48a883;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(cleanUpdateField(t.update||''))+'</div>':'')+'</td><td style="padding:6px 9px;font-weight:700;font-size:11px;width:130px;border:1px solid #e8e0ff">'+e(t.responsible||'—')+'</td>'+(t.dateFrom||t.dateTo?'<td style="padding:6px 7px;font-size:9.5px;width:110px;border:1px solid #e8e0ff">'+(t.dateFrom?'من: '+e(t.dateFrom)+'<br>':'')+(t.dateTo?'إلى: '+e(t.dateTo):'')+'</td>':'<td style="color:#ccc;padding:6px 7px;border:1px solid #e8e0ff">—</td>')+'<td style="text-align:center;padding:6px 7px;width:85px;border:1px solid #e8e0ff"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700">'+t.status+'</span></td>'+'</tr>';}).join('');return'<div style="border:2px solid #382972;border-radius:10px;margin-bottom:20px;overflow:hidden"><div style="background:linear-gradient(135deg,#1f4c3a,#382972,#208caa);padding:10px 14px"><div style="color:#fff;font-size:14px;font-weight:700;font-family:inherit">'+label+'</div><div style="margin-top:5px">'+meetMeta+'</div></div><div style="padding:13px 14px">'+(items.length?'<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:700;color:#1f4c3a;background:linear-gradient(135deg,#ede8ff,#e0f0ff);padding:6px 11px;border-right:4px solid #382972;border-radius:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg> جدول الأعمال</div><div style="padding:8px 11px">'+items.map(function(a){return'<div style="font-size:11px;margin-bottom:3px">'+e(a.text||a)+'</div>';}).join('')+'</div></div>':'')+(m.notes?'<div style="margin-bottom:10px;background:#eaf4fb;border-radius:8px;overflow:hidden">'+'<div style="font-size:10px;font-weight:700;color:#208caa;background:linear-gradient(135deg,#d6eaf8,#757bbb);padding:5px 10px;border-right:3px solid #48a883"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> ملاحظات الاجتماع</div>'+'<div style="padding:7px 10px;font-size:10px;color:#382972;line-height:1.7">'+e(m.notes)+'</div></div>':'')+(m.remarks?'<div style="margin-bottom:10px;background:#fffbe7;border-radius:8px;overflow:hidden">'+'<div style="font-size:10px;font-weight:700;color:#7d5700;background:linear-gradient(135deg,#e8dcff,#ffe082);padding:5px 10px;border-right:3px solid #f39c12"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg> المرئيات على عرض الاجتماع</div>'+'<div style="padding:7px 10px;font-size:10px;color:#4a3000;line-height:1.7">'+e(m.remarks)+'</div></div>':'')+(rows?'<table style="width:100%;border-collapse:collapse"><thead><tr>'+['#','التكليف','المسؤول','الفترة','الحالة'].map(function(c){return'<th style="background:#ede8ff;color:#1f4c3a;padding:6px 8px;text-align:right;border:1px solid #757bbb">'+c+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>':'')+'</div></div>';}
 function printSingle(di,mi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var d=D[di],m=GM(di)[mi];
   var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
   var sco={'قيد الانتظار':'#856404','جارٍ':'#382972','منجز':'#155724','متأخر':'#721c24'};
@@ -13156,7 +13176,7 @@ function printSingle(di,mi){
   blobDL(d.n+' — اجتماع',mSec(d,m,mi)+pendingHtml,{rep:d.r});
 }
 function printAll(di){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var d=D[di], ms=GM(di);
   if(!ms.length){showToast('لا توجد اجتماعات لهذه '+(activeSystem==='intl'?'المجلس/اللجنة':'اللجنة'),true);return;}
   var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
@@ -13242,7 +13262,7 @@ function printAll(di){
   if(!_pW){var _a=document.createElement('a');_a.href=_pU;_a.target='_blank';document.body.appendChild(_a);_a.click();document.body.removeChild(_a);}
 }
 function printRow(fi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var d=flt[fi];function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:10px 12px;width:33%;font-size:16px">'+l+'</td><td style="padding:10px 12px;font-size:16px">'+e(v)+'</td></tr>':'';}blobDL(d.n,'<table style="border-collapse:collapse">'+row('ممثل الوكالة',d.r)+row('الممثل البديل',d.ar)+row('الدور',d.ro)+row('النوع',d.ty)+row('الحالة',d.st)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+row('رقم خطاب الترشيح',d.rn)+row('تاريخ الخطاب',d.rd)+row(activeSystem==='intl'?'أمين المجلس/اللجنة':'أمين المجلس/اللجنة',d.go)+row('سند التشكيل',d.ba)+row('ملاحظات',d.no)+'</table>',{rep:d.r,hdr:activeSystem==='intl'?'بيانات المجلس / اللجنة الدولية':'بيانات المجلس/اللجنة'});}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}var d=flt[fi];function row(l,v){return v?'<tr><td style="background:#f0f4f8;font-weight:700;padding:10px 12px;width:33%;font-size:16px">'+l+'</td><td style="padding:10px 12px;font-size:16px">'+e(v)+'</td></tr>':'';}blobDL(d.n,'<table style="border-collapse:collapse">'+row('ممثل الوكالة',d.r)+row('الممثل البديل',d.ar)+row('الدور',d.ro)+row('النوع',d.ty)+row('الحالة',d.st)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+row('رقم خطاب الترشيح',d.rn)+row('تاريخ الخطاب',d.rd)+row(activeSystem==='intl'?'أمين المجلس/اللجنة':'أمين المجلس/اللجنة',d.go)+row('سند التشكيل',d.ba)+row('ملاحظات',d.no)+'</table>',{rep:d.r,hdr:activeSystem==='intl'?'بيانات المجلس / اللجنة الدولية':'بيانات المجلس/اللجنة'});}
 
 
 function buildPrintCharts(fd, allTasks, opts){
@@ -13422,7 +13442,7 @@ function buildPrintCharts(fd, allTasks, opts){
 }
 
 function printFullReport(fi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var d=flt[fi],di=D.indexOf(d),ms=GM(di);
   function row(l,v){return v?'<tr><td style="background:#f0f0f8;font-weight:700;padding:8px 12px;width:28%;font-size:16px;border:1px solid #ddd">'+l+'</td><td style="padding:8px 12px;font-size:16px;border:1px solid #ddd">'+e(v)+'</td></tr>':'';}
   var basicTable='<table style="width:100%;border-collapse:collapse;margin-bottom:20px">'+row('ممثل الوكالة',d.r)+(d.ar?row('الممثل البديل',d.ar):'')+row('الدور',d.ro)+row('الحالة',d.st)+row('النوع',d.ty)+row('المدة',d.du)+row('النطاق',d.sc)+row('الرئاسة',d.ch)+(d.rn?row('رقم خطاب الترشيح',d.rn):'')+(d.rd?row('تاريخ الخطاب',d.rd):'')+row(activeSystem==='intl'?'أمين المجلس/اللجنة':'أمين المجلس/اللجنة',d.go)+row('سند التشكيل',d.ba)+(d.no?row('ملاحظات',d.no):'')+'</table>';
@@ -13542,12 +13562,12 @@ function printFullReport(fi){
   setTimeout(function(){URL.revokeObjectURL(_burl);},60000);
 }
 function printTable(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}var rows=flt.filter(function(d){return isValidScope(d.sc);}).map(function(d,i){return'<tr><td style="text-align:center;padding:5px 7px">'+(i+1)+'</td><td style="padding:5px 7px">'+e(d.n)+'</td><td style="padding:5px 7px">'+e(d.r)+'</td><td style="padding:5px 7px">'+d.ro+'</td><td style="padding:5px 7px">'+d.st+'</td><td style="padding:5px 7px">'+d.ty+'</td><td style="padding:5px 7px">'+d.du+'</td><td style="padding:5px 7px">'+d.sc+'</td></tr>';}).join('');blobDL(activeSystem==='intl'?'جدول المجالس التنسيقية واللجان الدولية':'جدول المجالس واللجان','<table style="font-size:10px"><thead><tr>'+['#','الاسم','الممثل','الدور','الحالة','النوع','المدة','النطاق'].map(function(c){return'<th style="background:linear-gradient(135deg,#208caa,#1673a4);color:#fff;padding:6px 7px;text-align:right;white-space:nowrap">'+c+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>',{hdr:activeSystem==='intl'?'جدول المجالس التنسيقية والدولية':'جدول اللجان والمجالس'});}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}var rows=flt.filter(function(d){return isValidScope(d.sc);}).map(function(d,i){return'<tr><td style="text-align:center;padding:5px 7px">'+(i+1)+'</td><td style="padding:5px 7px">'+e(d.n)+'</td><td style="padding:5px 7px">'+e(d.r)+'</td><td style="padding:5px 7px">'+d.ro+'</td><td style="padding:5px 7px">'+d.st+'</td><td style="padding:5px 7px">'+d.ty+'</td><td style="padding:5px 7px">'+d.du+'</td><td style="padding:5px 7px">'+d.sc+'</td></tr>';}).join('');blobDL(activeSystem==='intl'?'جدول المجالس التنسيقية واللجان الدولية':'جدول المجالس واللجان','<table style="font-size:10px"><thead><tr>'+['#','الاسم','الممثل','الدور','الحالة','النوع','المدة','النطاق'].map(function(c){return'<th style="background:linear-gradient(135deg,#208caa,#1673a4);color:#fff;padding:6px 7px;text-align:right;white-space:nowrap">'+c+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody></table>',{hdr:activeSystem==='intl'?'جدول المجالس التنسيقية والدولية':'جدول اللجان والمجالس'});}
 
 
 /* ===== EXCEL EXPORT ===== */
 function exportS1Excel(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التصدير',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية التصدير',true);return;}
   var rows=flt.filter(function(d){return isValidScope(d.sc);}).map(function(d,i){
     var di=D.indexOf(d);
     var mc=GM(di).length;
@@ -13608,7 +13628,7 @@ function exportS1Excel(){
 }
 
 function exportS3Excel(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التصدير',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية التصدير',true);return;}
   /* Sheet 1: all meetings */
   var meetRows=[];
   D.filter(function(d){return isValidScope(d.sc);}).forEach(function(d,di){
@@ -14753,7 +14773,7 @@ async function moveToTrash(type,item_data,item_label){
 }
 
 async function openTrashModal(){
-  if(!currentUser||currentUser.role==='viewer'){showToast('ليس لديك صلاحية',true);return;}
+  if(!currentUser||isRealViewer()){showToast('ليس لديك صلاحية',true);return;}
   /* إظهار modal فوراً مع loading */
   var existingT=document.getElementById('trashModal');if(existingT)existingT.remove();
   var box=document.createElement('div');
@@ -14993,6 +15013,15 @@ function doLogin(){
       /* [SYSTEM-ISOLATION-FIX] أعد تحميل DText و إعدادات الحقول للنظام الحالي */
       try{ if(typeof window.dtextReloadForCurrentSystem==='function') window.dtextReloadForCurrentSystem(); }catch(_){}
       try{ if(typeof window.fmgrLoadSettings==='function') window.fmgrLoadSettings(); }catch(_){}
+      /* [SCOPED-SETTINGS-FIX] dtextReloadForCurrentSystem يقرأ localStorage فقط.
+         لجلب أحدث تعديلات النصوص من Supabase (التي يضبطها المدير) لكل مستخدم
+         يدخل بنفس المتصفّح، نُجبر تحميلاً صريحاً من القاعدة. fmgrLoadSettings
+         يفعل هذا أصلاً للحقول؛ هذا يكمل المسار لـ DText. */
+      try{ if(typeof window._dtextLoadFromSupabase==='function')
+        window._dtextLoadFromSupabase().catch(function(_e){
+          console.warn('[DText] فشل التحميل من Supabase عند الدخول:',_e&&_e.message);
+        });
+      }catch(_){}
     goTo('s1');
     setTimeout(function(){
       try{
@@ -19823,7 +19852,7 @@ function doManualBackup(){
 }
 
 function s4ExportTasksReport(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var tasks=s4FilterTasks();
   if(!tasks.length){showToast('لا توجد تكليفات لطباعتها',true);return;}
 
@@ -20087,7 +20116,7 @@ function s4ExportTasksReport(){
    التقرير الموحد — يجمع: التقرير الشامل + التنفيذي + لوحة المؤشرات
    ══════════════════════════════════════════════════════════════ */
 async function s4MergeAllReports(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
 
   /* ── تحقق من وجود لوحة المؤشرات في DOM ── */
   var dashWrap=document.getElementById('s4DashWrap');
@@ -20997,7 +21026,7 @@ function wrapRenCards(){
   var orig=renCards;
   renCards=function(){
     orig();
-    if(currentUser&&(currentUser.role==='viewer')){
+    if(isRealViewer()){
       document.querySelectorAll('.abo,.abr,.abgr,.abpu').forEach(function(b){b.style.display='none';});
     }
   };
@@ -22042,11 +22071,11 @@ function renderInitiatives(){
 
 /* ── نموذج الإضافة والتعديل ── */
 function openAddInitiative(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الإضافة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الإضافة',true);return;}
   _buildInitModal(null);
 }
 function openEditInitiative(ri){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التعديل',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية التعديل',true);return;}
   _buildInitModal(ri);
 }
 
@@ -22516,7 +22545,7 @@ function openViewInitiative(ri){
 
 /* ── حذف ── */
 function deleteInitiative(ri){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الحذف',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الحذف',true);return;}
   confirmDel((INITIATIVES[ri]||{}).title||'المبادرة', function(ok){
     if(!ok) return;
     INITIATIVES.splice(ri,1);
@@ -22941,7 +22970,25 @@ document.addEventListener('input', function(ev){
     if(localStorage.getItem('intl_session')){activeSystem='intl';}
     else if(localStorage.getItem('lajan_session')){activeSystem='main';}
   }catch(e){}
-  loadAuthUsers();
+  /* [SCOPED-REFRESH-FIX] بعد اكتمال loadAuthUsers (async)، حدّث
+     currentUser.permissions بأحدث نسخة من Supabase. هذا يضمن أن
+     النسخة المحلية الاحتياطية (المُستخدَمة لحظياً في restoreSession)
+     تُستبدَل بالحقيقة الخادمية فور وصولها — يحمي من حالة "المخصّص
+     عُدِّلت صلاحياته من جهاز آخر ودخل قبل وصول التحديث". */
+  loadAuthUsers().then(function(){
+    try{
+      if(currentUser && currentUser.email){
+        var _fresh=AUTH_USERS.find(function(u){
+          return u.email && u.email.toLowerCase()===currentUser.email.toLowerCase();
+        });
+        if(_fresh && _fresh.permissions && Object.keys(_fresh.permissions).length>0){
+          currentUser.permissions=_fresh.permissions;
+          /* أعد تطبيق العزل والواجهة بناءً على الصلاحيات المُحدّثة */
+          if(typeof applyRoleUI==='function')try{applyRoleUI();}catch(_){}
+        }
+      }
+    }catch(_){}
+  }).catch(function(){});
   initLoginParticles();
   updateLoginUI();
   var ll=document.getElementById('loginLogo');
@@ -22967,7 +23014,21 @@ document.addEventListener('input', function(ev){
       if(remaining>0&&sess.email){
         /* استعادة permissions عند تحميل الجلسة */
         var _sue=AUTH_USERS.find(function(u){return u.email.toLowerCase()===sess.email.toLowerCase();});
-        currentUser={email:sess.email,role:sess.role,name:sess.name,permissions:(_sue&&_sue.permissions)||{}};
+        /* [SCOPED-REFRESH-FIX] حرج: AUTH_USERS فارغ هنا (loadAuthUsers بعدُ
+           لم يكمل). _sue=undefined → permissions={} → is_scoped مفقود →
+           المخصّص يبدو "مشاهد عادي" مع كشف كل البيانات والأقسام لحظياً.
+           الحل: نسترجع permissions من النسخة المحلية الاحتياطية فوراً
+           (محفوظة عند الإنشاء/التعديل). ثم تُحدَّث لاحقاً عند اكتمال
+           loadAuthUsers بأحدث نسخة من القاعدة. لا فجوة كشف. */
+        var _localPerms={};
+        try{
+          var _bk=JSON.parse(localStorage.getItem('_authPermsBackup_'+activeSystem)||'{}')||{};
+          _localPerms=_bk[(sess.email||'').toLowerCase()]||{};
+        }catch(_){ _localPerms={}; }
+        var _restoredPerms=(_sue&&_sue.permissions&&Object.keys(_sue.permissions).length>0)
+          ? _sue.permissions
+          : _localPerms;
+        currentUser={email:sess.email,role:sess.role,name:sess.name,permissions:_restoredPerms};
         applyRoleUI();
         /* إخفاء loginScreen فوراً — الدخول لا يحتاج انتظار Supabase */
         var lsEl=document.getElementById('loginScreen');
@@ -23197,7 +23258,7 @@ function saveExecSumFields(){
 }
 
 function printPrepSummary(overrideDi,overrideMi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   saveExecSumFields();
   var di=(overrideDi!==undefined)?overrideDi:esCurrentDi;
   var mi=(overrideMi!==undefined)?overrideMi:esCurrentMi;
@@ -23345,7 +23406,7 @@ function printPrepSummary(overrideDi,overrideMi){
 }
 
 function printExecSummary(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   saveExecSumFields();
     var di=esCurrentDi;
   var mi=esCurrentMi;  var d=D[di], m=GM(di)[mi];
@@ -23715,7 +23776,7 @@ function cfGet(){
 
 
 function exportMeetingExcel(di,mi){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية التصدير',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية التصدير',true);return;}
   var d=D[di], m=GM(di)[mi];
   if(!m)return;
   var label=m.meetNum?'اجتماع_'+m.meetNum:'اجتماع_'+(mi+1);
@@ -23883,7 +23944,7 @@ function importDownloadTemplate(){if(isViewerBlocked('الاستيراد'))retur
    MAIN: فتح نافذة الاستيراد
    ══════════════════════════════════════════ */
 function importOpenModal(){
-  if(currentUser&&currentUser.role==='viewer'){showToast('ليس لديك صلاحية الاستيراد',true);return;}
+  if(isRealViewer()){showToast('ليس لديك صلاحية الاستيراد',true);return;}
   var existing=document.getElementById('importModal');
   if(existing){existing.style.display='flex';importResetState();return;}
 
@@ -25230,14 +25291,14 @@ setInterval(updateHomeClock,1000);
 /* ── منع الطباعة للـ viewer ── */
 window.addEventListener('keydown',function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='p'){
-    if(currentUser&&currentUser.role==='viewer'){
+    if(isRealViewer()){
       e.preventDefault();
       showToast('الطباعة غير متاحة لحساب المشاهدة',true);
     }
   }
 });
 window.addEventListener('beforeprint',function(){
-  if(currentUser&&currentUser.role==='viewer'){
+  if(isRealViewer()){
     showToast('الطباعة غير متاحة لحساب المشاهدة',true);
   }
 });
@@ -28590,6 +28651,9 @@ async function _loadFromSupabase(){
     console.warn('[DText] تعذّر التحميل من Supabase — يُستخدم localStorage');
   }
 }
+/* [SCOPED-SETTINGS-FIX] تعريض دالة تحميل DText من Supabase لاستدعائها عند كل دخول
+   مستخدم — وإلا يبقى DOM يعرض ما كان مُحمَّلاً عند فتح الصفحة (نسخة قديمة). */
+try{ if(typeof window!=='undefined') window._dtextLoadFromSupabase=_loadFromSupabase; }catch(_){}
 
 function _setSyncStatus(st){
   var el=document.getElementById('dtext-sync-status');
