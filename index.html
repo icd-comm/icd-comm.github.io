@@ -18320,16 +18320,32 @@ function s4InitFilters(){
   var prevComm=commSel.value;
   var prevResp=respSel.value;
 
+  /* [LONG-NAME-FIX] دالة قص الأسماء الطويلة للعرض داخل القائمة المنسدلة الضيقة.
+     القيمة الفعلية (value) تبقى كاملة لمنطق الفلترة، والاسم الكامل يظهر في tooltip. */
+  function _truncOpt(s, n){
+    s = String(s||'');
+    if(s.length <= n) return s;
+    return s.substring(0, n-1).trim() + '…';
+  }
+
   /* بناء قائمة اللجان */
   var comms=[...new Set(D.map(function(d){return d.n;}).filter(Boolean))].sort();
   commSel.innerHTML='<option value="">كل اللجان ('+D.length+')</option>'
-    +comms.map(function(c){return'<option value="'+e(c)+'">'+e(c)+'</option>';}).join('');
+    +comms.map(function(c){
+      var full=e(c);
+      var disp=e(_truncOpt(c, 36));
+      return'<option value="'+full+'" title="'+full+'">'+disp+'</option>';
+    }).join('');
 
   /* بناء قائمة المسؤولين */
   var tasks=s4GetAllTasks();
   var resps=[...new Set(tasks.filter(function(t){var d=D.find(function(dd){return dd.n===t.committee;});return !d||typeof isValidScope!=='function'||isValidScope(d.sc);}).map(function(t){return t.responsible;}).filter(Boolean))].sort();
   respSel.innerHTML='<option value="">كل المسؤولين ('+resps.length+')</option>'
-    +resps.map(function(r){return'<option value="'+e(r)+'">'+e(r)+'</option>';}).join('');
+    +resps.map(function(r){
+      var full=e(r);
+      var disp=e(_truncOpt(r, 36));
+      return'<option value="'+full+'" title="'+full+'">'+disp+'</option>';
+    }).join('');
 
   /* استعادة القيم السابقة */
   if(prevComm) commSel.value=prevComm;
@@ -22917,8 +22933,9 @@ function s4OpenCommitteePrintDialog(){
     return;
   }
 
-  /* بناء قائمة اللجان المخوَّلة فقط */
-  var committeeOptions = '';
+  /* بناء قائمة اللجان المخوَّلة فقط — عناصر <div> مخصصة + خيارات <select> مخفية للتوافق */
+  var committeeItems = '';      /* لعرض القائمة المخصصة */
+  var committeeOptions = '';    /* للـ select المخفي (للتوافق مع s4UpdatePrintPreview / s4ExecuteCommitteePrint) */
   var visibleCount = 0;
   for(var di=0; di<D.length; di++){
     var d = D[di];
@@ -22927,11 +22944,20 @@ function s4OpenCommitteePrintDialog(){
     if(typeof _isCommitteeInScope==='function' && !_isCommitteeInScope(di)) continue;
     var tasksCount = 0;
     var ms = (typeof GM==='function') ? GM(di) : [];
+    var meetingsCount = ms.length;
     for(var mi=0; mi<ms.length; mi++){
       if(ms[mi] && ms[mi].tasks) tasksCount += ms[mi].tasks.length;
     }
+    var nameEsc = _esc(d.n);
     committeeOptions += '<option value="'+di+'" data-count="'+tasksCount+'">'
-                      + _esc(d.n) + ' ('+tasksCount+' تكليف)</option>';
+                      + nameEsc + ' ('+tasksCount+' تكليف)</option>';
+    committeeItems += '<div class="s4-comm-item" data-val="'+di+'" data-search="'+nameEsc.toLowerCase()+'" onclick="_s4SelectComm('+di+',this)">'
+                    + '<div class="s4-comm-name">'+nameEsc+'</div>'
+                    + '<div class="s4-comm-meta">'
+                    + '<span class="s4-comm-badge s4-cb-tasks">📋 '+tasksCount+' تكليف</span>'
+                    + '<span class="s4-comm-badge s4-cb-meets">📅 '+meetingsCount+' اجتماع</span>'
+                    + '</div>'
+                    + '</div>';
     visibleCount++;
   }
 
@@ -22941,6 +22967,23 @@ function s4OpenCommitteePrintDialog(){
   }
 
   var html = ''
+    + '<style id="s4PrintDlgStyles">'
+    + '.s4-comm-list{max-height:240px;overflow-y:auto;border:2px solid #d1d5db;border-radius:8px;background:#fff}'
+    + '.s4-comm-item{padding:10px 12px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .12s;display:block}'
+    + '.s4-comm-item:last-child{border-bottom:none}'
+    + '.s4-comm-item:hover{background:#f0fdf4}'
+    + '.s4-comm-item.is-selected{background:#dcfce7;border-right:3px solid #1d8a4e}'
+    + '.s4-comm-item .s4-comm-name{font-size:12px;font-weight:600;color:#1f2937;line-height:1.5;word-wrap:break-word;white-space:normal;margin-bottom:4px}'
+    + '.s4-comm-item .s4-comm-meta{display:flex;gap:6px;flex-wrap:wrap}'
+    + '.s4-comm-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;display:inline-block}'
+    + '.s4-cb-tasks{background:#e0f2fe;color:#075985}'
+    + '.s4-cb-meets{background:#fef3c7;color:#92400e}'
+    + '.s4-comm-all{background:linear-gradient(135deg,#f0fdf4,#dbeafe);font-weight:700}'
+    + '.s4-comm-all .s4-comm-name{color:#1d8a4e;font-size:13px}'
+    + '.s4-comm-empty{padding:20px;text-align:center;color:#94a3b8;font-size:12px}'
+    + '.s4-comm-search{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;direction:rtl;margin-bottom:8px;box-sizing:border-box}'
+    + '.s4-comm-search:focus{outline:none;border-color:#1d8a4e}'
+    + '</style>'
     + '<div id="s4PrintDlgBg" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)s4ClosePrintDialog()">'
     + '<div style="background:#fff;border-radius:14px;padding:0;max-width:560px;width:95%;max-height:90vh;overflow:auto;font-family:inherit;direction:rtl;box-shadow:0 10px 40px rgba(0,0,0,.3)" onclick="event.stopPropagation()">'
     + '<div style="background:linear-gradient(135deg,#1d8a4e,#48a883);color:#fff;padding:14px 20px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center">'
@@ -22949,14 +22992,25 @@ function s4OpenCommitteePrintDialog(){
     + '</div>'
     + '<div style="padding:20px">'
 
-    /* اختيار اللجنة */
+    /* اختيار اللجنة — قائمة مخصصة + select مخفي للتوافق */
     + '<div style="margin-bottom:18px">'
     + '<label style="display:block;font-size:12px;font-weight:700;color:#1f2937;margin-bottom:6px">١. اختر اللجنة (اختياري):</label>'
-    + '<select id="s4PrintCommSel" onchange="s4UpdatePrintPreview()" style="width:100%;padding:10px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;font-family:inherit;direction:rtl">'
-    + '<option value="__ALL__" selected>📋 كل اللجان (مجموعة حسب اللجنة)</option>'
-    + '<option value="" disabled>───────────</option>'
+    /* select مخفي يحتفظ بالقيمة (للتوافق مع s4UpdatePrintPreview/s4ExecuteCommitteePrint) */
+    + '<select id="s4PrintCommSel" style="display:none">'
+    + '<option value="__ALL__" selected>📋 كل اللجان</option>'
     + committeeOptions
     + '</select>'
+    /* خانة البحث */
+    + '<input type="text" id="s4CommSearch" class="s4-comm-search" placeholder="🔍 ابحث عن لجنة بالاسم..." oninput="_s4FilterComms(this.value)" autocomplete="off">'
+    /* القائمة المخصصة */
+    + '<div class="s4-comm-list" id="s4CommList">'
+    + '<div class="s4-comm-item s4-comm-all is-selected" data-val="__ALL__" data-search="كل اللجان جميع" onclick="_s4SelectComm(\'__ALL__\',this)">'
+    + '<div class="s4-comm-name">📋 كل اللجان (مجموعة حسب اللجنة)</div>'
+    + '<div class="s4-comm-meta"><span class="s4-comm-badge s4-cb-tasks">يشمل كل اللجان (' + visibleCount + ')</span></div>'
+    + '</div>'
+    + committeeItems
+    + '<div class="s4-comm-empty" id="s4CommEmpty" style="display:none">لا توجد نتائج مطابقة للبحث</div>'
+    + '</div>'
     + '<div style="font-size:10px;color:#94a3b8;margin-top:4px">💡 اختر "كل اللجان" لجلب التكليفات من جميع اللجان حسب الحالات المحدَّدة</div>'
     + '</div>'
 
@@ -22991,7 +23045,12 @@ function s4OpenCommitteePrintDialog(){
 
   var host = document.createElement('div');
   host.innerHTML = html;
-  document.body.appendChild(host.firstChild);
+  /* host قد يحوي عنصرين: <style> و <div id="s4PrintDlgBg"> — نضيفهما معاً */
+  while(host.firstChild){
+    document.body.appendChild(host.firstChild);
+  }
+  /* تفعيل المعاينة فوراً (الافتراضي = __ALL__ فالزر يُفعَّل تلقائياً) */
+  if(typeof s4UpdatePrintPreview==='function') s4UpdatePrintPreview();
 }
 
 function _s4BuildStatusCheckbox(key, defaultChecked){
@@ -23010,6 +23069,55 @@ function _s4ToggleAllStatus(checked){
 function s4ClosePrintDialog(){
   var el = document.getElementById('s4PrintDlgBg');
   if(el) el.remove();
+  /* إزالة الـ styles المرافقة لتجنب تراكمها */
+  var st = document.getElementById('s4PrintDlgStyles');
+  if(st) st.remove();
+}
+
+/* اختيار لجنة من القائمة المخصصة وتحديث الـ select المخفي */
+function _s4SelectComm(val, itemEl){
+  var sel = document.getElementById('s4PrintCommSel');
+  if(sel){
+    sel.value = String(val);
+    /* تحديث المعاينة (الدالة كانت onchange سابقاً) */
+    if(typeof s4UpdatePrintPreview==='function') s4UpdatePrintPreview();
+  }
+  /* تحديث التمييز البصري */
+  var list = document.getElementById('s4CommList');
+  if(list){
+    var items = list.querySelectorAll('.s4-comm-item');
+    for(var i=0; i<items.length; i++){
+      items[i].classList.remove('is-selected');
+    }
+  }
+  if(itemEl) itemEl.classList.add('is-selected');
+}
+
+/* تصفية اللجان حسب نص البحث */
+function _s4FilterComms(q){
+  var list = document.getElementById('s4CommList');
+  var empty = document.getElementById('s4CommEmpty');
+  if(!list) return;
+  var query = String(q||'').trim().toLowerCase();
+  var items = list.querySelectorAll('.s4-comm-item');
+  var visible = 0;
+  for(var i=0; i<items.length; i++){
+    var it = items[i];
+    var key = it.getAttribute('data-search') || '';
+    /* نُبقي خيار "كل اللجان" ظاهراً دائماً عند البحث الفارغ، ونُخفيه عند البحث الفعلي */
+    var isAll = it.classList.contains('s4-comm-all');
+    var match;
+    if(query === ''){
+      match = true;
+    } else if(isAll){
+      match = key.indexOf(query) !== -1; /* لا نُجبره على الظهور */
+    } else {
+      match = key.indexOf(query) !== -1;
+    }
+    it.style.display = match ? '' : 'none';
+    if(match) visible++;
+  }
+  if(empty) empty.style.display = (visible === 0) ? 'block' : 'none';
 }
 
 /* تحديث المعاينة بعدد التكليفات المطابقة */
@@ -24918,9 +25026,14 @@ function _buildInitCouncilSidebar(){
   if(cf){
     var curVal = cf.value;
     cf.innerHTML = '<option value="">كل المجالس</option>';
+    /* [LONG-NAME-FIX] قص الأسماء الطويلة للعرض ضمن الفلتر الضيق (180px)؛
+       القيمة الفعلية (o.value) تبقى الاسم الكامل، والاسم الكامل يظهر في tooltip */
     D.forEach(function(d){
       var o = document.createElement('option');
-      o.value = d.n; o.textContent = d.n;
+      o.value = d.n;
+      var name = String(d.n||'');
+      o.textContent = (name.length > 28) ? (name.substring(0,27).trim()+'…') : name;
+      o.title = name;
       if(d.n===curVal) o.selected = true;
       cf.appendChild(o);
     });
@@ -25206,9 +25319,55 @@ function _buildInitModal(ri){
 }
 
 function _initFormHTML(it){
+  /* [LONG-NAME-FIX] دالة قص الأسماء الطويلة */
+  function _truncN(s,n){ s=String(s||''); return s.length<=n ? s : s.substring(0,n-1).trim()+'…'; }
+
   /* قوائم ديناميكية */
+  /* [INIT-COUNCIL-CUSTOM] الـ select الحقيقي يبقى موجوداً (مخفياً) للتوافق مع
+     قارئي القيمة (initCouncil.value) والمستمعين (change event). نُضيف فوقه
+     واجهة custom dropdown مع بحث لمنع توسع القائمة المنسدلة عند الأسماء الطويلة. */
   var councilOpts = '<option value="">— اختر المجلس / اللجنة —</option>'
     +D.map(function(d){return'<option value="'+e(d.n)+'"'+(d.n===(it.councilId||'')?'  selected':'')+'>'+e(d.n)+'</option>';}).join('');
+  var selectedCouncilName = it.councilId||'';
+  /* عناصر القائمة المخصصة */
+  var councilCustomItems = '<div class="init-cc-item'+(selectedCouncilName===''?' is-selected':'')+'" data-val="" data-search="" onclick="_initCouncilPick(this,\'\')">— اختر المجلس / اللجنة —</div>'
+    +D.map(function(d){
+       var full=e(d.n);
+       var fullLow=String(d.n||'').toLowerCase();
+       var sel=(d.n===selectedCouncilName);
+       return '<div class="init-cc-item'+(sel?' is-selected':'')+'" data-val="'+full+'" data-search="'+fullLow+'" title="'+full+'" onclick="_initCouncilPick(this,\''+full.replace(/'/g,"\\'")+'\')">'+full+'</div>';
+     }).join('');
+  var selectedLabel = selectedCouncilName ? e(selectedCouncilName) : '— اختر المجلس / اللجنة —';
+  var selectedLabelTrunc = selectedCouncilName ? e(_truncN(selectedCouncilName, 50)) : '— اختر المجلس / اللجنة —';
+  var councilCustomHtml = '<style>'
+    +'.init-cc-wrap{position:relative}'
+    +'.init-cc-trigger{width:100%;padding:7px 11px;border:1.5px solid #c4b5e8;border-radius:7px;background:#fff;font-size:11px;font-family:inherit;cursor:pointer;text-align:right;display:flex;align-items:center;justify-content:space-between;gap:6px;color:#1f2937;box-sizing:border-box}'
+    +'.init-cc-trigger:hover{border-color:#9338ff}'
+    +'.init-cc-trigger .init-cc-arrow{color:#9338ff;flex-shrink:0;font-size:10px}'
+    +'.init-cc-trigger .init-cc-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}'
+    +'.init-cc-pop{position:absolute;top:calc(100% + 4px);right:0;left:0;background:#fff;border:1.5px solid #c4b5e8;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);z-index:9999;max-height:280px;display:none;flex-direction:column}'
+    +'.init-cc-pop.is-open{display:flex}'
+    +'.init-cc-search{padding:8px;border-bottom:1px solid #f0e8ff;flex-shrink:0}'
+    +'.init-cc-search input{width:100%;padding:6px 9px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;font-family:inherit;direction:rtl;outline:none;box-sizing:border-box}'
+    +'.init-cc-search input:focus{border-color:#9338ff}'
+    +'.init-cc-list{overflow-y:auto;flex:1;max-height:220px}'
+    +'.init-cc-item{padding:7px 11px;font-size:11px;cursor:pointer;border-bottom:1px solid #f8f4ff;line-height:1.55;word-wrap:break-word;white-space:normal;color:#1f2937}'
+    +'.init-cc-item:last-child{border-bottom:none}'
+    +'.init-cc-item:hover{background:#faf5ff}'
+    +'.init-cc-item.is-selected{background:#ede4fc;border-right:3px solid #9338ff;font-weight:700}'
+    +'.init-cc-empty{padding:14px;text-align:center;color:#94a3b8;font-size:11px}'
+    +'</style>'
+    +'<div class="init-cc-wrap" id="initCouncilCustom">'
+    +'<button type="button" class="init-cc-trigger" onclick="_initCouncilToggle(this)">'
+    +'<span class="init-cc-lbl" title="'+selectedLabel+'">'+selectedLabelTrunc+'</span>'
+    +'<span class="init-cc-arrow">▾</span>'
+    +'</button>'
+    +'<div class="init-cc-pop">'
+    +'<div class="init-cc-search"><input type="text" placeholder="🔍 ابحث عن لجنة..." oninput="_initCouncilFilter(this.value)" onclick="event.stopPropagation()"></div>'
+    +'<div class="init-cc-list" id="initCouncilCustomList">'+councilCustomItems+'<div class="init-cc-empty" id="initCouncilCustomEmpty" style="display:none">لا توجد نتائج</div></div>'
+    +'</div>'
+    +'<select id="initCouncil" class="init-finp" style="display:none">'+councilOpts+'</select>'
+    +'</div>';
   /* اجتماعات المجلس المحدد */
   var meetingOpts = _getMeetingOptions(it.councilId||'', it.meetingRef||'');
 
@@ -25257,9 +25416,7 @@ function _initFormHTML(it){
       ])
     )
     +iSec('الربط بالمجالس والاجتماعات','⛓',
-      iF('المجلس / اللجنة المرتبطة',
-        '<select id="initCouncil" class="init-finp" style="background:#fff">'+councilOpts+'</select>'
-      )
+      iF('المجلس / اللجنة المرتبطة', councilCustomHtml)
       +iF('الاجتماع المرتبط',
         '<select id="initMeetingRef" class="init-finp" style="background:#fff">'+meetingOpts+'</select>'
       )
@@ -25413,6 +25570,101 @@ function _getMeetingOptions(councilName, selected){
 function _updateInitMeetings(councilName, sel, selected){
   if(!sel) return;
   sel.innerHTML = _getMeetingOptions(councilName, selected);
+}
+
+/* [INIT-COUNCIL-CUSTOM] دوال القائمة المخصصة لاختيار المجلس/اللجنة في نموذج المبادرة */
+function _initCouncilToggle(btnEl){
+  var wrap = btnEl && btnEl.closest ? btnEl.closest('.init-cc-wrap') : null;
+  if(!wrap) return;
+  var pop = wrap.querySelector('.init-cc-pop');
+  if(!pop) return;
+  var willOpen = !pop.classList.contains('is-open');
+  /* أغلق أي قائمة أخرى مفتوحة */
+  document.querySelectorAll('.init-cc-pop.is-open').forEach(function(p){ p.classList.remove('is-open'); });
+  if(willOpen){
+    pop.classList.add('is-open');
+    /* فوكَس على البحث */
+    var inp = pop.querySelector('.init-cc-search input');
+    if(inp){ try{ inp.value=''; }catch(e){} setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 30); }
+    /* امسح الفلترة */
+    var list = wrap.querySelector('.init-cc-list');
+    if(list){
+      list.querySelectorAll('.init-cc-item').forEach(function(it){ it.style.display=''; });
+      var emp = list.querySelector('#initCouncilCustomEmpty');
+      if(emp) emp.style.display='none';
+    }
+    /* أغلق عند الضغط خارج القائمة */
+    setTimeout(function(){
+      document.addEventListener('click', _initCouncilOutsideClose);
+    }, 0);
+  } else {
+    document.removeEventListener('click', _initCouncilOutsideClose);
+  }
+}
+function _initCouncilOutsideClose(ev){
+  var wrap = document.getElementById('initCouncilCustom');
+  if(!wrap) { document.removeEventListener('click', _initCouncilOutsideClose); return; }
+  if(!wrap.contains(ev.target)){
+    var pop = wrap.querySelector('.init-cc-pop');
+    if(pop) pop.classList.remove('is-open');
+    document.removeEventListener('click', _initCouncilOutsideClose);
+  }
+}
+function _initCouncilPick(itemEl, value){
+  var wrap = itemEl && itemEl.closest ? itemEl.closest('.init-cc-wrap') : document.getElementById('initCouncilCustom');
+  if(!wrap) return;
+  /* حدّث الـ select المخفي + أطلق حدث change ليُحدّث _updateInitMeetings */
+  var sel = wrap.querySelector('#initCouncil');
+  if(sel){
+    sel.value = value;
+    try{ sel.dispatchEvent(new Event('change',{bubbles:true})); }catch(e){
+      /* بديل قديم */
+      var ev=document.createEvent('HTMLEvents'); ev.initEvent('change',true,false); sel.dispatchEvent(ev);
+    }
+  }
+  /* حدّث التمييز البصري */
+  wrap.querySelectorAll('.init-cc-item').forEach(function(it){ it.classList.remove('is-selected'); });
+  if(itemEl) itemEl.classList.add('is-selected');
+  /* حدّث نص الزر */
+  var lbl = wrap.querySelector('.init-cc-trigger .init-cc-lbl');
+  if(lbl){
+    var full = value || '— اختر المجلس / اللجنة —';
+    var disp = full.length > 50 ? (full.substring(0,49).trim()+'…') : full;
+    lbl.textContent = disp;
+    lbl.title = full;
+  }
+  /* أغلق القائمة */
+  var pop = wrap.querySelector('.init-cc-pop');
+  if(pop) pop.classList.remove('is-open');
+  document.removeEventListener('click', _initCouncilOutsideClose);
+}
+function _initCouncilFilter(q){
+  var wrap = document.getElementById('initCouncilCustom');
+  if(!wrap) return;
+  var query = String(q||'').trim().toLowerCase();
+  var list = wrap.querySelector('.init-cc-list');
+  if(!list) return;
+  var emp = list.querySelector('#initCouncilCustomEmpty');
+  var items = list.querySelectorAll('.init-cc-item');
+  var visible = 0;
+  for(var i=0; i<items.length; i++){
+    var it = items[i];
+    var key = it.getAttribute('data-search') || '';
+    var val = it.getAttribute('data-val') || '';
+    /* عند البحث: لا نُظهر عنصر "— اختر —" الفارغ */
+    var isPlaceholder = (val === '');
+    var match;
+    if(query === ''){
+      match = true;
+    } else if(isPlaceholder){
+      match = false;
+    } else {
+      match = key.indexOf(query) !== -1;
+    }
+    it.style.display = match ? '' : 'none';
+    if(match) visible++;
+  }
+  if(emp) emp.style.display = (visible === 0) ? 'block' : 'none';
 }
 
 /* ── عرض المبادرة ── */
