@@ -2240,6 +2240,514 @@ body {
 }
 /* ╚══ END LEFT SIDEBAR NAV ═══════════════════════════════╝ */
 
+/* ╔══════════════════════════════════════════════════════════════
+   [MOBILE-OPTIMIZED-V1] حزمة استجابة شاملة — آيفون وآيباد
+   تطبق تجربة موبايل أصيلة: شريط نظيف + معلومات منقولة للقائمة
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 1) الشريط العلوي على ≤ 600px (آيفون و iPhone Plus) ── */
+@media (max-width: 600px){
+  /* الشريط نفسه — مدمج وثابت */
+  .topbar{
+    padding:6px 10px !important;
+    gap:8px !important;
+    min-height:48px !important;
+    max-height:54px !important;
+    flex-wrap:nowrap !important;
+    overflow:hidden !important;
+    position:sticky !important;
+    top:0 !important;
+    z-index:100 !important;
+  }
+  /* زر القائمة بارز قليلاً */
+  #sidebarMenuBtn{
+    padding:7px 9px !important;
+    background:rgba(255,255,255,.18) !important;
+    border-radius:10px !important;
+  }
+  /* الشعار صغير */
+  #topbarLogo{ height:24px !important; }
+  /* العنوان الرئيسي — كلمة واحدة فقط */
+  .topbar-info{ display:none !important; }
+  /* الساعة والإحصاءات وحالة المزامنة — تنتقل إلى القائمة الجانبية */
+  #topbarClock,
+  .topbar #topMeta,
+  .topbar #globalSearchWrap,
+  .topbar .sync-bar{
+    display:none !important;
+  }
+  /* زر الخروج — أيقونة فقط */
+  #btnLogout{
+    padding:5px 8px !important;
+    font-size:0 !important;
+    gap:0 !important;
+  }
+  #btnLogout svg{ width:15px !important; height:15px !important; }
+  /* عنوان مدمج جديد يظهر في وسط الشريط */
+  .topbar::before{
+    content:'إدارة المجالس واللجان';
+    color:#fff;
+    font-size:13px;
+    font-weight:700;
+    flex:1;
+    text-align:center;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-family:'Sakkal Majalla',Tahoma,Arial,sans-serif;
+  }
+  /* زر الرجوع — مدمج */
+  .topbar-back{
+    padding:5px 9px !important;
+    font-size:10px !important;
+  }
+}
+
+/* ── 2) آيباد عمودي (601-900px) — تقليل الازدحام دون إخفاء كل شيء ── */
+@media (min-width: 601px) and (max-width: 900px){
+  .topbar{
+    padding:0 12px !important;
+    gap:8px !important;
+    min-height:50px !important;
+    flex-wrap:nowrap !important;
+    overflow:hidden !important;
+  }
+  #topbarLogo{ height:26px !important; }
+  .topbar h1{ font-size:11.5px !important; }
+  .topbar p{ display:none !important; }
+  #topbarClock{ padding:0 6px !important; }
+  #topbarClockTime{ font-size:11px !important; }
+  #topbarClockDate{ font-size:9px !important; }
+  .topbar .tms-v{ font-size:13px !important; }
+  .topbar .tms-l{ font-size:8.5px !important; }
+  .topbar .tmd{ height:18px !important; }
+  .topbar .sync-txt{ display:none !important; }
+  #globalSearchWrap{ display:none !important; }
+  #btnLogout span:not(svg){ display:none !important; }
+  #btnLogout{ padding:5px 9px !important; }
+}
+
+/* ── 3) قائمة الموبايل — إضافة معلومات الشريط هناك ── */
+.mobile-topbar-info{
+  display:none;
+  padding:14px 16px;
+  background:linear-gradient(135deg,#208caa,#48a883);
+  color:#fff;
+  border-radius:12px;
+  margin:8px;
+}
+.mobile-topbar-info .mti-clock{
+  font-size:18px;
+  font-weight:700;
+  text-align:center;
+  letter-spacing:.5px;
+  direction:ltr;
+  font-family:'Segoe UI',Arial,sans-serif;
+}
+.mobile-topbar-info .mti-date{
+  font-size:11px;
+  text-align:center;
+  opacity:.9;
+  margin-top:2px;
+  direction:ltr;
+  font-family:'Segoe UI',Arial,sans-serif;
+}
+.mobile-topbar-info .mti-stats{
+  display:flex;
+  justify-content:space-around;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.2);
+}
+.mobile-topbar-info .mti-stat{ text-align:center; line-height:1.3 }
+.mobile-topbar-info .mti-v{ font-size:17px; font-weight:700 }
+.mobile-topbar-info .mti-l{ font-size:9.5px; opacity:.85 }
+.mobile-topbar-info .mti-sync{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-top:10px;
+  font-size:10.5px;
+  opacity:.9;
+}
+.mobile-topbar-info .mti-sync-dot{
+  width:8px;height:8px;border-radius:50%;background:#4ade80;
+  box-shadow:0 0 6px #4ade80;
+}
+@media (max-width: 600px){
+  .mobile-topbar-info{ display:block; }
+  /* البحث العام إذا كان مفعّلاً — نضعه أعلى القائمة */
+  #leftSidebar .mobile-search-host{ display:block; padding:8px 12px 4px }
+}
+@media (min-width: 601px){
+  .mobile-topbar-info{ display:none !important; }
+}
+/* ╚═══ END MOBILE TOPBAR ═══════════════════════════════════ */
+
+/* ╔══════════════════════════════════════════════════════════════
+   [MOBILE-OPTIMIZED-V1] المرحلة 2-8: تحسينات شاملة عبر النظام
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── المرحلة 2: شريط القسم (secbar) على الموبايل ── */
+@media (max-width: 600px){
+  .secbar{
+    padding:6px 10px !important;
+    min-height:auto !important;
+    flex-wrap:wrap !important;
+    gap:6px !important;
+  }
+  .secbar-title{ font-size:11.5px !important; gap:5px !important; }
+  .secbar-sub{ font-size:9px !important; display:none !important; }
+  .secbar-actions{ gap:4px !important; flex-wrap:wrap !important; }
+  .secbar-actions button{
+    padding:4px 9px !important;
+    font-size:9.5px !important;
+    border-radius:7px !important;
+  }
+}
+
+/* ── المرحلة 3: الجداول — تمرير أفقي سلس + بطاقات أحياناً ── */
+@media (max-width: 600px){
+  /* أي جدول في النظام يصبح قابلاً للتمرير الأفقي */
+  .s1-table-wrap,
+  table:not(.no-mobile-scroll){
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch;
+    max-width:100%;
+  }
+  table:not(.no-mobile-scroll){ min-width:580px; font-size:10.5px !important; }
+  table:not(.no-mobile-scroll) th,
+  table:not(.no-mobile-scroll) td{
+    padding:6px 8px !important;
+    font-size:10.5px !important;
+    white-space:normal !important;
+    word-break:break-word;
+  }
+  /* تنسيق ظل خفيف ليُشعر المستخدم بإمكانية التمرير */
+  .s1-table-wrap{
+    box-shadow:inset -10px 0 8px -8px rgba(0,0,0,.06), inset 10px 0 8px -8px rgba(0,0,0,.06);
+  }
+}
+
+/* ── المرحلة 4: النوافذ المنبثقة (Modals) — bottom-sheet كامل الشاشة ── */
+@media (max-width: 600px){
+  .modal-overlay{
+    align-items:flex-end !important;
+    padding:0 !important;
+  }
+  .modal-overlay > div,
+  #smModal > div, #addModal > div, #editModal > div,
+  #adminModal > div, #auditModal > div, #trashModal > div,
+  #importModal > div, #changelogModal > div, #userMgmtModal > div,
+  #s4PrintDlgBg > div, #logoutModal > div, #aboutModal > div{
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 !important;
+    border-radius:18px 18px 0 0 !important;
+    max-height:92vh !important;
+    position:fixed !important;
+    bottom:0 !important;
+    left:0 !important;
+    right:0 !important;
+    overflow-y:auto !important;
+    /* مقبض السحب لتعزيز إحساس bottom-sheet */
+  }
+  .modal-overlay > div::before,
+  #smModal > div::before,
+  #addModal > div::before,
+  #editModal > div::before{
+    content:'';
+    position:sticky;
+    top:0;
+    display:block;
+    width:36px;
+    height:4px;
+    background:rgba(0,0,0,.15);
+    border-radius:2px;
+    margin:6px auto;
+    z-index:10;
+  }
+}
+
+/* ── المرحلة 5: النماذج (Inputs/Selects/Textareas) — حماية من iOS zoom ── */
+@media (max-width: 600px){
+  /* iOS يكبّر الشاشة عند focus على input بحجم أقل من 16px - الحل: 16px قسراً */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  select,
+  textarea{
+    font-size:16px !important;
+  }
+  /* لكن نريد أن يظهر الـ label أصغر */
+  label, .form-label{ font-size:12px !important; }
+  /* حقول النماذج بمساحة لمسية أكبر */
+  .init-finp, .lf-inp, .lf-sel{
+    padding:9px 12px !important;
+    font-size:16px !important;
+    border-radius:9px !important;
+  }
+  /* أزرار الإجراءات الرئيسية أكبر */
+  .modal-btn, .form-action{
+    padding:11px 16px !important;
+    font-size:13px !important;
+    min-height:44px;
+  }
+}
+
+/* ── المرحلة 6: القوائم المخصصة (المُضافة سابقاً) — التأكد من توافقها ── */
+@media (max-width: 600px){
+  /* قائمة اللجان في نافذة طباعة التكليفات */
+  .s4-comm-list{ max-height:50vh !important; }
+  .s4-comm-item{ padding:11px 12px !important; }
+  .s4-comm-item .s4-comm-name{ font-size:13px !important; }
+  /* قائمة المجلس في نموذج المبادرة */
+  .init-cc-pop{ max-height:50vh !important; }
+  .init-cc-trigger{ padding:10px 12px !important; font-size:13px !important; min-height:44px; }
+  .init-cc-item{ padding:10px 12px !important; font-size:12.5px !important; }
+}
+
+/* ── المرحلة 7: KPI Grids / لوحات الإحصاءات ── */
+@media (max-width: 600px){
+  /* أي شبكة KPI تصبح عمودين على الموبايل */
+  .dash-kpi-grid,
+  .kpi-grid,
+  .stats-grid,
+  [class*="stats-row"]{
+    grid-template-columns:repeat(2,1fr) !important;
+    gap:8px !important;
+  }
+  .kpi-card{ padding:10px !important; min-height:auto !important; }
+  .kpi-v{ font-size:18px !important; }
+  .kpi-l{ font-size:9.5px !important; line-height:1.3 !important; }
+  /* الإحصاءات الصغيرة في s1 (statsBar) */
+  .s1-stats{ flex-wrap:wrap !important; gap:6px !important; padding:6px 8px !important; }
+  .s1-stats > *{ flex:1 0 calc(33.33% - 6px) !important; min-width:0 !important; }
+  /* s4-stats - شريط الإحصاءات في لوحة التكليفات */
+  .s4-stats{
+    flex-wrap:wrap !important;
+    gap:5px !important;
+    padding:6px 8px !important;
+    justify-content:center !important;
+  }
+  .s4-stat{
+    flex:1 0 calc(33.33% - 6px) !important;
+    min-width:0 !important;
+    max-width:none !important;
+    padding:6px 8px !important;
+    font-size:9px !important;
+  }
+  .s4-stat span{ font-size:17px !important; }
+}
+
+/* ── المرحلة 8: Kanban — عمود واحد على الموبايل ── */
+@media (max-width: 600px){
+  .kanban-board{
+    flex-direction:column !important;
+    flex-wrap:nowrap !important;
+    gap:10px !important;
+    padding:10px !important;
+  }
+  .kanban-col{
+    flex:1 1 auto !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+  .kanban-col-body{
+    max-height:none !important;
+    min-height:auto !important;
+    /* على الموبايل: نسمح بـ scroll عند تمدد العمود فقط */
+  }
+  /* الكانبان كاملاً قابل للتمرير العمودي */
+  .s4-body{ overflow-y:auto !important; }
+}
+
+/* ── المرحلة 8.1: شريط الفلاتر العائم على الموبايل ── */
+@media (max-width: 600px){
+  .s1-toolbar{
+    padding:8px !important;
+    gap:6px !important;
+    flex-wrap:wrap !important;
+  }
+  .s1-actions{
+    flex-wrap:wrap !important;
+    gap:5px !important;
+    width:100%;
+  }
+  .s1-search-box{
+    width:100% !important;
+    margin-top:4px;
+  }
+  .s1-search-box input{
+    width:100% !important;
+    padding:9px 12px 9px 30px !important;
+    font-size:14px !important;
+  }
+  .s1-filters{
+    width:100% !important;
+    flex-wrap:wrap !important;
+    gap:5px !important;
+  }
+  /* أزرار التصدير على الموبايل: في عمود */
+  .s1-export-wrap{ position:relative; }
+  .s1-export-menu{
+    right:auto !important;
+    left:0 !important;
+    min-width:200px;
+  }
+}
+
+/* ── 8.2: الشاشة الرئيسية (home) على الموبايل ── */
+@media (max-width: 600px){
+  .home-cards{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .home-stats{ gap:6px !important; }
+}
+
+/* ── 8.3: قسم S3 (التحضير) على الموبايل ── */
+@media (max-width: 600px){
+  #panel-s3.active{
+    flex-direction:column !important;
+    overflow-y:auto !important;
+  }
+  .s3-sidebar{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+    max-height:35vh !important;
+    border-left:none !important;
+    border-bottom:2px solid rgba(255,255,255,.15) !important;
+  }
+  .s3-content{
+    width:100% !important;
+    flex:1 !important;
+  }
+}
+
+/* ── 8.4: قسم S5 (المبادرات) على الموبايل ── */
+@media (max-width: 600px){
+  #panel-s5.active > div[style*="display:flex"]{
+    flex-direction:column !important;
+  }
+  #initCouncilSidebar{
+    width:100% !important;
+    min-width:0 !important;
+    max-height:30vh !important;
+    border-left:none !important;
+    border-bottom:2px solid #e0d4f7 !important;
+  }
+}
+
+/* ── 8.5: الآيباد العمودي (601-900px) — تكييف معتدل ── */
+@media (min-width: 601px) and (max-width: 900px){
+  .dash-kpi-grid, .kpi-grid{ grid-template-columns:repeat(3,1fr) !important; }
+  .kanban-col{ min-width:160px !important; }
+  .s4-stats{ flex-wrap:wrap; gap:6px; }
+  .s4-stat{ min-width:75px; }
+  /* النوافذ المنبثقة على الآيباد - بتصميم وسطي وأعرض */
+  .modal-overlay > div{
+    max-width:90% !important;
+    margin:auto !important;
+  }
+}
+
+/* ── 8.6: حماية عامة من overflow أفقي ── */
+@media (max-width: 1024px){
+  /* أي div بـ overflow:hidden قد يخفي محتوى مهم — نسمح بـ scroll */
+  .sbody{ overflow-x:hidden; }
+  .spanel{ overflow-x:hidden; }
+  /* نمنع overflow عمودي على الصفحة الأم */
+  #appScreen{ overflow-x:hidden; }
+}
+
+/* ╚═══ END MOBILE-OPTIMIZED-V1 ═══════════════════════════════ */
+
+/* ╔══════════════════════════════════════════════════════════════
+   [MOBILE-CHARTS-V1] الرسوم البيانية (Chart.js) - استجابة كاملة
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 1) القاعدة الأساسية: canvas يأخذ عرض parent دائماً ── */
+.cw canvas, .chart-box canvas{
+  max-width:100% !important;
+  display:block;
+}
+
+/* ── 2) الموبايل (≤600px): ارتفاعات أفضل + شبكة عمود واحد ── */
+@media (max-width: 600px){
+  /* شبكة الرسوم - عمود واحد */
+  .cgrid{
+    grid-template-columns:1fr !important;
+    padding:8px !important;
+    gap:10px !important;
+  }
+  /* doughnut/pie - ارتفاع مناسب على الموبايل */
+  .cw{
+    height:230px !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+  /* hbar/الرسوم الكبيرة - أطول لتتسع التسميات */
+  .cw.tall{
+    height:auto !important;
+    min-height:280px !important;
+    max-height:none !important;
+  }
+  /* للرسوم الأفقية بكثير من العناصر - السماح بـ scroll عمودي داخل الصندوق */
+  .cw.tall.has-many{
+    height:400px !important;
+    overflow-y:auto !important;
+  }
+  /* تأكد أن canvas الكبيرة (980px) لا تخرج عن الشاشة */
+  canvas[width="980"], canvas[width="990"], canvas[width="1000"]{
+    max-width:100% !important;
+    height:auto !important;
+  }
+  /* عناوين الرسوم */
+  .ct{
+    font-size:12px !important;
+    margin-bottom:8px !important;
+    padding-bottom:5px !important;
+  }
+  .ct-sub{ font-size:9px !important; }
+  /* جدول الـ legend - حجم أنسب */
+  .legend-tbl{ font-size:9.5px !important; margin-top:6px !important; }
+  .legend-tbl td{ padding:3px 5px !important; }
+  /* chart-box - حشو أصغر */
+  .chart-box{
+    padding:10px !important;
+    border-radius:12px !important;
+  }
+  .chart-title{ font-size:11.5px !important; }
+  .chart-sub{ font-size:9px !important; }
+  /* chart-grid-2 و chart-grid-3 - عمود واحد على الموبايل */
+  .chart-grid-2,
+  .chart-grid-3{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+}
+
+/* ── 3) الآيباد العمودي (601-900px) ── */
+@media (min-width: 601px) and (max-width: 900px){
+  .cgrid{ grid-template-columns:repeat(2,1fr) !important; gap:12px !important; }
+  .cw{ height:200px !important; }
+  .cw.tall{ height:260px !important; }
+  /* الرسوم الأفقية الكبيرة على الآيباد - عمودان */
+  .chart-grid-3{ grid-template-columns:repeat(2,1fr) !important; }
+}
+
+/* ╚═══ END MOBILE-CHARTS-V1 ═══════════════════════════════════ */
+
 /* ── قسم المبادرات s5 ── */
 #panel-s5.active{display:flex!important;flex-direction:column;overflow:hidden}
 .init-card{background:#fff;border:1.5px solid #e4d8f5;border-radius:12px;padding:0;margin-bottom:10px;transition:all .2s;cursor:pointer;position:relative;overflow:hidden}
@@ -5054,6 +5562,20 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
       <div class="lsb-logo-text">
         <span class="lsb-logo-title">وكالة التعاون الدولي</span>
         <span class="lsb-logo-sub">وحدة المجالس واللجان</span>
+      </div>
+    </div>
+    <!-- [MOBILE-OPTIMIZED-V1] معلومات الشريط العلوي على الموبايل (مخفية على الكمبيوتر) -->
+    <div class="mobile-topbar-info" id="mobileTopbarInfo">
+      <div class="mti-clock" id="mtiClockTime">--:--:--</div>
+      <div class="mti-date" id="mtiClockDate">--</div>
+      <div class="mti-stats" id="mtiStats">
+        <div class="mti-stat"><div class="mti-v" id="mtiCommV">0</div><div class="mti-l">لجنة</div></div>
+        <div class="mti-stat"><div class="mti-v" id="mtiMeetV">0</div><div class="mti-l">اجتماع</div></div>
+        <div class="mti-stat"><div class="mti-v" id="mtiTaskV">0</div><div class="mti-l">تكليف</div></div>
+      </div>
+      <div class="mti-sync">
+        <span class="mti-sync-dot" id="mtiSyncDot"></span>
+        <span id="mtiSyncTxt">جاهز</span>
       </div>
     </div>
     <nav class="lsb-nav">
@@ -9553,6 +10075,35 @@ function SCC(s){return s==='داخلية'?'b-in':s==='خارجية دولية'?'
 function spCls(s){return s==='منجز'?'sp-done':s==='جارٍ'?'sp-wip':s==='متأخر'?'sp-late':'sp-wait';}
 function kC(id){if(CI[id]){CI[id].destroy();delete CI[id];}}
 function pct(v,t){return t?Math.round(v/t*100):0;}
+
+/* [MOBILE-CHARTS-V1] إعادة رسم كل الرسوم البيانية عند تغيير حجم الشاشة.
+   يستخدم للتعامل مع: تدوير الجوال، فتح/إغلاق sidebar، تغيير حجم نافذة المتصفح.
+   الـ debounce 200ms لمنع الاستدعاءات المتتابعة. */
+var _chartResizeDebounce = null;
+function _rerenderAllCharts(){
+  if(_chartResizeDebounce){ clearTimeout(_chartResizeDebounce); }
+  _chartResizeDebounce = setTimeout(function(){
+    /* إذا كان قسم الإحصاءات s2 نشطاً، أعد renDash. وإلا، أعد رسم الرسوم الموجودة فقط */
+    var activeS2 = document.getElementById('panel-s2');
+    if(activeS2 && activeS2.classList.contains('active') && typeof renDash === 'function'){
+      try{ renDash(); }catch(e){ console.warn('renDash failed on resize:', e.message); }
+    } else {
+      /* فقط استدعاء resize على كل instance موجود — Chart.js يحدّث الحجم تلقائياً */
+      try{
+        Object.keys(CI||{}).forEach(function(id){
+          var ch = CI[id];
+          if(ch && typeof ch.resize === 'function'){
+            try{ ch.resize(); }catch(_){}
+          }
+        });
+      }catch(e){}
+    }
+  }, 200);
+}
+/* الاستماع لتغيير الحجم والاتجاه (orientationchange) */
+window.addEventListener('resize', _rerenderAllCharts);
+window.addEventListener('orientationchange', _rerenderAllCharts);
+
 /* setSyncUI الذكي: يُحدّث _supabaseHealthy تلقائياً ويمرر للمؤشر الموحد.
    هذا يحل مشكلة "العلامة الحمراء الدائمة":
    - كل استدعاء 'ok' يُعلن الصحة
@@ -9568,6 +10119,16 @@ function setSyncUI(st,msg){
   } else if(st==='err'){
     window._supabaseHealthy = false;
   }
+  /* [MOBILE-OPTIMIZED-V1] دالة محلية لمزامنة قائمة الموبايل */
+  var _mtiDot=document.getElementById('mtiSyncDot');
+  var _mtiTxt=document.getElementById('mtiSyncTxt');
+  function _syncMobile(stt, mtxt){
+    if(_mtiDot){
+      _mtiDot.style.background = (stt==='ok')?'#4ade80':(stt==='syncing')?'#facc15':(stt==='err')?'#f87171':'#aaa';
+      _mtiDot.style.boxShadow  = (stt==='ok')?'0 0 6px #4ade80':(stt==='syncing')?'0 0 6px #facc15':(stt==='err')?'0 0 6px #f87171':'none';
+    }
+    if(_mtiTxt) _mtiTxt.textContent = mtxt || '';
+  }
   /* إذا كان updateSyncStatusIndicator موجوداً ومستخدمٌ مسجّل الدخول،
      فهو يتولى عرض الرقم الصحيح بناءً على الحالة الفعلية */
   if(typeof updateSyncStatusIndicator==='function' && typeof currentUser!=='undefined' && currentUser){
@@ -9575,14 +10136,19 @@ function setSyncUI(st,msg){
     if(st==='syncing'){
       dot.className='sync-dot syncing';
       txt.textContent=msg||'جاري الحفظ...';
+      _syncMobile('syncing', msg||'جاري الحفظ...');
       return;
     }
     updateSyncStatusIndicator();
+    /* قراءة الحالة من dot الأصلي بعد التحديث */
+    var st2 = dot.className.indexOf('ok')>-1 ? 'ok' : (dot.className.indexOf('err')>-1?'err':'');
+    _syncMobile(st2, txt.textContent);
     return;
   }
   /* احتياطي: السلوك القديم (للاستدعاءات المبكرة قبل تحميل الرقم) */
   dot.className='sync-dot '+st;
   txt.textContent=msg;
+  _syncMobile(st, msg);
 }
 /* ══════════════════════════════════════════════════════════════════════
    SecurityCore — وحدة الأمان الموحّدة (Phase 1 Hardening)
@@ -12005,6 +12571,16 @@ function upTop(){
     '</div></div><div class="tmd"></div><div class="tms"><div class="tms-v">'+tm+
     '</div><div class="tms-l">اجتماع</div></div><div class="tmd"></div><div class="tms"><div class="tms-v">'+tt+
     '</div><div class="tms-l">تكليف</div></div>';
+  /* [MOBILE-OPTIMIZED-V1] مزامنة الإحصاءات مع قائمة الموبايل */
+  var mc=document.getElementById('mtiCommV');
+  var mm=document.getElementById('mtiMeetV');
+  var mtk=document.getElementById('mtiTaskV');
+  if(mc) mc.textContent=_cc;
+  if(mm) mm.textContent=tm;
+  if(mtk) mtk.textContent=tt;
+  /* تحديث وسم اللجنة حسب النظام */
+  var mcl=document.querySelector('#mtiStats .mti-stat:first-child .mti-l');
+  if(mcl) mcl.textContent=(activeSystem==='intl'?'مجلس/لجنة':'لجنة');
 }
 
 var secMeta={
@@ -12610,6 +13186,19 @@ function mkChart(id,type,labels,vals,colors,opts){
     var W=parent?parent.offsetWidth:300;
     var H=parent?parent.offsetHeight:220;
     if(W<10)W=300; if(H<10)H=220;
+    /* [MOBILE-CHARTS-V1] على الموبايل، للرسوم الأفقية مع >5 عناصر، نزيد ارتفاع canvas
+       بنحو 28px لكل عنصر إضافي، ونضيف class has-many للسماح بـ scroll */
+    var isMobile = window.innerWidth <= 600;
+    if(isMobile && (type==='hbar' || type==='bar') && Array.isArray(labels) && labels.length > 5){
+      var perItem = (type==='hbar') ? 30 : 0;
+      if(perItem > 0){
+        H = Math.max(H, 100 + labels.length * perItem);
+        /* إذا تجاوز 400px، نُفعّل scroll في .cw.tall */
+        if(parent && H > 400){
+          parent.classList.add('has-many');
+        }
+      }
+    }
     el.width=Math.round(W*dpr);
     el.height=Math.round(H*dpr);
     el.style.width=W+'px';
@@ -12661,11 +13250,11 @@ function mkChart(id,type,labels,vals,colors,opts){
         scales:isDoughnut?undefined:{
           y:{
             beginAtZero:true,
-            ticks:{font:{family:FONT,size:11},color:'#444',padding:4},
+            ticks:{font:{family:FONT,size:isMobile?12:11},color:'#444',padding:isMobile?6:4},
             grid:{color:'rgba(0,0,0,.06)'}
           },
           x:{
-            ticks:{font:{family:FONT,size:10},color:'#444'},
+            ticks:{font:{family:FONT,size:isMobile?11:10},color:'#444'},
             grid:{display:false}
           }
         }
@@ -28652,9 +29241,22 @@ function updateHomeClock(){
   var tbTime=document.getElementById('topbarClockTime');
   if(tbTime)tbTime.textContent=timeStr;
   var tbDate=document.getElementById('topbarClockDate');
+  var shortDateStr='';
   if(tbDate){
     var shortDateOpts={timeZone:'Asia/Riyadh',year:'numeric',month:'short',day:'2-digit'};
-    tbDate.textContent=now.toLocaleDateString('en-GB',shortDateOpts);
+    shortDateStr=now.toLocaleDateString('en-GB',shortDateOpts);
+    tbDate.textContent=shortDateStr;
+  }
+  /* [MOBILE-OPTIMIZED-V1] مزامنة ساعة قائمة الموبايل */
+  var mTime=document.getElementById('mtiClockTime');
+  if(mTime) mTime.textContent=timeStr;
+  var mDate=document.getElementById('mtiClockDate');
+  if(mDate){
+    if(!shortDateStr){
+      var so={timeZone:'Asia/Riyadh',year:'numeric',month:'short',day:'2-digit'};
+      shortDateStr=now.toLocaleDateString('en-GB',so);
+    }
+    mDate.textContent=shortDateStr;
   }
 }
 updateHomeClock();
