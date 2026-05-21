@@ -22862,12 +22862,17 @@ async function s4MergeAllReports(){
    نوحّدها هنا في ٤ مجموعات منطقية + حالة "متأخر" مشتقّة من due date.
    ──────────────────────────────────────────────────────────────────────── */
 
-/* تصنيف موحَّد للحالات */
+/* تصنيف موحَّد للحالات
+   [KANBAN-ALIGN-V1] متطابق مع منطق كانبان (autoUpdateOverdueTasks):
+   - يعتمد على t.dateTo (الحقل الفعلي في النظام)، لا t.due
+   - يعترف بقيمة 'متأخر' الصريحة التي يضعها autoUpdateOverdueTasks */
 function _s4NormalizeStatus(t){
   if(!t) return 'unknown';
   var s = (t.status || '').trim();
   /* منجز */
   if(s === 'منجز' || s === 'منجزة' || t.done === true) return 'done';
+  /* متأخر — كانبان يضع هذه القيمة تلقائياً */
+  if(s === 'متأخر' || s === 'متأخرة') return 'overdue';
   /* ملغي/متوقف */
   if(s === 'متوقفة' || s === 'ملغي' || s === 'ملغى') return 'cancelled';
   /* قيد التنفيذ */
@@ -22877,13 +22882,19 @@ function _s4NormalizeStatus(t){
   return 'unknown';
 }
 
-/* هل التكليف متأخر؟ (تجاوز الاستحقاق ولم يُنجَز) */
+/* هل التكليف متأخر؟ — متطابق مع منطق كانبان (يستخدم dateTo) */
 function _s4IsOverdue(t){
   var norm = _s4NormalizeStatus(t);
+  /* إذا كان status='متأخر' صريحاً، فهو متأخر */
+  if(norm === 'overdue') return true;
+  /* استثناء: منجز/ملغي لا يُحسبون متأخّرين */
   if(norm === 'done' || norm === 'cancelled') return false;
-  if(!t.due) return false;
+  /* احسب من dateTo (نفس حقل كانبان) — مع دعم due كـfallback */
+  var dateField = t.dateTo || t.due;
+  if(!dateField) return false;
   try{
-    var due = new Date(t.due);
+    var due = new Date(dateField);
+    if(isNaN(due.getTime())) return false;
     var now = new Date();
     now.setHours(0,0,0,0);
     return due < now;
@@ -23134,13 +23145,20 @@ function s4ExecuteCommitteePrint(){
         var norm = _s4IsOverdue(t) ? 'overdue' : _s4NormalizeStatus(t);
         if(selectedStatuses.indexOf(norm) >= 0){
           var daysOverdue = 0;
-          if(norm === 'overdue' && t.due){
-            try{
-              var due = new Date(t.due);
-              var now = new Date();
-              now.setHours(0,0,0,0);
-              daysOverdue = Math.floor((now - due) / (1000*60*60*24));
-            }catch(e){}
+          if(norm === 'overdue'){
+            /* [KANBAN-ALIGN-V1] استخدام dateTo نفس حقل كانبان */
+            var dateField = t.dateTo || t.due;
+            if(dateField){
+              try{
+                var due = new Date(dateField);
+                if(!isNaN(due.getTime())){
+                  var now = new Date();
+                  now.setHours(0,0,0,0);
+                  daysOverdue = Math.floor((now - due) / (1000*60*60*24));
+                  if(daysOverdue < 0) daysOverdue = 0;
+                }
+              }catch(e){}
+            }
           }
           var row = {
             di: di,
@@ -23148,7 +23166,8 @@ function s4ExecuteCommitteePrint(){
             meetDate: m.date || '',
             task: t.task || '',
             responsible: t.responsible || '',
-            due: t.due || t.dateTo || '',
+            /* [KANBAN-ALIGN-V1] الأولوية لـdateTo (نفس حقل كانبان) */
+            due: t.dateTo || t.due || '',
             status: norm,
             daysOverdue: daysOverdue,
             updateNote: t.update || ''
@@ -23276,7 +23295,12 @@ function s4ExecuteCommitteePrint(){
     + '<style>'
     + '@page{size:A4;margin:15mm}'
     + 'body{font-family:"Sakkal Majalla","Arial",serif;direction:rtl;margin:0;padding:20px;color:#1f2937;background:#fff}'
-    + '.header{background:linear-gradient(135deg,#003944,#1673a4);color:#fff;padding:20px;border-radius:10px;margin-bottom:20px;text-align:center}'
+    + '.header{background:linear-gradient(135deg,#003944,#1673a4);color:#fff;padding:18px 20px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;gap:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '.header .h-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;text-align:center;color:#fff;line-height:1.35}'
+    + '.header .h-brand img{height:62px;width:auto;object-fit:contain;display:block;margin-bottom:6px;filter:brightness(0) invert(1)}'
+    + '.header .h-brand .b1{font-size:12px;font-weight:700;opacity:.95}'
+    + '.header .h-brand .b2{font-size:11px;font-weight:600;opacity:.88;margin-top:2px}'
+    + '.header .h-title{flex:1;text-align:center}'
     + '.header h1{margin:0 0 5px;font-size:22px}'
     + '.header .sub{font-size:13px;opacity:.9}'
     + '.meta{display:flex;justify-content:space-between;font-size:11px;color:#475569;margin-bottom:12px;padding:8px 12px;background:#f8fafc;border-radius:6px}'
@@ -23312,8 +23336,15 @@ function s4ExecuteCommitteePrint(){
     + '@media print{.no-print{display:none}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}.committee-block{page-break-inside:auto}.committee-header{page-break-after:avoid}tr{page-break-inside:avoid}thead{display:table-header-group}}'
     + '</style></head><body>'
     + '<div class="header">'
+    + '<div class="h-brand">'
+    + ((typeof LOGO2_SRC!=='undefined' && LOGO2_SRC)?'<img src="'+LOGO2_SRC+'" alt="شعار وزارة التعليم" loading="lazy">':'')
+    + '<div class="b1">وكالة التعاون الدولي</div>'
+    + '<div class="b2">وحدة المجالس واللجان</div>'
+    + '</div>'
+    + '<div class="h-title">'
     + '<h1>'+_esc(titleText)+'</h1>'
     + '<div class="sub">'+subText+'</div>'
+    + '</div>'
     + '</div>'
     + '<div class="meta">'
     + '<span><strong>الحالات المعروضة:</strong> '+_esc(statusLabels)+'</span>'
@@ -23321,7 +23352,7 @@ function s4ExecuteCommitteePrint(){
     + '</div>'
     + statsHtml
     + allTablesHtml
-    + '<div class="footer">قسم إدارة المحاضر والمذكرات — وكالة التعاون الدولي — وزارة التعليم</div>'
+    + '<div class="footer">وحدة المجالس واللجان — وكالة التعاون الدولي — وزارة التعليم</div>'
     + '<div class="no-print" style="text-align:center;margin-top:20px"><button onclick="window.print()" style="background:#1673a4;color:#fff;border:none;border-radius:6px;padding:10px 24px;font-size:13px;cursor:pointer;font-family:inherit">🖨 طباعة</button></div>'
     + '</body></html>';
 
