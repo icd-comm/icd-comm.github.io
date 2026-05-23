@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
+<!-- ════════════════════════════════════════════════════════════
+     ║  BUILD VERSION: MOBILE-V2-FIX-2026-05-22                 ║
+     ║  Date: 2026-05-22 | Mobile/iPad responsive complete       ║
+     ║  للتأكد من النشر: ابحث في Raw عن نص: MOBILE-V2-FIX        ║
+     ════════════════════════════════════════════════════════════ -->
 <!-- نظام إدارة المجالس واللجان — v5 — وكالة التعاون الدولي، وزارة التعليم
      - تم توحيد دوال escape و parseDate في __escapeHtml و __parseDateAny
      - SYS object لتجريد lajan/intl، __PRINT_CSS_BASE لتوحيد CSS الطباعة
@@ -2747,6 +2752,181 @@ body {
 }
 
 /* ╚═══ END MOBILE-CHARTS-V1 ═══════════════════════════════════ */
+
+/* ╔══════════════════════════════════════════════════════════════
+   [MOBILE-V2-FIX] إصلاحات مستندة على لقطات الإنتاج الفعلية
+   تعالج: userBadge + execLaunchBtn + فلاتر S1/gm + KPIs + رسوم متداخلة
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 1) إخفاء العناصر المحقونة ديناميكياً في الشريط العلوي على الموبايل ── */
+@media (max-width: 600px){
+  /* userBadge (الإيميل + ADMIN) - يظهر في قائمة الـ sidebar بدلاً */
+  #userBadge{ display:none !important; }
+  /* زر "لوحة الحوكمة" البنفسجي - يوصل إليه من القائمة */
+  #execLaunchBtn, .exec-launch-btn{ display:none !important; }
+}
+
+/* ── 2) تكييف فلاتر S1 على الموبايل (طي تلقائي) ── */
+@media (max-width: 600px){
+  .s1-filters{
+    flex-wrap:wrap !important;
+    gap:5px !important;
+    max-height:80px;
+    overflow:hidden;
+    position:relative;
+    transition:max-height .3s ease;
+  }
+  .s1-filters.s1-filters-expanded{ max-height:600px; }
+  /* زر "إظهار/إخفاء الفلاتر" - يُضاف ديناميكياً */
+  .s1-filters-toggle{
+    display:inline-flex !important;
+    align-items:center;
+    gap:5px;
+    background:linear-gradient(135deg,#208caa,#1673a4);
+    color:#fff;
+    border:none;
+    border-radius:14px;
+    padding:5px 12px;
+    font-size:11px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    margin-bottom:5px;
+  }
+  /* فلاتر فردية أصغر */
+  .s1-flt{
+    flex:1 0 calc(50% - 5px) !important;
+    min-width:0 !important;
+    font-size:10.5px !important;
+    padding:5px 8px !important;
+    text-overflow:ellipsis;
+    overflow:hidden;
+    white-space:nowrap;
+  }
+}
+@media (min-width: 601px){
+  .s1-filters-toggle{ display:none !important; }
+  .s1-filters{ max-height:none !important; overflow:visible !important; }
+}
+
+/* ── 3) فلاتر gm (الاجتماعات العامة) على الموبايل - عمودان ── */
+@media (max-width: 600px){
+  .gm-sidebar, .gm-filters, .gm-flt-bar{
+    flex-wrap:wrap !important;
+    gap:6px !important;
+  }
+  .gm-flt{
+    flex:1 0 calc(50% - 6px) !important;
+    width:auto !important;
+    min-width:0 !important;
+    font-size:13px !important;
+    padding:8px 10px !important;
+    box-sizing:border-box;
+  }
+  .gm-search{
+    flex:1 0 100% !important;
+    width:100% !important;
+    box-sizing:border-box;
+    padding:9px 12px !important;
+    font-size:14px !important;
+  }
+  .gm-reset{
+    flex:1 0 100% !important;
+    padding:8px !important;
+  }
+}
+
+/* ── 4) إصلاح s4-stats بشكل قاطع (5 إحصاءات تخرج عن الشاشة) ── */
+@media (max-width: 600px){
+  .s4-stats{
+    display:grid !important;
+    grid-template-columns:repeat(3,1fr) !important;
+    gap:6px !important;
+    padding:8px !important;
+    overflow:visible !important;
+  }
+  .s4-stat{
+    flex:none !important;
+    min-width:0 !important;
+    max-width:none !important;
+    width:100% !important;
+    padding:7px 4px !important;
+    font-size:9px !important;
+    text-align:center;
+    box-sizing:border-box;
+  }
+  .s4-stat span{ font-size:18px !important; }
+}
+
+/* ── 5) إصلاح الكانبان بشكل قاطع (الأعمدة تخرج عن الشاشة) ── */
+@media (max-width: 600px){
+  .kanban-board{
+    display:flex !important;
+    flex-direction:column !important;
+    flex-wrap:nowrap !important;
+    gap:10px !important;
+    padding:10px !important;
+    width:100% !important;
+    box-sizing:border-box !important;
+    overflow:visible !important;
+  }
+  .kanban-col{
+    flex:none !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+  }
+}
+
+/* ── 6) إصلاح الرسوم البيانية المتداخلة (نصوص فوق نصوص) ── */
+@media (max-width: 600px){
+  /* صناديق الرسم في قسم التحليل */
+  .chart-grid-2,
+  .chart-grid-3,
+  [class*="exec-chart-grid"]{
+    grid-template-columns:1fr !important;
+    gap:14px !important;
+  }
+  /* canvas نفسها - منع التمدد الجانبي */
+  canvas{ max-width:100% !important; height:auto !important; }
+  /* الرسوم الكبيرة (cReps, cResp) - تتراجع إلى عرض الشاشة */
+  canvas#cReps, canvas#cResp, canvas[width="980"]{
+    max-width:100% !important;
+    width:100% !important;
+    height:auto !important;
+  }
+  /* لتجنب تداخل النصوص داخل الـ doughnut، نُكبّر الصندوق */
+  .cw, .chart-box .cw{
+    height:260px !important;
+    min-height:260px !important;
+    width:100% !important;
+    max-width:100% !important;
+    overflow:hidden !important;
+    box-sizing:border-box;
+  }
+  /* القسم 02 التحليل في الواجهة التنفيذية */
+  .exec-grid, .exec-row, [class*="grid-2"]{
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+  }
+}
+
+/* ── 7) منع overflow أفقي للصفحة كلها ── */
+@media (max-width: 600px){
+  html, body{
+    max-width:100vw !important;
+    overflow-x:hidden !important;
+  }
+  #appScreen, .sbody, .spanel{
+    max-width:100vw !important;
+    overflow-x:hidden !important;
+  }
+  /* عناصر فرعية - نسمح بـ scroll أفقي داخلي حيث يلزم (مثل الجداول) */
+  .s1-table-wrap{ overflow-x:auto !important; }
+}
+
+/* ╚═══ END MOBILE-V2-FIX ═══════════════════════════════════════ */
 
 /* ── قسم المبادرات s5 ── */
 #panel-s5.active{display:flex!important;flex-direction:column;overflow:hidden}
