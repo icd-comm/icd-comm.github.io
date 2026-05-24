@@ -10518,7 +10518,7 @@ var _sj = window.SecurityCore.safeJsonParse;
 
 var SB_CONFIG={
   url:'https://quaosjduxutnqhretejo.supabase.co',
-  key:'sb_publishable_7EpFx4cOzztzJoDqT8cykg_TM1N7h25'
+  key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1YW9zamR1eHV0bnFocmV0ZWpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTMxMjYsImV4cCI6MjA4OTg2OTEyNn0.s-OV34SbiAMYFSUq82h5aYgvNNrmcbTGiEYshIhtfxs'
 };
 
 /* ══════════════════════════════════════════════════════
@@ -31169,6 +31169,7 @@ async function sbUploadFile(file, pathOrProgress, onProgress) {
       {
         method: 'POST',
         headers: {
+          'apikey': SB_CONFIG.key,
           'Authorization': 'Bearer ' + SB_CONFIG.key,
           'x-upsert': 'true'
         },
@@ -31228,7 +31229,10 @@ window.testBucket = async function(){
   console.log('Bucket:', SB_STORAGE_BUCKET);
   try {
     var res = await fetch(SB_CONFIG.url + '/storage/v1/bucket/' + SB_STORAGE_BUCKET, {
-      headers: { 'Authorization': 'Bearer ' + SB_CONFIG.key }
+      headers: {
+        'apikey': SB_CONFIG.key,
+        'Authorization': 'Bearer ' + SB_CONFIG.key
+      }
     });
     console.log('Bucket status:', res.status);
     var data = await res.text();
