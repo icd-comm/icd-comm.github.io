@@ -9049,8 +9049,34 @@ function openScopedMyMinutesNotes(di, mi){
 window._docsState = { expanded:{}, search:'' };
 
 function _docsSafeName(s){
-  /* تنظيف اسم للاستخدام في مسار التخزين */
-  return String(s||'').replace(/[\/\\:?"<>|]/g,'_').slice(0,80);
+  /* تنظيف اسم للاستخدام في مسار Supabase Storage.
+     [PATH-FIX 2026-05-25 v2] إصلاح نهائي لخطأ InvalidKey:
+     Supabase Storage (مبني على Amazon S3) يرفض أي حرف غير ASCII
+     في مسار أو اسم الملف. الحل: نُحوّل كل شيء لـ ASCII آمن. */
+  var str = String(s||'').trim();
+  if(!str) return 'item';
+
+  /* نحاول استخراج الامتداد إن وُجد */
+  var ext = '';
+  var dotIdx = str.lastIndexOf('.');
+  if(dotIdx > 0 && dotIdx > str.length - 8){  /* امتداد معقول < 7 حرف */
+    ext = str.substring(dotIdx).toLowerCase().replace(/[^\w.]/g,'');
+    str = str.substring(0, dotIdx);
+  }
+
+  /* تحويل الاسم لـ ASCII آمن */
+  var ascii = str
+    .replace(/[^\x20-\x7E]/g, '')         /* إزالة كل ما ليس ASCII قابل للطباعة */
+    .replace(/[^\w-]/g, '_')                /* أي شيء ليس حرف/رقم/شرطة → _ */
+    .replace(/_+/g, '_')                    /* _ متتالية → واحدة */
+    .replace(/^_+|_+$/g, '');               /* قص _ من الأطراف */
+
+  /* إن صار فارغاً (الاسم كان عربي بالكامل)، نولّد معرّفاً عشوائياً */
+  if(!ascii){
+    ascii = 'f' + Date.now().toString(36) + Math.random().toString(36).substring(2,6);
+  }
+
+  return (ascii + ext).slice(0,80);
 }
 
 function _docsCollectAll(){
@@ -9287,15 +9313,17 @@ function _docsUpload(di, mi, scope){
       try{
         if(typeof showToast==='function') showToast('جارٍ رفع: '+file.name,false);
         var d = D[di];
-        var commName = _docsSafeName(d.n || ('comm-'+di));
+        /* [PATH-FIX 2026-05-25 v2] استخدام معرّف رقمي بدل الاسم العربي:
+           Supabase Storage يرفض العربية في المسار. الاسم الأصلي محفوظ في metadata. */
+        var commName = 'comm_' + di;
         var pathParts = ['committees', commName];
         if(scope==='decree'){
           pathParts.push('decree');
         } else if(scope==='committee'){
           pathParts.push('documents');
         } else if(scope==='meeting' || scope==='minutes'){
-          var meetNum = (GM(di)[mi] && GM(di)[mi].meetNum) || (mi+1);
-          pathParts.push('meetings', 'meeting-'+_docsSafeName(meetNum));
+          /* استخدام index الاجتماع (mi) بدل meetNum لضمان ASCII */
+          pathParts.push('meetings', 'meeting_' + mi);
           if(scope==='minutes') pathParts.push('minutes');
         }
         var ts = Date.now();
