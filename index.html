@@ -9079,6 +9079,111 @@ function _docsSafeName(s){
   return (ascii + ext).slice(0,80);
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   [DND 2026-05-25] نظام Drag & Drop موحّد لكل النظام
+   ──────────────────────────────────────────────────────────────────
+   _dndEnable(el, onFile, options): يُفعّل السحب والإفلات على أي عنصر
+   - el: عنصر HTML
+   - onFile(file): دالة تُستدعى عند إفلات ملف
+   - options: { accept: ['pdf','doc','docx'...], maxSize: bytes }
+   ════════════════════════════════════════════════════════════════════ */
+function _dndEnable(el, onFile, options){
+  if(!el || !onFile || el._dndEnabled) return;
+  el._dndEnabled = true;
+  options = options || {};
+  var accept = options.accept || ['pdf','doc','docx','ppt','pptx','xls','xlsx','png','jpg','jpeg'];
+  var maxSize = options.maxSize || (25*1024*1024);
+
+  /* حفظ الستايل الأصلي للاسترجاع */
+  var origBg = el.style.background || '';
+  var origBorder = el.style.border || '';
+  var origTransition = el.style.transition || '';
+
+  function highlight(on){
+    if(on){
+      el.style.transition = 'all 0.15s';
+      el.style.background = '#e3f2fd';
+      el.style.border = '2px dashed #208caa';
+    } else {
+      el.style.background = origBg;
+      el.style.border = origBorder;
+      el.style.transition = origTransition;
+    }
+  }
+
+  /* منع السلوك الافتراضي للمتصفح (فتح الملف في نافذة جديدة) */
+  ['dragenter','dragover','dragleave','drop'].forEach(function(evt){
+    el.addEventListener(evt, function(e){
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  });
+
+  el.addEventListener('dragenter', function(){ highlight(true); });
+  el.addEventListener('dragover',  function(){ highlight(true); });
+  el.addEventListener('dragleave', function(e){
+    /* تجاهل dragleave على عناصر فرعية */
+    if(e.target === el) highlight(false);
+  });
+
+  el.addEventListener('drop', function(e){
+    highlight(false);
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if(!files || !files.length) return;
+    var file = files[0];
+
+    /* تحقق من النوع */
+    var ext = (file.name.split('.').pop() || '').toLowerCase();
+    if(accept.indexOf(ext) === -1){
+      if(typeof showToast==='function') showToast('نوع الملف غير مدعوم. المسموح: '+accept.join(', '),true);
+      return;
+    }
+
+    /* تحقق من الحجم */
+    if(file.size > maxSize){
+      var mb = Math.round(maxSize/1024/1024);
+      if(typeof showToast==='function') showToast('حجم الملف يتجاوز '+mb+' ميجابايت',true);
+      return;
+    }
+
+    onFile(file);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   [DND 2026-05-25] تفعيل تلقائي على كل أزرار _docsUpload
+   ──────────────────────────────────────────────────────────────────
+   يبحث في الـ container عن أي عنصر فيه onclick="_docsUpload(...)"
+   ويُفعّل عليه drag&drop يستدعي نفس الدالة بنفس المعاملات + الملف.
+   ════════════════════════════════════════════════════════════════════ */
+function _dndEnableUploadButtons(container){
+  try{
+    if(!container) return;
+    var buttons = container.querySelectorAll('[onclick*="_docsUpload"]');
+    buttons.forEach(function(btn){
+      if(btn._dndEnabled) return;
+      var onclickStr = btn.getAttribute('onclick') || '';
+      /* استخراج المعاملات من onclick */
+      var m = onclickStr.match(/_docsUpload\s*\(\s*(\d+)\s*,\s*([\dnull]+)\s*,\s*&quot;(\w+)&quot;/);
+      if(!m) m = onclickStr.match(/_docsUpload\s*\(\s*(\d+)\s*,\s*([\dnull]+)\s*,\s*['"](\w+)['"]/);
+      if(!m) return;
+      var di = parseInt(m[1], 10);
+      var mi = m[2] === 'null' ? null : parseInt(m[2], 10);
+      var scope = m[3];
+      _dndEnable(btn, function(file){
+        _docsUpload(di, mi, scope, file);
+      });
+      /* إضافة تلميح بصري */
+      var origTitle = btn.getAttribute('title') || '';
+      if(origTitle.indexOf('اسحب') === -1){
+        btn.setAttribute('title', origTitle + (origTitle?' • ':'') + 'يمكنك سحب الملف هنا أيضاً');
+      }
+    });
+  }catch(e){
+    console.warn('[dndEnableUploadButtons]', e);
+  }
+}
+
 function _docsCollectAll(){
   /* يجمع كل الوثائق من D و GM. يُطبّق العزل للمخصّص. */
   var out = [];
@@ -9104,8 +9209,36 @@ function _docsCollectAll(){
       };
       commDocs.meetings.push(meetingDocs);
     });
+
+    /* [SORT 2026-05-25] حساب آخر تعديل (أحدث uploadedAt من أي ملف في اللجنة) */
+    var lastTs = 0;
+    function checkFile(f){
+      if(f && f.uploadedAt){
+        var t = new Date(f.uploadedAt).getTime();
+        if(!isNaN(t) && t > lastTs) lastTs = t;
+      }
+    }
+    checkFile(commDocs.decree);
+    commDocs.docs.forEach(checkFile);
+    commDocs.meetings.forEach(function(m){
+      checkFile(m.minutes_pdf);
+      m.docs.forEach(checkFile);
+    });
+    commDocs.lastModified = lastTs;
+
     out.push(commDocs);
   });
+
+  /* [SORT 2026-05-25] ترتيب تنازلي حسب آخر تعديل (الأحدث أولاً)
+     - اللجان التي رُفعت لها ملفات حديثاً تظهر في الأعلى
+     - اللجان التي لا تحتوي ملفات (lastModified=0) تظهر في الأسفل بترتيب أصلي */
+  out.sort(function(a, b){
+    if(a.lastModified === 0 && b.lastModified === 0) return a.di - b.di;
+    if(a.lastModified === 0) return 1;   /* a للأسفل */
+    if(b.lastModified === 0) return -1;  /* b للأسفل */
+    return b.lastModified - a.lastModified;  /* الأحدث أولاً */
+  });
+
   return out;
 }
 
@@ -9162,12 +9295,32 @@ function renderDocs(){
         return a + (m.minutes_pdf?1:0) + (m.docs||[]).length;
       },0);
 
+      /* [SORT 2026-05-25] تنسيق آخر تعديل للعرض */
+      var lastModInfo = '';
+      if(c.lastModified > 0){
+        var lastDate = new Date(c.lastModified);
+        var now = new Date();
+        var diffDays = Math.floor((now - lastDate) / (1000*60*60*24));
+        var dateStr;
+        if(diffDays === 0) dateStr = 'اليوم';
+        else if(diffDays === 1) dateStr = 'أمس';
+        else if(diffDays < 7) dateStr = 'قبل ' + diffDays + ' أيام';
+        else if(diffDays < 30) dateStr = 'قبل ' + Math.floor(diffDays/7) + ' أسابيع';
+        else dateStr = lastDate.toISOString().slice(0,10);
+        var isRecent = diffDays <= 7;
+        lastModInfo = '<span style="font-size:10px;color:'+(isRecent?'#1d8a4e':'#94a3b8')+';margin-right:8px;display:inline-flex;align-items:center;gap:3px'+(isRecent?';background:#e8f5e9;padding:2px 7px;border-radius:10px':'')+'">'
+          +(isRecent?'<svg width="9" height="9" viewBox="0 0 24 24" fill="#1d8a4e"><circle cx="12" cy="12" r="6"/></svg>':'')
+          +'آخر تعديل: '+dateStr+'</span>';
+      } else {
+        lastModInfo = '<span style="font-size:10px;color:#cbd5e1;margin-right:8px">بدون ملفات</span>';
+      }
+
       html += '<div style="background:#fff;border:1px solid #d4edf0;border-radius:11px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
         +'<div onclick="_docsToggle(\''+commId+'\')" style="background:linear-gradient(135deg,#fafdfd,#f0f7f9);padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:'+(isOpen?'1px solid #e0e9e3':'none')+'">'
           +'<span style="font-size:14px;color:#1d8a4e;transition:transform .2s;display:inline-block'+(isOpen?';transform:rotate(90deg)':'')+'">&#9656;</span>'
           +'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1d8a4e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
           +'<div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#003944">'+e(c.name)+'</div>'
-          +'<div style="font-size:11px;color:#757bbb;margin-top:2px">'+commCount+' وثيقة · '+c.meetings.length+' اجتماع</div></div>'
+          +'<div style="font-size:11px;color:#757bbb;margin-top:2px;display:flex;align-items:center;flex-wrap:wrap">'+commCount+' وثيقة · '+c.meetings.length+' اجتماع'+lastModInfo+'</div></div>'
           +(canDo('edit_committee')?'<button onclick="event.stopPropagation();_docsUpload('+c.di+',null,&quot;committee&quot;)" title="رفع وثيقة جديدة للجنة" style="background:linear-gradient(135deg,#1d8a4e,#27ae60);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">&#43; رفع وثيقة</button>':'')
         +'</div>';
 
@@ -9239,6 +9392,11 @@ function renderDocs(){
     });
 
     body.innerHTML = html || '<div style="text-align:center;padding:40px;color:#94a3b8">لا توجد نتائج للبحث</div>';
+
+    /* [DND 2026-05-25] تفعيل Drag & Drop على كل أزرار الرفع */
+    if(typeof _dndEnableUploadButtons === 'function'){
+      _dndEnableUploadButtons(body);
+    }
   }catch(err){
     console.error('[renderDocs]', err);
     var b = document.getElementById('docsBody');
@@ -9268,7 +9426,16 @@ function _docsFileCard(file, di, mi, scope, arrayIdx){
   var size = (typeof file==='object' && file.size) ? _docsHumanSize(file.size) : '';
   var auto = (typeof file==='object' && file.autoSync) ? true : false;
   var icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-  var canDelete = canDo('edit_meeting') && (scope==='committee' || scope==='meeting');
+  /* [DOCDEL-FIX 2026-05-25] السماح بالحذف لكل الأنواع مع تطبيق الصلاحيات المناسبة:
+     - decree (قرار التشكيل): يحتاج edit_committee
+     - committee (وثائق اللجنة): يحتاج edit_committee أو edit_meeting
+     - meeting/minutes (وثائق ومحاضر الاجتماعات): يحتاج edit_meeting */
+  var canDelete = false;
+  if(scope==='decree' || scope==='committee'){
+    canDelete = canDo('edit_committee') || canDo('edit_meeting');
+  } else if(scope==='meeting' || scope==='minutes'){
+    canDelete = canDo('edit_meeting');
+  }
   return '<div style="background:#fff;border:1px solid #e0e9f5;border-radius:7px;padding:8px 12px;margin-bottom:5px;display:flex;align-items:center;gap:8px;font-size:12px">'
     +icon
     +'<div style="flex:1;min-width:0">'
@@ -9291,19 +9458,18 @@ function _docsHumanSize(b){
   return (b/1024/1024).toFixed(2)+' MB';
 }
 
-function _docsUpload(di, mi, scope){
-  /* فتح اختيار ملف من الجهاز → رفع لـStorage → حفظ metadata */
+function _docsUpload(di, mi, scope, droppedFile){
+  /* [DND-FIX 2026-05-25] دعم drag&drop: إن مُرّر droppedFile، نستخدمه مباشرة.
+     وإلا نفتح dialog اختيار ملف من الجهاز. */
   try{
     /* عزل: المخصّص يرفع فقط في لجانه */
     if(typeof _isCommitteeInScope==='function' && !_isCommitteeInScope(di)){
       if(typeof showToast==='function') showToast('هذه اللجنة خارج نطاق صلاحياتك',true);
       return;
     }
-    var inp = document.createElement('input');
-    inp.type='file';
-    inp.accept='.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg';
-    inp.onchange = async function(){
-      var file = inp.files && inp.files[0];
+
+    /* الدالة الفعلية للرفع - مُعزّولة لإعادة الاستخدام */
+    var doUpload = async function(file){
       if(!file) return;
       /* حدّ 25MB */
       if(file.size > 25*1024*1024){
@@ -9330,7 +9496,6 @@ function _docsUpload(di, mi, scope){
         var safeFile = ts+'_'+_docsSafeName(file.name);
         var fullPath = pathParts.join('/')+'/'+safeFile;
         /* رفع عبر sbUploadFile الموجودة */
-        /* [SBUPLOAD-EXPOSE-FIX] نفحص في window أيضاً لأنّها معرَّفة في كتلة <script> مختلفة */
         var _uploader = (typeof sbUploadFile === 'function')
                           ? sbUploadFile
                           : (typeof window.sbUploadFile === 'function' ? window.sbUploadFile : null);
@@ -9368,11 +9533,26 @@ function _docsUpload(di, mi, scope){
         if(typeof saveImmediately==='function') saveImmediately();
         else if(typeof scheduleSave==='function') scheduleSave();
         if(typeof showToast==='function') showToast('تم رفع الوثيقة بنجاح',false);
-        renderDocs();
+        if(typeof renderDocs==='function') renderDocs();
       }catch(e){
         console.error('[docsUpload]', e);
         if(typeof showToast==='function') showToast('خطأ أثناء الرفع: '+(e.message||e),true);
       }
+    };
+
+    /* المسار 1: ملف من drag&drop */
+    if(droppedFile && droppedFile.name){
+      doUpload(droppedFile);
+      return;
+    }
+
+    /* المسار 2: فتح dialog اختيار ملف */
+    var inp = document.createElement('input');
+    inp.type='file';
+    inp.accept='.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg';
+    inp.onchange = function(){
+      var file = inp.files && inp.files[0];
+      doUpload(file);
     };
     inp.click();
   }catch(e){
@@ -9389,16 +9569,26 @@ function _docsDelete(di, mi, scope, arrayIdx){
     }
     if(!confirm('تأكيد حذف الوثيقة؟ (لا يمكن التراجع)')) return;
     var d = D[di];
+    /* [DOCDEL-FIX 2026-05-25] دعم كل scopes: committee/meeting/decree/minutes */
     if(scope==='committee' && arrayIdx!=null && Array.isArray(d.documents)){
       d.documents.splice(arrayIdx,1);
     } else if(scope==='meeting' && mi!=null && arrayIdx!=null){
       var m = GM(di)[mi];
       if(Array.isArray(m.documents)) m.documents.splice(arrayIdx,1);
+    } else if(scope==='decree'){
+      /* حذف قرار التشكيل */
+      d.decree = null;
+    } else if(scope==='minutes' && mi!=null){
+      /* حذف محضر الاجتماع */
+      var mm = GM(di)[mi];
+      if(mm) mm.minutes_pdf = null;
     }
     if(typeof saveImmediately==='function') saveImmediately();
     else if(typeof scheduleSave==='function') scheduleSave();
     if(typeof showToast==='function') showToast('حُذفت الوثيقة',false);
-    renderDocs();
+    if(typeof renderDocs==='function') renderDocs();
+    /* إعادة رسم باقي الواجهات إن لزم */
+    if(typeof renderD==='function') renderD();
   }catch(e){
     console.error('[docsDelete]', e);
     if(typeof showToast==='function') showToast('تعذّر الحذف',true);
@@ -31047,6 +31237,16 @@ function gmOpenMeeting(id){
     : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> اجتماع جديد';
   document.getElementById('gmMtgBody').innerHTML = gmBuildMeetingForm(m);
   shM('gmMtgModal');
+
+  /* [DND 2026-05-25] تفعيل drag&drop على منطقة المرفقات */
+  setTimeout(function(){
+    var attachList = document.getElementById('gmAttachList');
+    if(attachList && typeof _dndEnable === 'function'){
+      _dndEnable(attachList.parentElement || attachList, function(file){
+        gmUploadFileObj(file);
+      }, { accept: ['pdf','doc','docx','ppt','pptx'] });
+    }
+  }, 100);
   // ربط مقابض السحب وإعادة تعيين الحجم للافتراضي
   var modal = document.querySelector('#gmMtgModal .modal');
   if(modal){
@@ -31082,6 +31282,10 @@ function gmBuildMeetingForm(m){
     html += gmBuildAttachRow(at, i);
   });
   html += '</div>';
+  /* [DND 2026-05-25] لافتة بصرية لمنطقة السحب والإفلات */
+  html += '<div style="margin:6px 0;padding:10px;border:2px dashed #c0d6e8;border-radius:8px;text-align:center;color:#94a3b8;font-size:11px;font-family:inherit">'
+       + '📎 اسحب وأفلت ملف PDF/Word/PPT هنا، أو استخدم الأزرار أدناه'
+       + '</div>';
   html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
   html += '<button type="button" class="gm-attach-add" onclick="gmAddAttach()">+ إضافة رابط</button>';
   html += '<label class="gm-attach-upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> رفع ملف (PDF/Word/PPT)';
@@ -31284,22 +31488,35 @@ window.testBucket = async function(){
 };
 
 function gmUploadFile(inp){
-  var file = inp.files && inp.files[0];
-  if(!file){ inp.value=''; return; }
+  /* [DND-FIX 2026-05-25] الواجهة العامة - تدعم input أو File مباشرة */
+  var file;
+  if(inp && inp.files && inp.files[0]){
+    /* استدعاء عادي من input */
+    file = inp.files[0];
+    inp.value = '';
+  } else if(inp && inp.name){
+    /* استدعاء من drag&drop: inp هو File مباشرة */
+    file = inp;
+  }
+  if(!file) return;
+  gmUploadFileObj(file);
+}
+
+function gmUploadFileObj(file){
+  /* الدالة الفعلية للرفع - تستقبل File مباشرة */
+  if(!file) return;
 
   var name = (file.name||'').toLowerCase();
   var allowed = ['.pdf','.doc','.docx','.ppt','.pptx'];
   var ok = allowed.some(function(ext){ return name.endsWith(ext); });
   if(!ok){
     showToast('يُقبل فقط PDF و Word و PowerPoint', true);
-    inp.value=''; return;
+    return;
   }
   if(file.size > 25*1024*1024){
     showToast('حجم الملف يتجاوز 25 ميغابايت', true);
-    inp.value=''; return;
+    return;
   }
-
-  inp.value = '';
 
   /* إظهار مؤشر التحميل */
   var list = document.getElementById('gmAttachList');
