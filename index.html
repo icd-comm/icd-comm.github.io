@@ -5353,6 +5353,7 @@ body.um-resizing, body.um-resizing *{ user-select:none !important; cursor:inheri
 .gm-kan-col-body{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:7px}
 .gm-kan-col-body.drop-over{background:rgba(30,136,229,.08)}
 .gm-kan-col[data-status="معلق"] .gm-kan-col-hdr{color:#6c757d;border-bottom-color:#adb5bd}
+.gm-kan-col[data-status="على المسار"] .gm-kan-col-hdr{color:#1673a4;border-bottom-color:#208caa}
 .gm-kan-col[data-status="قيد الانتظار"] .gm-kan-col-hdr{color:#208caa;border-bottom-color:#208caa}
 .gm-kan-col[data-status="جارٍ"] .gm-kan-col-hdr{color:#382972;border-bottom-color:#f39c12}
 .gm-kan-col[data-status="متأخر"] .gm-kan-col-hdr{color:#922b21;border-bottom-color:#e74c3c}
@@ -5363,6 +5364,7 @@ body.um-resizing, body.um-resizing *{ user-select:none !important; cursor:inheri
 .gm-kan-card:active{cursor:grabbing}
 .gm-kan-card.dragging{opacity:.5}
 .gm-kan-card[data-status="معلق"]{border-right-color:#adb5bd}
+.gm-kan-card[data-status="على المسار"]{border-right-color:#208caa}
 .gm-kan-card[data-status="قيد الانتظار"]{border-right-color:#208caa}
 .gm-kan-card[data-status="جارٍ"]{border-right-color:#f39c12}
 .gm-kan-card[data-status="متأخر"]{border-right-color:#e74c3c}
@@ -5424,6 +5426,7 @@ body.um-resizing, body.um-resizing *{ user-select:none !important; cursor:inheri
 .gm-gantt-bar:hover{filter:brightness(1.12);transform:scaleY(1.1);box-shadow:0 3px 8px rgba(32,140,170,.4);z-index:2}
 .gm-gantt-bar[data-status="منجز"]{background:linear-gradient(135deg,#27ae60,#1d6a3b)}
 .gm-gantt-bar[data-status="متأخر"]{background:linear-gradient(135deg,#e74c3c,#922b21)}
+.gm-gantt-bar[data-status="على المسار"]{background:linear-gradient(135deg,#208caa,#1673a4)}
 .gm-gantt-bar[data-status="جارٍ"]{background:linear-gradient(135deg,#f39c12,#c87f0a)}
 .gm-gantt-bar[data-status="قيد الانتظار"]{background:linear-gradient(135deg,#208caa,#208caa)}
 .gm-gantt-bar[data-status="معلق"]{background:linear-gradient(135deg,#95a5a6,#7f8c8d)}
@@ -5964,9 +5967,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
           <select id="s4FltStatus" onchange="renS4()"
             style="width:100%;background:#fff;color:#003944;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 6px;font-size:11px;font-family:inherit;cursor:pointer;outline:none">
             <option value="">كل الحالات</option>
-            <option>معلق</option>
-            <option>قيد الانتظار</option>
-            <option>جارٍ</option>
+            <option>على المسار</option>
             <option>متأخر</option>
             <option>منجز</option>
           </select>
@@ -6027,9 +6028,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
         <div class="gm-filter-label">تصفية</div>
         <select class="gm-flt" id="gmFltStatus" onchange="gmRender()">
           <option value="">كل حالات التكليفات</option>
-          <option>معلق</option>
-          <option>قيد الانتظار</option>
-          <option>جارٍ</option>
+          <option>على المسار</option>
           <option>متأخر</option>
           <option>منجز</option>
         </select>
@@ -8222,7 +8221,7 @@ function applyIMPForNew(){
       if(mm.ref)agItems.push({text:mm.ref});
       if(mm.tx_num)agItems.push({text:'رقم المعاملة: '+mm.tx_num+(mm.tx_date?' تاريخ: '+mm.tx_date:'')});
       var tasks=(mm.tasks||[]).map(function(t){
-        return{task:t.task||'',responsible:t.responsible||'',status:t.status||'قيد الانتظار',
+        return{task:t.task||'',responsible:t.responsible||'',status:t.status||'على المسار',
                 dateFrom:t.dateFrom||'',dateTo:t.dateTo||'',notes:t.notes||'',update:t.update||''};
       });
       M[di].push({id:Date.now()+Math.random(),meetNum:parseInt(mm.meetNum)||0,
@@ -8251,7 +8250,7 @@ function applyIMP(){
       if(mm.ref)agItems.push({text:mm.ref});
       if(mm.tx_num)agItems.push({text:'رقم المعاملة: '+mm.tx_num+(mm.tx_date?' تاريخ: '+mm.tx_date:'')});
       var tasks=(mm.tasks||[]).map(function(t){
-        return{task:t.task||'',responsible:t.responsible||'',status:t.status||'قيد الانتظار',
+        return{task:t.task||'',responsible:t.responsible||'',status:t.status||'على المسار',
                 dateFrom:t.dateFrom||'',dateTo:t.dateTo||'',notes:t.notes||'',update:t.update||''};
       });
       M[di].push({id:Date.now()+Math.random(),meetNum:parseInt(mm.meetNum)||0,
@@ -8687,7 +8686,7 @@ function _execOpenReadOnlyView(di, mi){
           +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:12px;color:#382972">'+e(t.task||'')+'</td>'
           +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:11px;color:#1673a4">'+e(t.responsible||'')+'</td>'
           +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:11px;color:#666;text-align:center">'+e(t.dateTo||'—')+'</td>'
-          +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:10.5px;text-align:center"><span style="background:#f0f4ff;color:#1673a4;border-radius:10px;padding:2px 8px">'+e(t.status||'قيد الانتظار')+'</span></td>'
+          +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:10.5px;text-align:center"><span style="background:#f0f4ff;color:#1673a4;border-radius:10px;padding:2px 8px">'+e(t.status||'على المسار')+'</span></td>'
         +'</tr>';
       }).join('');
       tasksBlock = '<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:700;color:#208caa;border-right:5px solid #208caa;padding-right:10px;margin-bottom:9px">التكليفات الصادرة ('+m.tasks.length+')</div>'
@@ -8769,47 +8768,94 @@ function openMinutesReview(di, mi){
 
     var box = document.createElement('div');
     box.id = 'govMinutesReviewModal';
-    box.style.cssText = 'position:fixed;inset:0;background:rgba(15,12,32,.62);z-index:99998;display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl;padding:20px;overflow:auto';
+    box.style.cssText = 'position:fixed;inset:0;background:rgba(15,12,32,.66);z-index:99998;display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl;padding:18px;overflow:auto;backdrop-filter:blur(3px)';
 
     var inner = document.createElement('div');
-    inner.style.cssText = 'background:#fff;border-radius:14px;max-width:900px;width:100%;max-height:92vh;box-shadow:0 22px 60px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column';
+    inner.style.cssText = 'background:#f7f8fc;border-radius:18px;max-width:1080px;width:100%;max-height:94vh;box-shadow:0 28px 70px rgba(0,0,0,.4);overflow:hidden;display:flex;flex-direction:column';
+
+    /* ── [GOV-REVIEW-REDESIGN-V3 2026-05-28] مؤشرات الحالة واللون ── */
+    var WF_STEPS = ['مسودة','مُرسَل','قيد المراجعة','معتمد','منشور','مؤرشف'];
+    var statusColor = ws===0?'#94a3b8':(ws===1?'#e67e22':(ws===2?'#9338ff':(ws===3?'#1d8a4e':(ws===4?'#208caa':'#475569'))));
+    /* حساب الأيام منذ آخر حركة (SLA) */
+    var _slaDays = null;
+    try{ if(typeof _slaLastActionDate==='function'){ var _lad=_slaLastActionDate(m); if(_lad && typeof _slaDaysSince==='function') _slaDays=_slaDaysSince(_lad); } }catch(_){}
+    if(_slaDays===null && m.wf_at){ try{ _slaDays=Math.floor((Date.now()-new Date(m.wf_at).getTime())/(1000*60*60*24)); }catch(_){} }
+    var _slaColor = _slaDays===null?'#94a3b8':(_slaDays<=7?'#1d8a4e':(_slaDays<=14?'#e67e22':'#dc2626'));
+    var _slaTxt = _slaDays===null?'—':(_slaDays===0?'اليوم':(_slaDays+' يوم'));
 
     /* ── الترويسة ── */
-    var statusColor = ws===0?'#94a3b8':(ws===1?'#e67e22':(ws===2?'#9338ff':(ws===3?'#1d8a4e':(ws===4?'#208caa':'#003944'))));
     var headerHtml = ''
-      +'<div style="background:linear-gradient(135deg,#1673a4,#003944);color:#fff;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:10px">'
-        +'<div>'
-          +'<div style="font-size:11px;opacity:.82;margin-bottom:3px">مراجعة محضر — قسم إدارة المحاضر والمذكرات</div>'
-          +'<div style="font-size:16px;font-weight:700">'+e(d.n||'لجنة')+' — '+e(meetingLabel)+'</div>'
-          +(m._scopedBy?'<div style="font-size:11px;opacity:.82;margin-top:4px">رُفِع من: '+e(m._scopedBy)+(m._scopedAt?' · '+e(String(m._scopedAt).slice(0,10)):'')+'</div>':'')
+      +'<div style="background:linear-gradient(135deg,#1673a4,#003944);color:#fff;padding:18px 24px 0">'
+        +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">'
+          +'<div style="flex:1;min-width:0">'
+            +'<div style="font-size:10.5px;opacity:.78;margin-bottom:4px;letter-spacing:.3px">مراجعة واعتماد محضر — قسم إدارة المحاضر والمذكرات</div>'
+            +'<div style="font-size:17px;font-weight:800;line-height:1.4">'+e(d.n||'لجنة')+' <span style="opacity:.65">—</span> '+e(meetingLabel)+'</div>'
+            +'<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;font-size:10.5px">'
+              +(m.date?'<span style="background:rgba(255,255,255,.14);border-radius:8px;padding:3px 10px">&#128197; '+e(m.date)+'</span>':'')
+              +(m._scopedBy?'<span style="background:rgba(147,56,160,.4);border-radius:8px;padding:3px 10px">&#128100; رُفِع من: '+e(m._scopedBy)+'</span>':'')
+              +(ws>=1?'<span style="background:rgba(255,255,255,.14);border-radius:8px;padding:3px 10px;color:'+(_slaDays!==null&&_slaDays>14?'#fecaca':'#fff')+'">&#9201; منذ آخر إجراء: '+_slaTxt+'</span>':'')
+              +(Array.isArray(m.tasks)&&m.tasks.length?'<span style="background:rgba(255,255,255,.14);border-radius:8px;padding:3px 10px">&#128203; '+m.tasks.length+' تكليف</span>':'')
+            +'</div>'
+          +'</div>'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
+            +(ws>=3 ? '<span title="اعتُمد رسمياً مع توقيع رقمي" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;font-size:10px;font-weight:800;padding:5px 11px;border-radius:14px;white-space:nowrap">&#9733; موثّق رقميّاً</span>' : '')
+            +'<button id="gmrClose" title="إغلاق" style="background:rgba(255,255,255,.16);color:#fff;border:none;width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:19px;font-family:inherit;flex-shrink:0">×</button>'
+          +'</div>'
         +'</div>'
-        +'<div style="display:flex;align-items:center;gap:8px">'
-          +(ws>=3 ? '<span title="اعتمد رسمياً مع توقيع رقمي" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;font-size:10.5px;font-weight:800;padding:5px 11px;border-radius:14px;display:inline-flex;align-items:center;gap:4px">&#9733; موثّق رقميّاً</span>' : '')
-          +'<span style="background:'+statusColor+';color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:14px">'+e(wsLabel)+'</span>'
-          +'<button id="gmrClose" title="إغلاق" style="background:rgba(255,255,255,.16);color:#fff;border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px;font-family:inherit">×</button>'
+        /* شريط تقدّم سير العمل (stepper) */
+        +'<div style="display:flex;align-items:center;margin-top:16px;padding-bottom:2px;overflow-x:auto">'
+          + WF_STEPS.map(function(lbl,idx){
+              var done = idx<ws, cur = idx===ws;
+              var dotBg = cur?'#fff':(done?'rgba(255,255,255,.92)':'rgba(255,255,255,.25)');
+              var dotCol = cur?statusColor:(done?'#1673a4':'rgba(255,255,255,.6)');
+              var txtCol = (cur||done)?'#fff':'rgba(255,255,255,.55)';
+              var line = idx<WF_STEPS.length-1 ? '<div style="flex:1;height:2px;min-width:14px;background:'+(idx<ws?'rgba(255,255,255,.85)':'rgba(255,255,255,.22)')+'"></div>' : '';
+              return '<div style="display:flex;align-items:center;'+(idx<WF_STEPS.length-1?'flex:1;':'')+'">'
+                +'<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0">'
+                  +'<div style="width:24px;height:24px;border-radius:50%;background:'+dotBg+';color:'+dotCol+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;'+(cur?'box-shadow:0 0 0 4px rgba(255,255,255,.25)':'')+'">'+(done?'&#10003;':(idx+1))+'</div>'
+                  +'<span style="font-size:8.5px;font-weight:700;color:'+txtCol+';white-space:nowrap">'+lbl+'</span>'
+                +'</div>'+line
+              +'</div>';
+            }).join('')
         +'</div>'
+        +'<div style="height:14px"></div>'
       +'</div>';
 
-    /* ── المحتوى الأساسي: المحضر، PDF، التكليفات ── */
+    /* ── المحضر المرفق: معاينة مدمجة ── */
     var pdfRow = '';
-    if(m.minutes_pdf){
+    var _hasMin = (typeof _hasRealMinutes==='function') ? _hasRealMinutes(m) : !!m.minutes_pdf;
+    if(_hasMin){
       var pdfUrl = (typeof m.minutes_pdf==='object' && m.minutes_pdf.url) ? m.minutes_pdf.url : m.minutes_pdf;
+      /* [XSS-HARDEN 2026-05-28] لا نسمح إلا بمخططات http/https — يمنع javascript:/data: */
+      if(pdfUrl && !/^https?:\/\//i.test(String(pdfUrl))) pdfUrl='';
       var pdfName = (typeof m.minutes_pdf==='object' && m.minutes_pdf.name) ? m.minutes_pdf.name : 'محضر مرفق';
+      var _isPdf = pdfUrl && /\.pdf($|\?)/i.test(String(pdfUrl));
       pdfRow = ''
-        +'<div style="background:#faf8ff;border:1px solid #ede8ff;border-radius:9px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">'
-          +'<div style="display:flex;align-items:center;gap:8px;color:#382972;font-size:12px;font-weight:600">'
-            +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9338ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
-            +'<span>محضر مرفق: '+e(pdfName)+'</span>'
+        +'<div style="background:#fff;border:1px solid #e8ecf5;border-radius:12px;padding:0;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid #f0f2f8;background:#faf8ff">'
+            +'<div style="display:flex;align-items:center;gap:9px;color:#382972;font-size:12.5px;font-weight:700;min-width:0">'
+              +'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9338ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+              +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(pdfName)+'</span>'
+            +'</div>'
+            +(pdfUrl ? '<a href="'+e(pdfUrl)+'" target="_blank" rel="noopener" style="background:#9338ff;color:#fff;text-decoration:none;border-radius:8px;padding:7px 15px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0">فتح في تبويب جديد &#8599;</a>' : '<span style="color:#dc2626;font-size:10.5px;font-weight:600">رابط غير صالح</span>')
           +'</div>'
-          +'<a href="'+e(pdfUrl)+'" target="_blank" rel="noopener" style="background:#9338ff;color:#fff;text-decoration:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:700">عرض المحضر المرفق</a>'
+          +(_isPdf
+            ? '<iframe src="'+e(pdfUrl)+'#toolbar=1&navpanes=0" style="width:100%;height:340px;border:none;background:#f4f4f6" title="معاينة المحضر"></iframe>'
+            : '<div style="padding:18px;text-align:center;color:#94a3b8;font-size:12px">الملف ليس بصيغة PDF — استخدم زر الفتح أعلاه للاطلاع</div>')
+        +'</div>';
+    } else {
+      pdfRow = ''
+        +'<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:9px;color:#b91c1c;font-size:12px;font-weight:600">'
+          +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+          +'<span>لا يوجد ملف محضر مرفق بهذا الاجتماع.</span>'
         +'</div>';
     }
 
     var minutesText = m.minutes || m.notes || '';
     var minutesBlock = ''
-      +'<div style="margin-bottom:16px">'
-        +'<div style="font-size:12px;font-weight:700;color:#1673a4;margin-bottom:8px;border-right:4px solid #1673a4;padding-right:10px">نص المحضر</div>'
-        +'<div style="background:#fafbff;border:1px solid #e8ecf5;border-radius:9px;padding:14px;font-size:13px;line-height:1.95;color:#382972;white-space:pre-wrap;max-height:280px;overflow:auto">'
+      +'<div style="background:#fff;border:1px solid #e8ecf5;border-radius:12px;padding:0;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+        +'<div style="font-size:12px;font-weight:700;color:#1673a4;padding:11px 16px;border-bottom:1px solid #f0f2f8;background:#f7fbfd">&#128221; نص المحضر / الملاحظات</div>'
+        +'<div style="padding:15px 17px;font-size:13px;line-height:2;color:#334155;white-space:pre-wrap;max-height:240px;overflow:auto">'
           +(minutesText ? e(minutesText) : '<span style="color:#9ca3af">— لا يوجد نص محضر مكتوب —</span>')
         +'</div>'
       +'</div>';
@@ -8817,24 +8863,27 @@ function openMinutesReview(di, mi){
     var tasksBlock = '';
     if(Array.isArray(m.tasks) && m.tasks.length){
       var taskRows = m.tasks.map(function(t,ti){
+        var _st = t.status||'على المسار';
+        var _stBg = _st==='منجز'?'#d4f5e0':(_st==='متأخر'?'#fde8e8':'#e3f2fd');
+        var _stCol = _st==='منجز'?'#155724':(_st==='متأخر'?'#b91c1c':'#1673a4');
         return '<tr>'
-          +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:12px;color:#666;text-align:center;width:30px">'+(ti+1)+'</td>'
-          +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:12px;color:#382972">'+e(t.task||'')+'</td>'
-          +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:11px;color:#1673a4">'+e(t.responsible||'')+'</td>'
-          +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:11px;color:#666;text-align:center">'+e(t.dateTo||'—')+'</td>'
-          +'<td style="padding:7px 10px;border-bottom:1px solid #eef1f8;font-size:11px;text-align:center"><span style="background:#f0f4ff;color:#1673a4;border-radius:10px;padding:2px 8px">'+e(t.status||'قيد الانتظار')+'</span></td>'
+          +'<td style="padding:8px 11px;border-bottom:1px solid #eef1f8;font-size:12px;color:#94a3b8;text-align:center;width:30px">'+(ti+1)+'</td>'
+          +'<td style="padding:8px 11px;border-bottom:1px solid #eef1f8;font-size:12px;color:#334155">'+e(t.task||'')+'</td>'
+          +'<td style="padding:8px 11px;border-bottom:1px solid #eef1f8;font-size:11px;color:#1673a4;font-weight:600">'+e(t.responsible||'—')+'</td>'
+          +'<td style="padding:8px 11px;border-bottom:1px solid #eef1f8;font-size:11px;color:#64748b;text-align:center">'+e(t.dateTo||'—')+'</td>'
+          +'<td style="padding:8px 11px;border-bottom:1px solid #eef1f8;font-size:11px;text-align:center"><span style="background:'+_stBg+';color:'+_stCol+';border-radius:10px;padding:3px 10px;font-weight:700">'+e(_st)+'</span></td>'
         +'</tr>';
       }).join('');
       tasksBlock = ''
-        +'<div style="margin-bottom:16px">'
-          +'<div style="font-size:12px;font-weight:700;color:#1d8a4e;margin-bottom:8px;border-right:4px solid #1d8a4e;padding-right:10px">التكليفات الصادرة ('+m.tasks.length+')</div>'
-          +'<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #eef1f8;border-radius:9px;overflow:hidden">'
-            +'<thead><tr style="background:#f0fff4">'
-              +'<th style="padding:8px 10px;text-align:center;font-size:11px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">#</th>'
-              +'<th style="padding:8px 10px;text-align:right;font-size:11px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">التكليف</th>'
-              +'<th style="padding:8px 10px;text-align:right;font-size:11px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">المسؤول</th>'
-              +'<th style="padding:8px 10px;text-align:center;font-size:11px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">الاستحقاق</th>'
-              +'<th style="padding:8px 10px;text-align:center;font-size:11px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">الحالة</th>'
+        +'<div style="background:#fff;border:1px solid #e8ecf5;border-radius:12px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+          +'<div style="font-size:12px;font-weight:700;color:#1d8a4e;padding:11px 16px;border-bottom:1px solid #f0f2f8;background:#f0fff4">&#9989; التكليفات الصادرة ('+m.tasks.length+')</div>'
+          +'<table style="width:100%;border-collapse:collapse;background:#fff">'
+            +'<thead><tr style="background:#fafdfb">'
+              +'<th style="padding:9px 11px;text-align:center;font-size:10.5px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">#</th>'
+              +'<th style="padding:9px 11px;text-align:right;font-size:10.5px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">التكليف</th>'
+              +'<th style="padding:9px 11px;text-align:right;font-size:10.5px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">المسؤول</th>'
+              +'<th style="padding:9px 11px;text-align:center;font-size:10.5px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">الاستحقاق</th>'
+              +'<th style="padding:9px 11px;text-align:center;font-size:10.5px;color:#1d8a4e;font-weight:700;border-bottom:1px solid #e0e9e3">الحالة</th>'
             +'</tr></thead>'
             +'<tbody>'+taskRows+'</tbody>'
           +'</table>'
@@ -8845,64 +8894,63 @@ function openMinutesReview(di, mi){
     var logBlock = '';
     if(Array.isArray(m.wf_log) && m.wf_log.length){
       var logRows = m.wf_log.slice().reverse().slice(0,8).map(function(L){
-        var arrow = (typeof WF_LABELS!=='undefined') ? (WF_LABELS[L.from||0]+' → '+WF_LABELS[L.to||0]) : (L.from+'→'+L.to);
-        return '<div style="font-size:11px;color:#666;padding:5px 10px;border-bottom:1px dashed #eef1f8;line-height:1.6">'
+        var arrow = (WF_LABELS[L.from||0]+' → '+WF_LABELS[L.to||0]);
+        return '<div style="font-size:11px;color:#64748b;padding:7px 14px;border-bottom:1px dashed #eef1f8;line-height:1.6">'
           +'<b style="color:#382972">'+e(arrow)+'</b>'
-          +(L.by?' · '+e(L.by):'')
-          +(L.at?' · '+e(String(L.at).slice(0,16).replace('T',' ')):'')
-          +(L.note?'<div style="color:#92400e;background:#fff8e1;border-radius:5px;padding:4px 8px;margin-top:4px;font-size:11px">'+e(L.note)+'</div>':'')
+          +(L.by?' <span style="opacity:.6">·</span> '+e(L.by):'')
+          +(L.at?' <span style="opacity:.6">·</span> '+e(String(L.at).slice(0,16).replace('T',' ')):'')
+          +(L.note?'<div style="color:#92400e;background:#fff8e1;border-radius:6px;padding:5px 9px;margin-top:5px;font-size:11px">&#128172; '+e(L.note)+'</div>':'')
         +'</div>';
       }).join('');
-      logBlock = '<div style="margin-top:14px;background:#fafbff;border:1px solid #eef1f8;border-radius:9px;overflow:hidden">'
-        +'<div style="background:#f0f4ff;padding:7px 12px;font-size:11px;font-weight:700;color:#382972">سجلّ سير العمل (آخر '+Math.min(8,m.wf_log.length)+' حركات)</div>'
+      logBlock = '<div style="background:#fff;border:1px solid #e8ecf5;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+        +'<div style="background:#f7f8fc;padding:9px 14px;font-size:11.5px;font-weight:700;color:#382972;border-bottom:1px solid #f0f2f8">&#128340; سجلّ سير العمل (آخر '+Math.min(8,m.wf_log.length)+' حركات)</div>'
         +logRows
       +'</div>';
     }
 
-    var bodyHtml = '<div style="padding:18px 22px;overflow-y:auto;flex:1;background:#fff">'
+    var bodyHtml = '<div style="padding:18px 22px;overflow-y:auto;flex:1">'
       + pdfRow + minutesBlock + tasksBlock + logBlock
     +'</div>';
 
     /* ── الأزرار: مرنة بحسب الحالة ودور المستخدم ── */
-    var actions = '';
+    var primaryActions = '';   /* قرارات تقدّم الدورة — بارزة */
+    var secondaryActions = ''; /* إجراءات مساعدة — أهدأ */
     if(isAdmin){
-      /* المدير: أزرار قرار كاملة */
       if(ws===1){
-        /* مرفوع للمراجعة → بدء المراجعة أو اعتماد مباشر أو إعادة */
-        actions += '<button class="gmr-act gmr-primary" data-act="approve" title="اعتماد المحضر (1→3)">&#10004; اعتماد</button>';
-        actions += '<button class="gmr-act gmr-secondary" data-act="review" title="بدء المراجعة الرسمية (1→2)">&#9998; بدء المراجعة</button>';
-        actions += '<button class="gmr-act gmr-edit" data-act="edit" title="فتح المحضر لتعديله مباشرة">&#9881; تعديل المحضر</button>';
-        actions += '<button class="gmr-act gmr-warn" data-act="return" title="إعادة المحضر للمنشئ بملاحظات (1→0)">&#8635; إعادة بملاحظات</button>';
+        primaryActions += '<button class="gmr-act gmr-primary" data-act="approve" title="اعتماد المحضر رسمياً (1→3)">&#10004; اعتماد</button>';
+        secondaryActions += '<button class="gmr-act gmr-secondary" data-act="review" title="بدء المراجعة الرسمية (1→2)">&#9998; بدء المراجعة</button>';
+        secondaryActions += '<button class="gmr-act gmr-edit" data-act="edit" title="فتح المحضر لتعديله مباشرة">&#9881; تعديل</button>';
+        secondaryActions += '<button class="gmr-act gmr-warn" data-act="return" title="إعادة المحضر للمنشئ بملاحظات (1→0)">&#8635; إعادة بملاحظات</button>';
       } else if(ws===2){
-        /* قيد المراجعة → اعتماد أو إعادة */
-        actions += '<button class="gmr-act gmr-primary" data-act="approve" title="اعتماد المحضر (2→3)">&#10004; اعتماد</button>';
-        actions += '<button class="gmr-act gmr-edit" data-act="edit" title="فتح المحضر لتعديله مباشرة">&#9881; تعديل المحضر</button>';
-        actions += '<button class="gmr-act gmr-warn" data-act="return" title="إعادة بملاحظات">&#8635; إعادة بملاحظات</button>';
+        primaryActions += '<button class="gmr-act gmr-primary" data-act="approve" title="اعتماد المحضر رسمياً (2→3)">&#10004; اعتماد</button>';
+        secondaryActions += '<button class="gmr-act gmr-edit" data-act="edit" title="فتح المحضر لتعديله مباشرة">&#9881; تعديل</button>';
+        secondaryActions += '<button class="gmr-act gmr-warn" data-act="return" title="إعادة بملاحظات (2→0)">&#8635; إعادة بملاحظات</button>';
       } else if(ws===3){
-        /* معتمد → نشر */
-        actions += '<button class="gmr-act gmr-primary" data-act="publish" title="نشر المحضر للجميع (3→4)">&#9650; نشر</button>';
-        actions += '<button class="gmr-act gmr-edit" data-act="edit" title="فتح للتعديل (يعيد للحالة السابقة)">&#9881; تعديل المحضر</button>';
+        primaryActions += '<button class="gmr-act gmr-primary" data-act="publish" title="نشر المحضر للجميع (3→4)">&#9650; نشر</button>';
+        secondaryActions += '<button class="gmr-act gmr-edit" data-act="edit" title="فتح للتعديل (يعيد للحالة السابقة)">&#9881; تعديل</button>';
       } else if(ws===4){
-        /* منشور → أرشفة */
-        actions += '<button class="gmr-act gmr-secondary" data-act="archive" title="أرشفة المحضر (4→5)">&#128193; أرشفة</button>';
+        primaryActions += '<button class="gmr-act gmr-secondary" data-act="archive" title="أرشفة المحضر (4→5)">&#128193; أرشفة</button>';
       }
     }
-    /* للكل: عرض الاجتماع (المعاينة) + سجلّ الاعتماد */
-    actions += '<button class="gmr-act gmr-view" data-act="auditTrail" title="عرض سجلّ الاعتماد القانوني والتوقيعات">&#128196; سجلّ الاعتماد</button>';
-    actions += '<button class="gmr-act gmr-view" data-act="openCard" title="فتح بطاقة الاجتماع الكاملة">&#128065; فتح البطاقة</button>';
+    /* للكل: إجراءات اطلاع */
+    secondaryActions += '<button class="gmr-act gmr-view" data-act="auditTrail" title="عرض سجلّ الاعتماد القانوني والتوقيعات">&#128196; سجلّ الاعتماد</button>';
+    secondaryActions += '<button class="gmr-act gmr-view" data-act="openCard" title="فتح بطاقة الاجتماع الكاملة">&#128065; فتح البطاقة</button>';
 
     var footerHtml = ''
       +'<style>'
-        +'.gmr-act{border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-family:inherit;font-weight:700;cursor:pointer;color:#fff;transition:transform .1s}'
-        +'.gmr-act:hover{transform:translateY(-1px)}'
-        +'.gmr-primary{background:linear-gradient(135deg,#1d8a4e,#27ae60)}'
+        +'.gmr-act{border:none;border-radius:10px;padding:11px 20px;font-size:13px;font-family:inherit;font-weight:700;cursor:pointer;color:#fff;transition:transform .12s,box-shadow .12s;white-space:nowrap}'
+        +'.gmr-act:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.18)}'
+        +'.gmr-act:active{transform:translateY(0)}'
+        +'.gmr-primary{background:linear-gradient(135deg,#1d8a4e,#27ae60);font-size:14px;padding:12px 28px}'
         +'.gmr-secondary{background:linear-gradient(135deg,#9338ff,#7358a5)}'
         +'.gmr-edit{background:linear-gradient(135deg,#1673a4,#208caa)}'
         +'.gmr-warn{background:linear-gradient(135deg,#e67e22,#d97706)}'
-        +'.gmr-view{background:#f0f4ff;color:#382972}'
+        +'.gmr-view{background:#eef1fb;color:#475569;font-weight:600}'
+        +'.gmr-view:hover{background:#e2e7f5;box-shadow:0 4px 10px rgba(0,0,0,.08)}'
       +'</style>'
-      +'<div style="padding:14px 22px;background:#fafbff;border-top:1px solid #ede8ff;display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;align-items:center">'
-        + actions
+      +'<div style="padding:14px 22px;background:#fff;border-top:1px solid #ede8ff;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">'
+        +'<div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center">'+secondaryActions+'</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center">'+primaryActions+'</div>'
       +'</div>';
 
     inner.innerHTML = headerHtml + bodyHtml + footerHtml;
@@ -9630,11 +9678,24 @@ function wfSubmitMeeting(di, mi){
     var m=GM(di)&&GM(di)[mi];
     if(!m){ if(typeof showToast==='function')showToast('تعذّر إيجاد الاجتماع',true); return; }
     if(wfState(m)!==0){ if(typeof showToast==='function')showToast('المحضر ليس في حالة المسودة',true); return; }
+    /* [GOV-MINUTES-REQUIRED 2026-05-28] منع الرفع للاعتماد دون محضر محمّل فعلياً */
+    if(!_hasRealMinutes(m)){ if(typeof showToast==='function')showToast('لا يمكن الرفع للاعتماد قبل تحميل ملف المحضر — أرفِق محضر الاجتماع (PDF/Word/PPT) أولاً',true); return; }
     var ok=confirm('سترفع المحضر وترسله لقسم إدارة المحاضر والمذكرات للاعتماد. بعد الإرسال يصبح للقراءة عندك حتى يعتمده المدير أو يُعيده بملاحظات.\n\nستجد إشعار قرار المدير في قسم إدارة المحاضر والمذكرات (تبويب "محاضري").\n\nهل تريد المتابعة؟');
     if(!ok)return;
     wfTransition(di, mi, 1, 'تم الرفع والإرسال من المنشئ المخصّص');
   }catch(e){ console.warn('[wfSubmitMeeting]',e); }
 }
+
+/* [GOV-MINUTES-REQUIRED 2026-05-28] هل للاجتماع محضر محمّل فعلياً؟
+   يقبل: object فيه url صالح، أو نص رابط/مرجع غير فارغ. */
+function _hasRealMinutes(m){
+  if(!m) return false;
+  var mp = m.minutes_pdf;
+  if(!mp) return false;
+  if(typeof mp==='object'){ var u=mp.url||''; return !!(u && String(u).trim().length>0); }
+  return String(mp).trim().length>0;
+}
+try{ if(typeof window!=='undefined') window._hasRealMinutes=_hasRealMinutes; }catch(e){}
 
 /* ════════════════════════════════════════════════════════════════════
    [SLA-V1] حساسية الوقت + التفويض + التصعيد — Phase 4
@@ -10500,7 +10561,7 @@ function RC(r){return r&&r.includes('رئيس')?'r-h':r==='عضو'?'r-m':'r-p';}
 function CC(c){return c&&c.includes('للغاية')?'b-top':(c&&(c==='سري'||c==='سرية'))?'b-sec':'';}
 function DC(d){return d==='دائمة'?'b-perm':'b-temp';}
 function SCC(s){return s==='داخلية'?'b-in':s==='خارجية دولية'?'b-intl':'b-ext';}
-function spCls(s){return s==='منجز'?'sp-done':s==='جارٍ'?'sp-wip':s==='متأخر'?'sp-late':'sp-wait';}
+function spCls(s){return s==='منجز'?'sp-done':s==='متأخر'?'sp-late':'sp-wip';}/* [STATUS-UNIFY-V1] على المسار → sp-wip (نشط) */
 function kC(id){if(CI[id]){CI[id].destroy();delete CI[id];}}
 function pct(v,t){return t?Math.round(v/t*100):0;}
 
@@ -12946,6 +13007,7 @@ window.addEventListener('beforeunload', function(e){
 /* تحقق من حالة الاتصال بـ Supabase عند التحميل */
 
 function updateHomeStats(){
+  if(typeof autoUpdateOverdueTasks==='function')autoUpdateOverdueTasks(); /* [OVERDUE-UNIFY] تحديث قبل عرض إحصاءات الرئيسية */
   /* استخدم D مباشرة — كل السجلات في النظام الحالي صالحة بعد isolation في init */
   var _validD = D.filter(function(d){var _i=D.indexOf(d);return govInScope(_i);}); /* [SCOPE-V3] عزل إحصاءات الصفحة الرئيسية على لجان المستخدم */
   var ok=_validD.filter(function(d){return d.st==='مستمرة';}).length;
@@ -13992,7 +14054,7 @@ function renKPIs(){
       m.tasks.forEach(function(t){
         if(t.status==='منجز')dt++;
         else if(t.status==='متأخر')lateT++;
-        else if(t.status==='جارٍ')wipT++;
+        else wipT++;/* على المسار */
       });
     });
   });
@@ -14193,7 +14255,7 @@ if(f==='committees'||f==='all'){
 
 if((f==='tasks'||f==='all')&&aT.length){
   /* ── حالات التكليفات ── */
-  var tStatusColors={'قيد الانتظار':'#f39c12','جارٍ':'#48a883','منجز':'#27ae60','متأخر':'#e74c3c','غير معروف':'#95a5a6'};
+  var tStatusColors={'على المسار':'#48a883','قيد الانتظار':'#f39c12','جارٍ':'#48a883','منجز':'#27ae60','متأخر':'#e74c3c','غير معروف':'#95a5a6'};
   var ts={};
   aT.forEach(function(t){var s=(t.status||'').trim()||'غير معروف';ts[s]=(ts[s]||0)+1;});
   var tK=Object.keys(ts),tV=Object.values(ts),tT=aT.length;
@@ -14273,7 +14335,7 @@ async function exportPPTX(pMode){
     });
   });
   var tDone=allTasks.filter(function(t){return t.status==='منجز';}).length;
-  var tWip=allTasks.filter(function(t){return t.status==='جارٍ';}).length;
+  var tWip=allTasks.filter(function(t){return t.status!=='منجز'&&t.status!=='متأخر';}).length;
   var tLate=allTasks.filter(function(t){return t.status==='متأخر';}).length;
   var tWait=allTasks.filter(function(t){return t.status==='قيد الانتظار';}).length;
   var pctDone=allTasks.length?Math.round(tDone/allTasks.length*100):0;
@@ -14307,7 +14369,7 @@ async function exportPPTX(pMode){
   });
   /* إحصاءات الغلاف */
   var coverStats=pMode==='tasks'?
-    [{n:allTasks.length,l:'إجمالي التكليفات'},{n:tDone,l:'منجز'},{n:tLate,l:'متأخر'},{n:tWip,l:'جارٍ'}]:
+    [{n:allTasks.length,l:'إجمالي التكليفات'},{n:tDone,l:'منجز'},{n:tLate,l:'متأخر'},{n:tWip,l:'على المسار'}]:
     activeSystem==='intl'?[{n:FDP.length,l:'إجمالي المجالس والهيئات الدولية'},{n:ok,l:'مستمرة'},{n:ctyMD,l:'مجلس تنسيقي دولي'},{n:ctyDI,l:'لجنة دولية مشتركة'}]:[{n:FDP.length,l:activeSystem==='intl'?'إجمالي المجالس والهيئات':'إجمالي اللجان'},{n:ok,l:'مستمرة'},{n:ctyL,l:'لجنة'},{n:ctyM,l:'مجلس'}];
   coverStats.forEach(function(s,i){
     var x=1.2+i*2.0;
@@ -14427,7 +14489,7 @@ async function exportPPTX(pMode){
     var tkpis=[
       {n:allTasks.length,l:'إجمالي التكليفات',c:'4A2080',bg:'F3E8FD'},
       {n:tDone+' ('+pctDone+'%)',l:'منجز',c:C.green,bg:C.lightGreen},
-      {n:tWip,l:'جارٍ',c:C.blue,bg:C.lightBlue},
+      {n:tWip,l:'على المسار',c:C.blue,bg:C.lightBlue},
       {n:tLate,l:'متأخر',c:C.red,bg:C.lightRed}
     ];
     tkpis.forEach(function(k,i){
@@ -14512,6 +14574,7 @@ function dashPrint(printMode){
   /* [SCOPED-EXPORT-FIX] حاجز عزل: طباعة لوحة الإحصاءات */
   if(!_scopedBlockOrAllow('طباعة لوحة الإحصاءات'))return;
   if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
+  if(typeof autoUpdateOverdueTasks==='function')autoUpdateOverdueTasks(); /* [OVERDUE-UNIFY] تحديث الحالات قبل التقرير */
   var pMode=printMode||'all';
   var modeLabels=activeSystem==='intl'?{'committees':'تقرير المجالس التنسيقية والدولية','tasks':'تقرير التكليفات الدولية','all':'التقرير الشامل الدولي'}:{'committees':'تقرير المجالس واللجان','tasks':'تقرير التكليفات','all':'التقرير الشامل'};
   var pModeLbl=modeLabels[pMode]||'التقرير الشامل';
@@ -14542,16 +14605,16 @@ function dashPrint(printMode){
   var durT=FDP.filter(function(d){return d.du==='مؤقته';}).length;
   var origA=FDP.filter(function(d){return d.orig==='أساسية';}).length;
   var origB=FDP.filter(function(d){return d.orig==='منبثقة';}).length;
-  var tm=0,tt=0,tDone=0,tWip=0,tWait=0,tLate=0;
+  var tm=0,tt=0,tDone=0,tWip=0,tWait=0,tLate=0,tDoneLate=0;
   FDP.forEach(function(d){
     var i=D.indexOf(d);
     GM(i).forEach(function(m){
       tm++;tt+=m.tasks.length;
       m.tasks.forEach(function(t){
-        if(t.status==='منجز')tDone++;
-        else if(t.status==='جارٍ')tWip++;
+        /* [STATUS-UNIFY-V1] ثلاث حالات: منجز / متأخر / على المسار (tWip) */
+        if(t.status==='منجز'){tDone++;if(t.completedLate&&t.lateDays>0)tDoneLate++;}
         else if(t.status==='متأخر')tLate++;
-        else tWait++;
+        else tWip++; /* على المسار (يشمل أي مسمى قديم) */
       });
     });
   });
@@ -15044,19 +15107,19 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
     if(pMode==='tasks'){
       var _tk_done=allTasks&&allTasks.length?allTasks.filter(function(t){return t.status==='منجز';}).length:tDone;
       var _tk_late=allTasks&&allTasks.length?allTasks.filter(function(t){return t.status==='متأخر';}).length:tLate;
-      var _tk_wip=allTasks&&allTasks.length?allTasks.filter(function(t){return t.status==='جارٍ';}).length:tWip;
+      var _tk_wip=allTasks&&allTasks.length?allTasks.filter(function(t){return t.status!=='منجز'&&t.status!=='متأخر';}).length:tWip;
       var _tk_total=allTasks&&allTasks.length?allTasks.length:tt;
       var _tk_pct=_tk_total?Math.round(_tk_done/_tk_total*100):0;
-      html+='<div class="exec-sum-page" style="margin-top:0">'        +'<div class="esp-head">'          +'<div class="esp-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>'          +'<div><div class="esp-title">ملخص التكليفات</div>'          +'<div class="esp-sub">نظرة شاملة على حالة التكليفات — '+today+'</div></div>'        +'</div>'        +'<div class="esp-kpis">'          +'<div class="esp-kpi" style="background:linear-gradient(135deg,#E1F5E8,#757bbb);border:1px solid #6BBF8A;border-top:3px solid #118C5A"><div class="esp-kpi-n" style="color:#003944">'+_tk_total+'</div><div class="esp-kpi-l" style="color:#003944">إجمالي التكليفات</div></div>'          +'<div class="esp-kpi" style="background:linear-gradient(135deg,#757bbb,#EBE7F5);border:1px solid #208caa;border-top:3px solid #208caa"><div class="esp-kpi-n" style="color:#003944">'+_tk_done+' ('+_tk_pct+'%)</div><div class="esp-kpi-l" style="color:#003944">منجز</div></div>'          +'<div class="esp-kpi" style="background:linear-gradient(135deg,#FEF5DC,#FEEEB0);border:1px solid #E6C050;border-top:3px solid #382972"><div class="esp-kpi-n" style="color:#7A4E00">'+_tk_wip+'</div><div class="esp-kpi-l" style="color:#7A4E00">جارٍ</div></div>'          +'<div class="esp-kpi" style="background:linear-gradient(135deg,#FDECEC,#F8D0D0);border:1px solid #D88080;border-top:3px solid #991B1B"><div class="esp-kpi-n" style="color:#7A1414">'+_tk_late+'</div><div class="esp-kpi-l" style="color:#991B1B">متأخر</div></div>'        +'</div>'      +'</div>';    }
+      html+='<div class="exec-sum-page" style="margin-top:0">'        +'<div class="esp-head">'          +'<div class="esp-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>'          +'<div><div class="esp-title">ملخص التكليفات</div>'          +'<div class="esp-sub">نظرة شاملة على حالة التكليفات — '+today+'</div></div>'        +'</div>'        +'<div class="esp-kpis">'          +'<div class="esp-kpi" style="background:linear-gradient(135deg,#E1F5E8,#757bbb);border:1px solid #6BBF8A;border-top:3px solid #118C5A"><div class="esp-kpi-n" style="color:#003944">'+_tk_total+'</div><div class="esp-kpi-l" style="color:#003944">إجمالي التكليفات</div></div>'          +'<div class="esp-kpi" style="background:linear-gradient(135deg,#757bbb,#EBE7F5);border:1px solid #208caa;border-top:3px solid #208caa"><div class="esp-kpi-n" style="color:#003944">'+_tk_done+' ('+_tk_pct+'%)</div><div class="esp-kpi-l" style="color:#003944">منجز</div></div>'          +'<div class="esp-kpi" style="background:linear-gradient(135deg,#FEF5DC,#FEEEB0);border:1px solid #E6C050;border-top:3px solid #382972"><div class="esp-kpi-n" style="color:#7A4E00">'+_tk_wip+'</div><div class="esp-kpi-l" style="color:#7A4E00">على المسار</div></div>'          +'<div class="esp-kpi" style="background:linear-gradient(135deg,#FDECEC,#F8D0D0);border:1px solid #D88080;border-top:3px solid #991B1B"><div class="esp-kpi-n" style="color:#7A1414">'+_tk_late+'</div><div class="esp-kpi-l" style="color:#991B1B">متأخر</div></div>'        +'</div>'      +'</div>';    }
 
     /* Tasks KPIs */
     html+='<div class="sec">'
       +'<div class="sec-hdr"><span class="sec-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></span><div><div class="sec-title">تحليل التكليفات</div><div class="sec-sub">حالة التكليفات ومستوى الإنجاز</div></div></div>'
       +'<div class="sec-body"><div class="kpi-grid">'
-      +'<div class="kpi-card" style="border-right-color:#118C5A;background:#118C5A10"><div class="kpi-val" style="color:#118C5A">'+tDone+'</div><div class="kpi-lbl">منجز</div><div class="kpi-desc">'+pctDone+'% من الإجمالي</div></div>'
-      +'<div class="kpi-card" style="border-right-color:#1673a4;background:#1A6C7A10"><div class="kpi-val" style="color:#1673a4">'+tWip+'</div><div class="kpi-lbl">جارٍ</div><div class="kpi-desc">قيد التنفيذ الفعلي</div></div>'
-      +'<div class="kpi-card" style="border-right-color:#382972;background:#38297210"><div class="kpi-val" style="color:#382972">'+tWait+'</div><div class="kpi-lbl">قيد الانتظار</div><div class="kpi-desc">لم تبدأ بعد</div></div>'
+      +'<div class="kpi-card" style="border-right-color:#118C5A;background:#118C5A10"><div class="kpi-val" style="color:#118C5A">'+tDone+'</div><div class="kpi-lbl">منجز</div><div class="kpi-desc">'+pctDone+'% من الإجمالي'+(tDoneLate>0?' · منها '+tDoneLate+' متأخر':'')+'</div></div>'
+      +'<div class="kpi-card" style="border-right-color:#1673a4;background:#1A6C7A10"><div class="kpi-val" style="color:#1673a4">'+tWip+'</div><div class="kpi-lbl">على المسار</div><div class="kpi-desc">قيد العمل ضمن المدة</div></div>'
       +'<div class="kpi-card" style="border-right-color:#991B1B;background:#991B1B10"><div class="kpi-val" style="color:#991B1B">'+tLate+'</div><div class="kpi-lbl">متأخر</div><div class="kpi-desc">تجاوزت موعدها</div></div>'
+      +(tDoneLate>0?'<div class="kpi-card" style="border-right-color:#b9770e;background:#b9770e10"><div class="kpi-val" style="color:#b9770e">'+tDoneLate+'</div><div class="kpi-lbl">أُنجز متأخراً</div><div class="kpi-desc">منجز لكن بعد الاستحقاق</div></div>':'')
       +'</div></div></div>';
 
     /* Tasks charts */
@@ -15065,7 +15128,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
       +'<div class="sec-body"><div class="chart-grid-2">'
       +'<div class="chart-box"><div class="chart-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> توزيع حالات التكليفات</div><div class="chart-sub">'+tt+' تكليف إجمالي — إنجاز '+pctDone+'%</div><canvas id="cTask" width="440" height="260"></canvas></div>'
       +'<div class="chart-box"><div class="chart-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M21 6H3a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="18" y1="10" x2="18" y2="14"/></svg> مستوى الإنجاز التفصيلي</div><div class="chart-sub">شريط تقدّم لكل حالة</div>'
-      +['منجز|'+tDone+'|#118C5A','جارٍ|'+tWip+'|#1673a4','قيد الانتظار|'+tWait+'|#382972','متأخر|'+tLate+'|#991B1B'].map(function(s){
+      +['منجز|'+tDone+'|#118C5A','على المسار|'+tWip+'|#1673a4','متأخر|'+tLate+'|#991B1B'].map(function(s){
         var p=s.split('|');var lbl=p[0];var val=parseInt(p[1]);var col=p[2];var pct=tt?Math.round(val/tt*100):0;
         return'<div class="prog-row"><div class="prog-labels"><span class="prog-lbl">'+lbl+'</span><span class="prog-val" style="color:'+col+'">'+val+' ('+pct+'%)</span></div><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+col+'"></div></div></div>';
       }).join('')
@@ -15097,7 +15160,9 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
             task:t.task||t.text||t.title||'—',
             assignee:t.responsible||t.assignee||'—',
             due:t.dateTo||t.due||t.d||'—',
-            status:t.status||t.st||'—'
+            status:t.status||t.st||'—',
+            completedLate:!!t.completedLate,
+            lateDays:t.lateDays||0
           });
         });
       });
@@ -15105,9 +15170,9 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
 
     if(allTasks.length>0){
       var lateT=allTasks.filter(function(t){return t.status==='متأخر';});
-      var wipT=allTasks.filter(function(t){return t.status==='جارٍ';});
+      var wipT=allTasks.filter(function(t){return t.status!=='منجز'&&t.status!=='متأخر';});
       var doneT=allTasks.filter(function(t){return t.status==='منجز';});
-      var waitT=allTasks.filter(function(t){return t.status==='قيد الانتظار';});
+      /* [STATUS-UNIFY-V1] أُزيل waitT — مدموج في wipT (على المسار) */
 
       html+='<div class="sec" style="margin-top:18px">';
       html+='<div class="sec-hdr"><span class="sec-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/></svg></span><div>';
@@ -15115,10 +15180,9 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
       html+='<div class="sec-sub">جميع التكليفات المسجّلة في قسم تحضير الاجتماعات — '+allTasks.length+' تكليف</div>';
       html+='</div></div><div class="sec-body">';
 
-      html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">';
+      html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">';
       html+='<div style="background:#118C5A15;border-right:3px solid #118C5A;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#118C5A">'+doneT.length+'</div><div style="font-size:9pt;color:#555">منجز</div></div>';
-      html+='<div style="background:#1A6C7A15;border-right:3px solid #1673a4;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#1673a4">'+wipT.length+'</div><div style="font-size:9pt;color:#555">جارٍ</div></div>';
-      html+='<div style="background:#38297215;border-right:3px solid #382972;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#382972">'+waitT.length+'</div><div style="font-size:9pt;color:#555">قيد الانتظار</div></div>';
+      html+='<div style="background:#1A6C7A15;border-right:3px solid #1673a4;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#1673a4">'+wipT.length+'</div><div style="font-size:9pt;color:#555">على المسار</div></div>';
       html+='<div style="background:#991B1B15;border-right:3px solid #991B1B;border-radius:8px;padding:10px 14px;text-align:center"><div style="font-size:18pt;font-weight:700;color:#991B1B">'+lateT.length+'</div><div style="font-size:9pt;color:#555">متأخر</div></div>';
       html+='</div>';
 
@@ -15137,8 +15201,8 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
       html+='<th style="padding:9px 12px;text-align:center;font-weight:600;font-size:10pt">الحالة</th>';
       html+='</tr></thead><tbody>';
 
-      var sColors={'منجز':'#118C5A','جارٍ':'#1673a4','قيد الانتظار':'#382972','متأخر':'#991B1B'};
-      var sBg={'منجز':'#118C5A15','جارٍ':'#1A6C7A15','قيد الانتظار':'#38297215','متأخر':'#991B1B15'};
+      var sColors={'منجز':'#118C5A','على المسار':'#1673a4','جارٍ':'#1673a4','قيد الانتظار':'#382972','متأخر':'#991B1B'};
+      var sBg={'منجز':'#118C5A15','على المسار':'#1A6C7A15','جارٍ':'#1A6C7A15','قيد الانتظار':'#38297215','متأخر':'#991B1B15'};
       allTasks.forEach(function(t,i){
         var sc=sColors[t.status]||'#888';
         var sb=sBg[t.status]||'#f5f5f5';
@@ -15147,7 +15211,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
         html+='<td style="padding:8px 12px;font-size:9.5pt;color:#003944;word-wrap:break-word;line-height:1.5">'+t.committee+'</td>';
         html+='<td style="padding:8px 12px;font-size:9.5pt;color:#003944;word-wrap:break-word;line-height:1.5">'+e(t.task||'')+(t.update?'<div style="font-size:8.5pt;color:#003944;margin-top:3px;background:#e8f4fd;border-right:2px solid #1673a4;padding:2px 6px;border-radius:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> آخر تحديث: '+e(cleanUpdateField(t.update||''))+'</div>':'')+'</td>';
         html+='<td style="padding:8px 12px;font-size:9.5pt;color:#555;word-wrap:break-word">'+t.assignee+'</td>';
-        html+='<td style="padding:8px 12px;text-align:center"><span style="background:'+sb+';color:'+sc+';border-radius:6px;padding:3px 10px;font-size:9pt;font-weight:700;display:inline-block">'+t.status+'</span></td>';
+        html+='<td style="padding:8px 12px;text-align:center"><span style="background:'+sb+';color:'+sc+';border-radius:6px;padding:3px 10px;font-size:9pt;font-weight:700;display:inline-block">'+t.status+'</span>'+((t.status==='منجز'&&t.completedLate&&t.lateDays>0)?'<div style="margin-top:4px;font-size:7.5pt;font-weight:700;color:#b9770e;background:#fff4e0;border:1px solid #f0c674;border-radius:5px;padding:2px 6px;display:inline-block">⚑ متأخر '+t.lateDays+' يوم</div>':'')+'</td>';
         html+='</tr>';
       });
       html+='</tbody></table></div>';
@@ -15177,7 +15241,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
 
   /* ── 1. TASK FUNNEL (قمع التكليفات) ── */
   if((pMode==='tasks'||pMode==='all')&&tt>0){
-    var _fn_wait=tWait, _fn_wip=tWip, _fn_done=tDone, _fn_late=tLate;
+    var _fn_wip=tWip, _fn_done=tDone, _fn_late=tLate;/* [STATUS-UNIFY-V1] أُزيل _fn_wait — دُمج في على المسار */
     var _fn_max=Math.max(tt,1);
     var _fn_pct=function(n){return Math.round(n/_fn_max*100);};
     var _fn_wid=function(n){return Math.max(12, Math.round(n/_fn_max*100));};
@@ -15194,19 +15258,13 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
       +'<div style="font-size:20pt;font-weight:800">'+tt+'</div>'
       +'</div>'
       +'<div style="color:#888;font-size:14pt">▼</div>'
-      /* المرحلة 2: قيد الانتظار */
-      +'<div style="width:'+_fn_wid(_fn_wait+_fn_wip+_fn_done+_fn_late)+'%;max-width:640px;min-width:280px;background:linear-gradient(135deg,#382972,#7358a5);color:#fff;padding:12px 22px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-      +'<div style="font-weight:700;font-size:11pt">⏳ قيد الانتظار</div>'
-      +'<div style="display:flex;align-items:center;gap:10px"><span style="font-size:9pt;color:#fff">'+_fn_pct(_fn_wait)+'%</span><span style="font-size:18pt;font-weight:800">'+_fn_wait+'</span></div>'
-      +'</div>'
-      +'<div style="color:#888;font-size:14pt">▼</div>'
-      /* المرحلة 3: جارٍ */
-      +'<div style="width:'+_fn_wid(_fn_wip+_fn_done+_fn_late)+'%;max-width:600px;min-width:260px;background:linear-gradient(135deg,#382972,#D4A247);color:#fff;padding:12px 22px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-      +'<div style="font-weight:700;font-size:11pt">↻ جارٍ التنفيذ</div>'
+      /* [STATUS-UNIFY-V1] المرحلة 2: على المسار (تدمج قيد الانتظار + جارٍ) */
+      +'<div style="width:'+_fn_wid(_fn_wip+_fn_done+_fn_late)+'%;max-width:640px;min-width:280px;background:linear-gradient(135deg,#382972,#1673a4);color:#fff;padding:12px 22px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+      +'<div style="font-weight:700;font-size:11pt">➤ على المسار</div>'
       +'<div style="display:flex;align-items:center;gap:10px"><span style="font-size:9pt;color:#fff">'+_fn_pct(_fn_wip)+'%</span><span style="font-size:18pt;font-weight:800">'+_fn_wip+'</span></div>'
       +'</div>'
       +'<div style="color:#888;font-size:14pt">▼</div>'
-      /* المرحلة 4: منجز */
+      /* المرحلة 3: منجز */
       +'<div style="width:'+_fn_wid(_fn_done)+'%;max-width:560px;min-width:240px;background:linear-gradient(135deg,#118C5A,#1A9A6C);color:#fff;padding:12px 22px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
       +'<div style="font-weight:700;font-size:11pt">✓ منجز</div>'
       +'<div style="display:flex;align-items:center;gap:10px"><span style="font-size:9pt;color:#fff">'+_fn_pct(_fn_done)+'%</span><span style="font-size:18pt;font-weight:800">'+_fn_done+'</span></div>'
@@ -15398,7 +15456,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
 
     if(_tl_show.length>0){
       var _tl_statusColor=function(s){
-        return {'منجز':'#118C5A','جارٍ':'#208caa','متأخر':'#991B1B','قيد الانتظار':'#382972','معلق':'#7358a5'}[s]||'#888';
+        return {'منجز':'#118C5A','على المسار':'#208caa','جارٍ':'#208caa','متأخر':'#991B1B','قيد الانتظار':'#382972','معلق':'#7358a5'}[s]||'#888';
       };
       var _tl_statusBg=function(s){
         return {'منجز':'#E1F5E8','جارٍ':'#757bbb','متأخر':'#FDECEC','قيد الانتظار':'#FEF5DC','معلق':'#EBE7F5'}[s]||'#F5F7F8';
@@ -15656,8 +15714,8 @@ if(_D.pMode==='committees'||_D.pMode==='all'){
 }
 if(_D.pMode==='tasks'||_D.pMode==='all'){
   /* التكليفات: + غير معروف إن وجد */
-  var tL=['منجز','جارٍ','قيد الانتظار','متأخر'],tV=[_D.tDone,_D.tWip,_D.tWait,_D.tLate];
-  donut('cTask',tL,tV,TC,{v:_D.pctDone+'%',l:'إنجاز'});
+  var tL=['منجز','على المسار','متأخر'],tV=[_D.tDone,(_D.tWip||0)+(_D.tWait||0),_D.tLate];
+  donut('cTask',tL,tV,['#118C5A','#208caa','#991B1B'],{v:_D.pctDone+'%',l:'إنجاز'});
   if(_D.tt>0)hbar('cResp',_D.rpK,_D.rpV,BC);
 }
 
@@ -15768,7 +15826,7 @@ function buildModByBadge(modBy,modAt,extraStyle){
     +icon+'<span>'+txt.join(' • ')+'</span></div>';
 }
 
-function getTaskStats(){var total=0,done=0,wip=0,wait=0,late=0;D.forEach(function(d,i){if(!govInScope(i))return;GM(i).forEach(function(m){m.tasks.forEach(function(t){total++;if(t.status==='منجز')done++;else if(t.status==='جارٍ')wip++;else if(t.status==='متأخر')late++;else wait++;});});});return{total:total,done:done,wip:wip,wait:wait,late:late};}
+function getTaskStats(){autoUpdateOverdueTasks();var total=0,done=0,wip=0,wait=0,late=0;D.forEach(function(d,i){if(!govInScope(i))return;GM(i).forEach(function(m){m.tasks.forEach(function(t){total++;if(t.status==='منجز')done++;else if(t.status==='متأخر')late++;else wip++;/* على المسار */});});});return{total:total,done:done,wip:wip,wait:wait,late:late};}
 function renS3KPIs(){var wm=D.filter(function(d,i){return govInScope(i)&&GM(i).length>0;}).length;var tm=0;D.forEach(function(d,i){if(!govInScope(i))return;tm+=GM(i).length;});var s=getTaskStats();var pp=s.total?Math.round(s.done/s.total*100):0;var kr=document.getElementById('s3kpiRow');if(!kr)return;kr.innerHTML=[['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M2 22h20M12 2 2 7h20z"/><rect x="4" y="7" width="2" height="11"/><rect x="11" y="7" width="2" height="11"/><rect x="18" y="7" width="2" height="11"/></svg>',wm,'⛁ لجان لها اجتماعات','all'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>',tm,'اجتماع','all'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',s.total,'تكليف كلي','all'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M5 3h14"/><path d="m17 3-5 7-5-7"/><path d="M5 21h14"/><path d="m17 21-5-7-5 7"/></svg>',s.wait,'انتظار','قيد الانتظار'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',s.wip,'جارية','جارٍ'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="20 6 9 17 4 12"/></svg>',s.done+' ('+pp+'%)','✓ منجز — '+pp+'% إنجاز','منجز'],['<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',s.late,'⚠️ متأخر — يستدعي متابعة','متأخر']].map(function(k){return'<div class="s3-kpi clickable'+(taskFilter===k[3]?' active-kpi':'')+'" data-tf="'+k[3]+'"><span class="s3-kpi-icon">'+k[0]+'</span><div><div class="s3-kpi-val">'+k[1]+'</div><div class="s3-kpi-lbl">'+k[2]+'</div></div></div>';}).join('');kr.querySelectorAll('.s3-kpi.clickable').forEach(function(kp){kp.addEventListener('click',function(){taskFilter=kp.getAttribute('data-tf');syncChipToFilter();renS3KPIs();renS3Sidebar();renS3Main();});});}
 function syncChipToFilter(){document.querySelectorAll('.task-chip').forEach(function(c){c.classList.remove('on');if(c.getAttribute('data-ts')===taskFilter)c.classList.add('on');});}
 
@@ -15816,8 +15874,8 @@ function renS3Sidebar(){
     GM(di).forEach(function(m){m.tasks.forEach(function(t){
       if(t.status==='منجز') _tdone++;
       else if(t.status==='متأخر') _tlate++;
-      else if(t.status==='جارٍ') _twip++;
-      else _twait++;
+      else _twip++;
+      /* [STATUS-UNIFY-V1] على المسار يجمع كل غير المنجز/المتأخر */
     });});
     var _pct = tc ? Math.round(_tdone/tc*100) : 0;
     var _barW = Math.max(0, Math.min(100, _pct));
@@ -15911,22 +15969,106 @@ function taskTimeStatus(task){
   return null;
 }
 
+/* ══════════════════════════════════════════════════════
+   [LATE-COMPLETION-V1 2026-05-28] الإنجاز المتأخر
+   الهدف الإداري: تمييز التكليف الذي أُنجز بعد تاريخ الاستحقاق عن
+   الذي أُنجز في وقته — دون أن يخرج من حالة "منجز" في أي قسم.
+   نُخزّن وسمين على التكليف: completedLate (bool) و lateDays (عدد).
+   عدد الأيام يُحسب من تاريخ الاستحقاق (dateTo) إلى تاريخ الإنجاز
+   (completedDate) ويُجمّد لحظة التعديل، فلا يتغيّر بمرور الوقت.
+   ══════════════════════════════════════════════════════ */
+/* فرق الأيام بين تاريخين (dateTo → completedDate). موجب = أُنجز متأخراً */
+function _lateDaysBetween(dueStr, doneStr){
+  var due=parseArabicDate(dueStr), done=parseArabicDate(doneStr);
+  if(!due||!done)return 0;
+  due.setHours(0,0,0,0); done.setHours(0,0,0,0);
+  var d=Math.round((done-due)/(1000*60*60*24));
+  return d>0?d:0;
+}
+/* تطبيق منطق الإنجاز المتأخر على تكليف منجز. يُجمّد lateDays/completedLate.
+   تُستدعى عند التحويل اليدوي إلى منجز وعند ضمان اتساق البيانات. */
+function applyLateCompletion(t){
+  if(!t)return;
+  if(t.status==='منجز'){
+    if(t.completedDate && t.dateTo){
+      var ld=_lateDaysBetween(t.dateTo, t.completedDate);
+      t.lateDays=ld;
+      t.completedLate=ld>0;
+    }else{
+      /* بلا تاريخ استحقاق أو إنجاز: لا يمكن الحكم بالتأخير */
+      if(typeof t.lateDays==='undefined')t.lateDays=0;
+      if(typeof t.completedLate==='undefined')t.completedLate=false;
+    }
+  }else{
+    /* غير منجز: نُزيل وسم الإنجاز المتأخر (الحالة قد تكون رُجِّعت يدوياً) */
+    t.completedLate=false;
+    t.lateDays=0;
+  }
+}
+/* تنسيق شارة الإنجاز المتأخر (نص قصير موحّد) */
+function lateCompletionLabel(t){
+  if(t && t.status==='منجز' && t.completedLate && t.lateDays>0){
+    return 'أُنجز متأخراً بـ '+t.lateDays+' يوم عن الاستحقاق';
+  }
+  return '';
+}
+
+
+/* [STATUS-UNIFY-V1 2026-05-28] توحيد حالات التكليفات في ثلاث فقط:
+   • "على المسار" — قيد العمل ولم تتجاوز الاستحقاق (تدمج: معلق/قيد الانتظار/جارٍ والمرادفات)
+   • "متأخر"      — تجاوزت تاريخ الاستحقاق ولم تُنجز
+   • "منجز"       — أُنجزت (قبل أو بعد الاستحقاق؛ التأخير يوضّح عبر completedLate/lateDays)
+   ملاحظة: هذا خاص بالتكليفات فقط — حالات المبادرات (مقترحة/قيد الدراسة/معتمدة/
+   قيد التنفيذ/منجزة/متوقفة) منظومة منفصلة لا تُمَس. */
+var TASK_STATUSES = ['على المسار','متأخر','منجز'];
+try{ window.TASK_STATUSES = TASK_STATUSES; }catch(e){}
+/* ترحيل أي مسمى قديم/مرادف إلى أحد الحالات الثلاث. لا يلمس "متأخر" و"منجز". */
+function migrateTaskStatus(s){
+  s = (s==null?'':String(s)).trim();
+  if(s==='منجز' || s==='منجزة') return 'منجز';
+  if(s==='متأخر' || s==='متأخرة') return 'متأخر';
+  if(s==='على المسار') return 'على المسار';
+  /* كل ما تبقّى (معلق/قيد الانتظار/جارٍ/جاري/جارٍ التنفيذ/قيد التنفيذ/فارغ/غير معروف)
+     → على المسار. التأخّر الفعلي يُحسب لاحقاً من تاريخ الاستحقاق في markTaskOverdue. */
+  return 'على المسار';
+}
+try{ window.migrateTaskStatus = migrateTaskStatus; }catch(e){}
 
 /* ══════════════════════════════════════════════════════
    تحديث تلقائي لحالة التكليف إلى "متأخر"
    ══════════════════════════════════════════════════════ */
+/* [OVERDUE-UNIFY 2026-05-28] منطق موحّد لتحويل تكليف واحد إلى "متأخر".
+   يُطبَّق على أي تكليف ليس منجزاً وليس متأخراً وتجاوز تاريخ استحقاقه
+   (diff<0 = بعد انتهاء يوم الاستحقاق بالكامل، أي اليوم التالي فأكثر).
+   يشمل كل الحالات غير المنجزة. يُرجع true إن تغيّر.
+   [STATUS-UNIFY-V1] يطبّق الترحيل للحالات الثلاث أولاً. */
+function markTaskOverdue(t){
+  if(!t)return false;
+  var changed=false;
+  /* ترحيل المسمى أولاً (معلق/قيد الانتظار/جارٍ → على المسار) */
+  var migrated=migrateTaskStatus(t.status);
+  if(migrated!==t.status){ t.status=migrated; changed=true; }
+  if(t.status!=='منجز'&&t.status!=='متأخر'){
+    var diff=daysDiff(t.dateTo);
+    if(diff!==null&&diff<0){
+      t.status='متأخر';
+      changed=true;
+    }
+  }
+  /* [LATE-COMPLETION-V1] ضمان اتساق وسم الإنجاز المتأخر دون تعديل الحالة */
+  if(t.status==='منجز' && t.completedDate && t.dateTo && typeof t.completedLate==='undefined'){
+    applyLateCompletion(t);
+    changed=true;
+  }
+  return changed;
+}
+
 function autoUpdateOverdueTasks(){
   var changed=false;
   Object.keys(M).forEach(function(di){
     M[di].forEach(function(m){
       m.tasks.forEach(function(t){
-        if(t.status!=='منجز'&&t.status!=='متأخر'){
-          var diff=daysDiff(t.dateTo);
-          if(diff!==null&&diff<0){
-            t.status='متأخر';
-            changed=true;
-          }
-        }
+        if(markTaskOverdue(t))changed=true;
       });
     });
   });
@@ -16063,6 +16205,16 @@ function renS3Main(){
     if(typeof showToast==='function')showToast('حذف الاجتماع: هذه اللجنة خارج نطاق صلاحياتك',true);
     return;
   }
+  /* [GOV-LOCK-V2] منع اليوزر المخصّص من حذف اجتماع رُفِع للاعتماد (wf>=1) */
+  try{
+    var _mDel=GM(bdi)&&GM(bdi)[bmi];
+    var _wsDel=(typeof wfState==='function')?wfState(_mDel):0;
+    var _isMgrDel=(typeof wfIsAdmin==='function'&&wfIsAdmin())||(typeof wfIsDelegate==='function'&&wfIsDelegate());
+    if(currentUser && currentUser.permissions && currentUser.permissions.is_scoped===true && _wsDel>=1 && !_isMgrDel){
+      if(typeof showToast==='function')showToast('لا يمكن حذف محضر مرفوع للاعتماد — تواصل مع المدير',true);
+      return;
+    }
+  }catch(_){}
   confirmDel('هذا الاجتماع',function(ok2){if(!ok2)return;var _m=GM(bdi)[bmi];var _d=D[bdi];var _label=(_d?_d.n:'لجنة')+' — اجتماع '+((_m&&_m.meetNum)||bmi+1);moveToTrash('meeting',{meeting:JSON.parse(JSON.stringify(_m)),di:bdi,committee_name:_d?_d.n:''},_label);GM(bdi).splice(bmi,1);renS3Sidebar();renS3Main();renderS3Cal();upTop();saveImmediately();});}});});
 }
 
@@ -16150,22 +16302,22 @@ function openSM(di,mi){
     if(typeof showToast==='function')showToast('هذه اللجنة خارج نطاق صلاحياتك',true);
     return;
   }
-  /* [SCOPED-PATH-FIX] قفل تعديل المنشئ المخصّص بعد رفع المحضر — للقراءة فقط
-     حتى يعيده المدير لمسودة بملاحظات (1→0) أو يعتمده. */
+  /* [SCOPED-PATH-FIX]+[GOV-LOCK-V2 2026-05-28] قفل تعديل المنشئ المخصّص بعد رفع المحضر.
+     حوكمياً: أي محضر بلغ حالة "مُرسَل" (wf>=1) فأعلى يصبح للقراءة فقط على اليوزر
+     المخصّص — بصرف النظر عن _scopedAdd — حتى يعيده المدير لمسودة (1→0) أو يعتمده.
+     المدير والمفوَّض مستثنيان (يديرون دورة الاعتماد). */
   try{
     if(mi!==-1 && currentUser && currentUser.permissions && currentUser.permissions.is_scoped===true){
-      var _mm=GM(di)&&GM(di)[mi];
-      if(_mm && _mm._scopedAdd===true){
-        var _byMe=(_mm._scopedBy===currentUser.name)||(_mm._scopedBy===currentUser.email);
-        var _ws=(typeof wfState==='function')?wfState(_mm):0;
-        if(_byMe && _ws>=1){
-          showToast('المحضر قيد المراجعة — للقراءة فقط حتى يعيده المدير أو يعتمده',true);
-          return;
-        }
+      var _mmGL=GM(di)&&GM(di)[mi];
+      var _wsGL=(typeof wfState==='function')?wfState(_mmGL):0;
+      var _isMgr=(typeof wfIsAdmin==='function'&&wfIsAdmin())||(typeof wfIsDelegate==='function'&&wfIsDelegate());
+      if(_mmGL && _wsGL>=1 && !_isMgr){
+        showToast('المحضر مرفوع للاعتماد — للقراءة فقط حتى يعيده المدير بملاحظات أو يعتمده',true);
+        return;
       }
     }
   }catch(_){}
-  var m=mi===-1?NM():GM(di)[mi];var isNew=mi===-1;var wt=m.tasks.map(function(t){return Object.assign({},t);});var wA=m.agendaItems&&m.agendaItems.length?m.agendaItems.map(function(x){return{text:x.text||x||'',type:x.type||''};}):(m.agenda?[{text:m.agenda,type:''}]:[]);var _aiTypes=['افتتاحية','عرض','تقرير','افتتاحية','عرض','تقرير','مناقشة','قرار','متابعة','توصية','إحاطة','ما يستجد من أعمال','للاطلاع','ما يستجد من أعمال','للاطلاع'];var _aiTypeClass={'افتتاحية':'t-briefing','عرض':'t-discuss','تقرير':'t-discuss','مناقشة':'t-discuss','قرار':'t-decision','متابعة':'t-followup','توصية':'t-recommend','إحاطة':'t-briefing','ما يستجد من أعمال':'t-followup','للاطلاع':'t-briefing'};;document.getElementById('smTitle').innerHTML=(isNew?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> اجتماع جديد — ':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل — ')+D[di].n;function aH(){
+  var m=mi===-1?NM():GM(di)[mi];var isNew=mi===-1;var wt=m.tasks.map(function(t){return Object.assign({},t);});/* [OVERDUE-UNIFY] تحويل فوري لأي تكليف تجاوز استحقاقه عند فتح النافذة — على النسخة المعروضة والأصل معاً */wt.forEach(function(_t,_i){if(markTaskOverdue(_t)&&m.tasks[_i]){m.tasks[_i].status=_t.status;}});var wA=m.agendaItems&&m.agendaItems.length?m.agendaItems.map(function(x){return{text:x.text||x||'',type:x.type||''};}):(m.agenda?[{text:m.agenda,type:''}]:[]);var _aiTypes=['افتتاحية','عرض','تقرير','افتتاحية','عرض','تقرير','مناقشة','قرار','متابعة','توصية','إحاطة','ما يستجد من أعمال','للاطلاع','ما يستجد من أعمال','للاطلاع'];var _aiTypeClass={'افتتاحية':'t-briefing','عرض':'t-discuss','تقرير':'t-discuss','مناقشة':'t-discuss','قرار':'t-decision','متابعة':'t-followup','توصية':'t-recommend','إحاطة':'t-briefing','ما يستجد من أعمال':'t-followup','للاطلاع':'t-briefing'};;document.getElementById('smTitle').innerHTML=(isNew?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg> اجتماع جديد — ':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تعديل — ')+D[di].n;function aH(){
   var el=document.getElementById('agendaList');
   if(!el)return;
   if(!wA.length){el.innerHTML='<div style="text-align:center;padding:7px;color:#757bbb;font-size:10px">لا توجد بنود</div>';return;}
@@ -16190,8 +16342,8 @@ function openSM(di,mi){
   el.querySelectorAll('.ai-type-select').forEach(function(sel){sel.onchange=function(){wA[parseInt(this.getAttribute('data-ai'))].type=this.value;};});
   el.querySelectorAll('.ai-del').forEach(function(btn){btn.onclick=function(){wA.splice(parseInt(this.getAttribute('data-ai')),1);aH();};});
 }
-function tH(){autoUpdateOverdueTasks();if(!wt.length)return'<div id="tareaEmpty" style="text-align:center;padding:9px;color:#757bbb;font-size:10px">لا توجد تكليفات</div>';return'<div class="s3m-at-wrap"><table id="tarea" class="s3m-at"><thead><tr><th style="width:26px">#</th><th style="min-width:220px">التكليف</th><th style="width:140px">المسؤول</th><th style="width:60px">بند</th><th style="width:140px">من</th><th style="width:140px">إلى</th><th style="width:115px">الأولوية</th><th style="width:115px">الحالة</th><th style="width:140px">آخر تحديث</th><th style="width:34px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></th></tr></thead><tbody>'+wt.map(function(t,ti){return'<tr><td style="text-align:center;color:#bbb;font-size:9px">'+(ti+1)+'</td><td><textarea class="finp ti" rows="2" style="width:100%;resize:vertical;min-height:44px;line-height:1.5;vertical-align:top" data-ti="'+ti+'" data-f="task">'+e(t.task||'')+'</textarea></td><td><textarea class="finp ti" rows="2" style="width:100%;resize:vertical;min-height:44px;line-height:1.5;vertical-align:top" data-ti="'+ti+'" data-f="responsible">'+e(t.responsible||'')+'</textarea></td><td style="text-align:center;width:55px"><select class="fsel ai-ref-sel" style="width:100%;font-size:10px;padding:2px" data-ti="'+(ti)+'"><option value="0">—</option>'+wA.map(function(_a,_ri){return '<option value="'+(_ri+1)+'"'+(t.agendaRef===(_ri+1)?' selected':'')+'>'+(_ri+1)+'. '+(_a.text||'')+'</option>';}).join('')+'</select></td><td><input type="date" lang="en" class="finp ti" style="width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateFrom" value="'+e(t.dateFrom||'')+'"></td><td><input type="date" lang="en" class="finp ti" style="width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateTo" value="'+e(t.dateTo||'')+'"></td><td><select class="fsel ts" style="width:100%" data-ti="'+ti+'">'+['معلق','قيد الانتظار','جارٍ','منجز','متأخر'].map(function(s){return'<option'+(s===t.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></td><td><input class="finp ti" style="width:100%" data-ti="'+ti+'" data-f="update" placeholder="التحديث..." value="'+e(t.update||'')+'"></td><td><button class="ab abr tdl" data-ti="'+ti+'" style="padding:1px 4px;font-size:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td></tr>';}).join('')+'</tbody></table></div>';}
-function rfT(){var old=document.getElementById('tarea');if(!old)return;var tmp=document.createElement('div');tmp.innerHTML=tH();var wrap=old.closest('.s3m-at-wrap');var target=wrap||old;target.parentNode.replaceChild(tmp.firstChild,target);wireT();}
+function tH(){autoUpdateOverdueTasks();if(!wt.length)return'<div id="tareaEmpty" style="text-align:center;padding:9px;color:#757bbb;font-size:10px">لا توجد تكليفات</div>';return'<div class="s3m-at-wrap"><table id="tarea" class="s3m-at"><thead><tr><th style="width:26px">#</th><th style="min-width:220px">التكليف</th><th style="width:140px">المسؤول</th><th style="width:60px">بند</th><th style="width:140px">من</th><th style="width:140px">إلى</th><th style="width:115px">الأولوية</th><th style="width:115px">الحالة</th><th style="width:140px">آخر تحديث</th><th style="width:34px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></th></tr></thead><tbody>'+wt.map(function(t,ti){return'<tr><td style="text-align:center;color:#bbb;font-size:9px">'+(ti+1)+'</td><td><textarea class="finp ti" rows="2" style="width:100%;resize:vertical;min-height:44px;line-height:1.5;vertical-align:top" data-ti="'+ti+'" data-f="task">'+e(t.task||'')+'</textarea></td><td><textarea class="finp ti" rows="2" style="width:100%;resize:vertical;min-height:44px;line-height:1.5;vertical-align:top" data-ti="'+ti+'" data-f="responsible">'+e(t.responsible||'')+'</textarea></td><td style="text-align:center;width:55px"><select class="fsel ai-ref-sel" style="width:100%;font-size:10px;padding:2px" data-ti="'+(ti)+'"><option value="0">—</option>'+wA.map(function(_a,_ri){return '<option value="'+(_ri+1)+'"'+(t.agendaRef===(_ri+1)?' selected':'')+'>'+(_ri+1)+'. '+(_a.text||'')+'</option>';}).join('')+'</select></td><td><input type="date" lang="en" class="finp ti" style="width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateFrom" value="'+e(t.dateFrom||'')+'"></td><td><input type="date" lang="en" class="finp ti" style="width:100%;direction:ltr" data-ti="'+ti+'" data-f="dateTo" value="'+e(t.dateTo||'')+'"></td><td><select class="fsel ts" style="width:100%" data-ti="'+ti+'">'+TASK_STATUSES.map(function(s){return'<option'+(s===t.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select>'+((t.status==='منجز'&&t.completedLate&&t.lateDays>0)?'<div style="margin-top:3px;font-size:8.5px;font-weight:700;color:#b9770e;background:#fff4e0;border:1px solid #f0c674;border-radius:5px;padding:1px 5px;line-height:1.4;text-align:center" title="أُنجز بعد تاريخ الاستحقاق">⚑ متأخر '+t.lateDays+' يوم</div>':'')+'</td><td><input class="finp ti" style="width:100%" data-ti="'+ti+'" data-f="update" placeholder="التحديث..." value="'+e(t.update||'')+'"></td><td><button class="ab abr tdl" data-ti="'+ti+'" style="padding:1px 4px;font-size:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></td></tr>';}).join('')+'</tbody></table></div>';}
+function rfT(){/* [FIX 2026-05-28] دعم استبدال tareaEmpty أيضاً عند إضافة أول تكليف */var old=document.getElementById('tarea');var emptyMsg=document.getElementById('tareaEmpty');var target=null;if(old){var wrap=old.closest('.s3m-at-wrap');target=wrap||old;}else if(emptyMsg){target=emptyMsg;}else{return;}var tmp=document.createElement('div');tmp.innerHTML=tH();target.parentNode.replaceChild(tmp.firstChild,target);wireT();}
 function attachRespAC(inp){inp.setAttribute('autocomplete','off');var drop=document.createElement('div');drop.style.cssText='position:absolute;z-index:9999;background:#fff;border:1.5px solid #757bbb;border-radius:9px;box-shadow:0 4px 18px rgba(44,22,84,.18);max-height:180px;overflow-y:auto;min-width:220px;display:none;font-size:11px;font-family:inherit;direction:rtl';document.body.appendChild(drop);function show(q2){var filtered=RESP_LIST.filter(function(r){return r.includes(q2);});if(!filtered.length||!q2){drop.style.display='none';return;}drop.innerHTML=filtered.map(function(r){return'<div class="ac-item" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid #f0ecff;color:#1f4c3a;font-weight:600">'+r+'</div>';}).join('');drop.querySelectorAll('.ac-item').forEach(function(item){item.onmousedown=function(ev2){ev2.preventDefault();inp.value=item.textContent;var ti2=parseInt(inp.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=item.textContent;drop.style.display='none';};item.onmouseover=function(){this.style.background='#ede8ff';};item.onmouseout=function(){this.style.background='';};});var rect=inp.getBoundingClientRect();drop.style.top=(rect.bottom+window.scrollY+2)+'px';drop.style.right=(window.innerWidth-rect.right)+'px';drop.style.display='block';}inp.addEventListener('input',function(){show(this.value);var ti2=parseInt(this.getAttribute('data-ti'));if(wt[ti2])wt[ti2].responsible=this.value;});inp.addEventListener('focus',function(){show(this.value||'');});inp.addEventListener('blur',function(){setTimeout(function(){drop.style.display='none';},150);});inp._acDrop=drop;}
 function wireT(){document.querySelectorAll('.ti').forEach(function(el){if(el.getAttribute('data-f')==='responsible'){attachRespAC(el);}else{el.oninput=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value;};}});document.querySelectorAll('.ts').forEach(function(el){el.onchange=function(){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i].status=el.value;};});document.querySelectorAll('.ai-ref-sel').forEach(function(sel){sel.onchange=function(){var i=parseInt(this.getAttribute('data-ti'));if(wt[i])wt[i].agendaRef=parseInt(this.value)||0;};});document.querySelectorAll('.tdl').forEach(function(el){el.onclick=function(){var ti2=parseInt(el.getAttribute('data-ti'));var _t=wt[ti2];var _di2=parseInt(document.getElementById('smModal').getAttribute('data-di')||'-1');var _mi2=parseInt(document.getElementById('smModal').getAttribute('data-mi')||'-1');var _comm=(_di2>=0&&D[_di2])?D[_di2].n:(activeSystem==='intl'?'مجلس/لجنة':'لجنة');var _label=_comm+' — تكليف: '+(_t?(_t.task||'').substring(0,40):'');moveToTrash('task',{task:JSON.parse(JSON.stringify(_t||{})),di:_di2,mi:_mi2,committee_name:_comm},_label);wt.splice(ti2,1);rfT();};});}
 document.getElementById('smBody').innerHTML='<div style="background:linear-gradient(135deg,#ede8ff,#ddf0fb);border-radius:9px;padding:8px 12px;margin-bottom:11px;border-right:4px solid var(--s3-mid)"><div style="font-size:11px;font-weight:700">'+e(D[di].n)+'</div><div style="font-size:9.5px;color:var(--s3-accent);margin-top:1px">'+e(D[di].r)+' • '+D[di].ty+'</div></div><div class="mg2"><div class="mi"><div class="flbl">رقم الاجتماع</div><input id="smnum" class="finp" type="number" min="1" value="'+(m.meetNum||'')+'"></div><div class="mi"><div class="flbl">تاريخ الاجتماع</div><input id="smd" class="finp" type="date" lang="en" style="direction:ltr;text-align:left" value="'+e(m.date||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl">مكان الاجتماع</div><input id="sml" class="finp" value="'+e(m.loc||'')+'"></div><div class="mi" style="grid-column:1/-1"><div class="flbl" style="display:flex;align-items:center;justify-content:space-between">جدول الأعمال <button id="btnAA" style="background:linear-gradient(135deg,#208caa,#1673a4);color:#fff;border:none;border-radius:6px;padding:2px 9px;font-size:10px;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة بند</button></div><div id="agendaList" style="margin-top:4px"></div></div><div class="mi" style="grid-column:1/-1"><div class="flbl">ملاحظات</div><textarea id="smn" class="finp" rows="3" style="resize:vertical">'+e(m.notes||'')+'</textarea></div>'+'<div class="mi" style="grid-column:1/-1">'+'<div class="flbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg> المرئيات على عرض الاجتماع</div>'+'<textarea id="smrv" class="finp" rows="4" style="resize:vertical" placeholder="أدخل المرئيات والتوصيات على عرض الاجتماع...">'+e(m.remarks||'')+'</textarea></div>'+'<div class="mi" style="grid-column:1/-1">'      +'<div class="flbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> محضر الاجتماع (PDF/Word/PPT)</div>'      +'<div style="display:flex;align-items:center;gap:10px;margin-top:4px">'        +'<label style="display:inline-flex;align-items:center;gap:7px;background:#f0f8ff;border:1.5px dashed #208caa;border-radius:10px;padding:9px 16px;cursor:pointer;font-size:12px;color:#208caa;font-family:inherit;white-space:nowrap;flex-shrink:0">'          +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> اختر ملف (PDF/Word/PPT) <input type="file" id="smm_file" accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="display:none">'        +'</label>'        +'<span id="smm_file_name" style="font-size:11px;color:#555;font-family:inherit">لم يُختر ملف</span>'        +'<button type="button" id="smm_view_btn" style="display:none;background:#27ae60;color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> عرض</button>'        +'<button type="button" id="smm_clear" data-clear="smm" style="display:none;background:#e74c3c;color:#fff;border:none;border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit">✕ حذف</button>'      +'</div>'      +'<input type="hidden" id="smm" value="'+e(m.minutes_pdf||'')+'">'    +'</div>'  +'</div><div class="s3stitle"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> التكليفات</span><button id="btnAT" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:7px;padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> إضافة تكليف</button></div>'+tH()+'<div style="display:flex;gap:7px;margin-top:12px"><button id="btnSaveSM" style="flex:1;background:linear-gradient(135deg,var(--s3-dark),var(--s3-mid),var(--s3-sky));color:#fff;border:none;border-radius:9px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> '+(isNew?'إضافة':'حفظ')+'</button><button id="btnCancelSM" style="background:#e9ecef;color:#555;border:none;border-radius:9px;padding:8px 13px;font-size:12px;cursor:pointer;font-family:inherit">إلغاء</button></div>';
@@ -16216,8 +16368,8 @@ setTimeout(function(){
       }
     }
     window._updQuorum=function(){var c=parseInt(document.getElementById('smatt_count')&&document.getElementById('smatt_count').value)||0;var q=parseInt(document.getElementById('smatt_quorum')&&document.getElementById('smatt_quorum').value)||0;var st=document.getElementById('smatt_qstatus');var ch=document.getElementById('smatt_qcheck');if(!st||!ch)return;ch.style.display=(c||q)?'flex':'none';if(q>0){st.textContent=c>=q?'✓ النصاب مكتمل ('+c+'/'+q+')':'✗ النصاب غير مكتمل ('+c+'/'+q+')';st.style.color=c>=q?'#1d6a3b':'#c0392b';}else{st.textContent=c?'⚭ '+c+' حاضر':'';st.style.color='#555';}};aH();var ba=document.getElementById('btnAA');if(ba)ba.onclick=function(){wA.push({text:'',type:''});aH();setTimeout(function(){var ii=document.querySelectorAll('.ai-inp');if(ii.length)ii[ii.length-1].focus();},40);};},30);
-document.getElementById('btnAT').onclick=function(){wt.push({task:'',responsible:'',status:'قيد الانتظار',dateFrom:'',dateTo:'',agendaRef:0});rfT();};
-document.getElementById('btnSaveSM').onclick=function(){document.querySelectorAll('.ti').forEach(function(el){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value.trim();});document.querySelectorAll('.ts').forEach(function(el){var i=parseInt(el.getAttribute('data-ti'));if(wt[i]){var _newSt=el.value;var _oldSt=wt[i].status;wt[i].status=_newSt;/* تسجيل تاريخ الإنجاز عند الانتقال إلى منجز */if(_newSt==='منجز'&&_oldSt!=='منجز'&&!wt[i].completedDate){var _td=new Date();wt[i].completedDate=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');}else if(_newSt!=='منجز'&&_oldSt==='منجز'){wt[i].completedDate='';}}});document.querySelectorAll('.ai-inp').forEach(function(el){var i=parseInt(el.getAttribute('data-ai'));if(wA[i])wA[i].text=el.value.trim();});var obj=isNew?NM():GM(di)[mi];obj.meetNum=parseInt(document.getElementById('smnum').value)||0;var _smd=document.getElementById('smd');obj.date=_smd?_smd.value.trim():'';var _sml=document.getElementById('sml');obj.loc=_sml?_sml.value.trim():'';obj.agendaItems=wA.filter(function(a){return a.text;});obj.agenda=obj.agendaItems.map(function(a,i){return(i+1)+'. '+a.text;}).join('\n');var _smn=document.getElementById('smn');obj.notes=_smn?_smn.value.trim():'';
+document.getElementById('btnAT').onclick=function(){wt.push({task:'',responsible:'',status:'على المسار',dateFrom:'',dateTo:'',agendaRef:0});rfT();};
+document.getElementById('btnSaveSM').onclick=function(){document.querySelectorAll('.ti').forEach(function(el){var i=parseInt(el.getAttribute('data-ti'));if(wt[i])wt[i][el.getAttribute('data-f')]=el.value.trim();});document.querySelectorAll('.ts').forEach(function(el){var i=parseInt(el.getAttribute('data-ti'));if(wt[i]){var _newSt=el.value;var _oldSt=wt[i].status;wt[i].status=_newSt;/* تسجيل تاريخ الإنجاز عند الانتقال إلى منجز */if(_newSt==='منجز'&&_oldSt!=='منجز'&&!wt[i].completedDate){var _td=new Date();wt[i].completedDate=_td.getFullYear()+'-'+String(_td.getMonth()+1).padStart(2,'0')+'-'+String(_td.getDate()).padStart(2,'0');}else if(_newSt!=='منجز'&&_oldSt==='منجز'){wt[i].completedDate='';}/* [LATE-COMPLETION-V1] تجميد وسم الإنجاز المتأخر لحظة التعديل */applyLateCompletion(wt[i]);}});document.querySelectorAll('.ai-inp').forEach(function(el){var i=parseInt(el.getAttribute('data-ai'));if(wA[i])wA[i].text=el.value.trim();});var obj=isNew?NM():GM(di)[mi];obj.meetNum=parseInt(document.getElementById('smnum').value)||0;var _smd=document.getElementById('smd');obj.date=_smd?_smd.value.trim():'';var _sml=document.getElementById('sml');obj.loc=_sml?_sml.value.trim():'';obj.agendaItems=wA.filter(function(a){return a.text;});obj.agenda=obj.agendaItems.map(function(a,i){return(i+1)+'. '+a.text;}).join('\n');var _smn=document.getElementById('smn');obj.notes=_smn?_smn.value.trim():'';
     var _smrv=document.getElementById('smrv');obj.remarks=_smrv?_smrv.value.trim():'';
     var _smatt=document.getElementById('smatt');obj.attendees=_smatt?_smatt.value.trim():'';var _smatt_count=document.getElementById('smatt_count');obj.attendeesCount=_smatt_count?parseInt(_smatt_count.value)||0:0;var _smatt_quorum=document.getElementById('smatt_quorum');obj.attendeesQuorum=_smatt_quorum?parseInt(_smatt_quorum.value)||0:0;
     var _smdnum=document.getElementById('smdnum');obj.decisionNum=_smdnum?_smdnum.value.trim():'';
@@ -16473,7 +16625,7 @@ function getAllPendingTasks(d,di,currentMiTasks){
   });
   return pending;
 }
-function mSec(d,m,si){var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};var sco={'قيد الانتظار':'#856404','جارٍ':'#382972','منجز':'#155724','متأخر':'#721c24'};var label=m.meetNum?'اجتماع رقم '+m.meetNum:'اجتماع '+(si+1);
+function mSec(d,m,si){var sbg={'على المسار':'#dceeff','قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};var sco={'على المسار':'#1673a4','قيد الانتظار':'#856404','جارٍ':'#382972','منجز':'#155724','متأخر':'#721c24'};var label=m.meetNum?'اجتماع رقم '+m.meetNum:'اجتماع '+(si+1);
 var meetMeta='';
 if(m.date)meetMeta+='<span style="background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:2px 9px;font-size:11px;margin-right:8px;font-family:inherit"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+e(m.date)+'</span>';
 if(m.decisionNum)meetMeta+='<span style="background:#e8f4fd;color:#208caa;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700"> ق: '+e(m.decisionNum)+'</span> ';if(m.attendeesCount&&m.attendeesQuorum){var _qok=m.attendeesCount>=m.attendeesQuorum;meetMeta+='<span style="background:'+(_qok?'#d4edda':'#fce8e8')+';color:'+(_qok?'#1d6a3b':'#c0392b')+';border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700">'+(_qok?'✓':'✗')+' '+m.attendeesCount+'/'+m.attendeesQuorum+'</span> ';}else if(m.attendeesCount){meetMeta+='<span style="background:#f0f4f8;color:#555;border-radius:4px;padding:1px 6px;font-size:10px">⚭ '+m.attendeesCount+'</span> ';}
@@ -16487,7 +16639,7 @@ function printSingle(di,mi){
   }
   if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var d=D[di],m=GM(di)[mi];
-  var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
+  var sbg={'على المسار':'#dceeff','قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
   var sco={'قيد الانتظار':'#856404','جارٍ':'#382972','منجز':'#155724','متأخر':'#721c24'};
   var pending=getAllPendingTasks(d,di,m.tasks);
   var pendingHtml='';
@@ -16520,7 +16672,7 @@ function printAll(di){
   if(isRealViewer()){showToast('ليس لديك صلاحية الطباعة',true);return;}
   var d=D[di], ms=GM(di);
   if(!ms.length){showToast('لا توجد اجتماعات لهذه '+(activeSystem==='intl'?'المجلس/اللجنة':'اللجنة'),true);return;}
-  var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
+  var sbg={'على المسار':'#dceeff','قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
   var sco={'قيد الانتظار':'#856404','جارٍ':'#382972','منجز':'#155724','متأخر':'#721c24'};
 
   /* بناء محتوى كل اجتماع */
@@ -16653,7 +16805,7 @@ function buildPrintCharts(fd, allTasks, opts){
   var scColors={'داخلية':'#27ae60','خارجية دولية':'#48a883','خارج نطاق الوزارة':'#7358a5','خارجية':'#208caa','غير معروف':'#bdc3c7'};
   var tyColors={'لجنة':'#1d8a4e','مجلس تنسيقي دولي':'#1f4c3a','فرق عمل':'#7358a5','مجلس':'#208caa','لجنة دولية مشتركة':'#c0392b','غير معروف':'#95a5a6'};
   var duColors={'دائمة':'#208caa','مؤقته':'#e67e22','غير معروف':'#95a5a6'};
-  var tStatusColors={'قيد الانتظار':'#f39c12','جارٍ':'#48a883','منجز':'#27ae60','متأخر':'#e74c3c','غير معروف':'#95a5a6'};
+  var tStatusColors={'على المسار':'#48a883','قيد الانتظار':'#f39c12','جارٍ':'#48a883','منجز':'#27ae60','متأخر':'#e74c3c','غير معروف':'#95a5a6'};
   var CPAL=['#1f4c3a','#382972','#208caa','#208caa','#27ae60','#f39c12','#e74c3c','#7358a5','#208caa','#48a883'];
 
   function cnt(arr,key){
@@ -16748,14 +16900,14 @@ function buildPrintCharts(fd, allTasks, opts){
     var ts2={};
     allTasks.forEach(function(t){var s=(t.status||'').trim()||'غير معروف';ts2[s]=(ts2[s]||0)+1;});
     var tK2=Object.keys(ts2),tV2=Object.values(ts2),tC2=cols(tK2,tStatusColors);
-    var tDone2=ts2['منجز']||0,tLate2=ts2['متأخر']||0,tWip2=ts2['جارٍ']||0;
+    var tDone2=ts2['منجز']||0,tLate2=ts2['متأخر']||0,tWip2=ts2['على المسار']||0;
 
     html+='<div class="rpt-section">'
       +'<h3 class="rpt-h3">✓ إحصاءات التكليفات ('+tT+')</h3>'
       +'<div class="rpt-cards">'
       +'<div class="rpt-card" style="border-color:#6c757d"><div class="rpt-card-v">'+tT+'</div><div class="rpt-card-l">إجمالي</div></div>'
       +'<div class="rpt-card" style="border-color:#27ae60"><div class="rpt-card-v">'+tDone2+'</div><div class="rpt-card-l">منجز</div></div>'
-      +'<div class="rpt-card" style="border-color:#48a883"><div class="rpt-card-v">'+tWip2+'</div><div class="rpt-card-l">جارٍ</div></div>'
+      +'<div class="rpt-card" style="border-color:#48a883"><div class="rpt-card-v">'+tWip2+'</div><div class="rpt-card-l">على المسار</div></div>'
       +'<div class="rpt-card" style="border-color:#e74c3c"><div class="rpt-card-v">'+tLate2+'</div><div class="rpt-card-l">متأخر</div></div>'
       +'</div>';
 
@@ -16766,7 +16918,7 @@ function buildPrintCharts(fd, allTasks, opts){
       +rptLegend(tK2.map(function(k,i){return[k+' ('+tV2[i]+')',tC2[i]];}))
       +'<canvas id="pc_ts" width="280" height="220" style="width:280px;height:220px"></canvas>'
       +rptLegTable(tK2,tV2,tC2,tT)
-      +rptInsight('نسبة الإنجاز: <b>'+rptPct(tDone2,tT)+'%</b> | متأخر: <b>'+tLate2+'</b> | جارٍ: <b>'+tWip2+'</b>')
+      +rptInsight('نسبة الإنجاز: <b>'+rptPct(tDone2,tT)+'%</b> | متأخر: <b>'+tLate2+'</b> | على المسار: <b>'+tWip2+'</b>')
       +'</div>';
     js+='rptMkChart("pc_ts","doughnut",'+JSON.stringify(tK2)+','+JSON.stringify(tV2)+','+JSON.stringify(tC2)+');';
 
@@ -16811,7 +16963,7 @@ function printFullReport(fi){
   var allTasks=[];
   ms.forEach(function(m){m.tasks.forEach(function(t){allTasks.push(t);});});
   var tDone=allTasks.filter(function(t){return t.status==='منجز';}).length;
-  var tWip=allTasks.filter(function(t){return t.status==='جارٍ';}).length;
+  var tWip=allTasks.filter(function(t){return t.status!=='منجز'&&t.status!=='متأخر';}).length;
   var tWait=allTasks.filter(function(t){return t.status==='قيد الانتظار';}).length;
   var tLate=allTasks.filter(function(t){return t.status==='متأخر';}).length;
   var tTotal=allTasks.length;
@@ -17014,9 +17166,9 @@ function exportS3Excel(){
         _mr['ملاحظات الاجتماع']=m.notes||'';
         _mr['عدد التكليفات']=m.tasks.length;
         _mr['منجز']=m.tasks.filter(function(t){return t.status==='منجز';}).length;
-        _mr['جارٍ']=m.tasks.filter(function(t){return t.status==='جارٍ';}).length;
+_mr['على المسار']=m.tasks.filter(function(t){return t.status!=='منجز'&&t.status!=='متأخر';}).length;
         _mr['متأخر']=m.tasks.filter(function(t){return t.status==='متأخر';}).length;
-        _mr['انتظار']=m.tasks.filter(function(t){return t.status==='قيد الانتظار';}).length;
+
         meetRows.push(_mr);
     });
   });
@@ -18926,6 +19078,11 @@ document.addEventListener('change',function(e){
         if(vbtn){vbtn.style.display='inline-block';vbtn.onclick=function(){openMinutesPDF(null);};}
         if(cbtn)cbtn.style.display='inline-block';
       }
+      /* [FIX 2026-05-28] إظهار زر عرض ملف القرار فور الرفع عبر showSqFileStatus
+         (كان يظهر فقط بعد إغلاق النموذج وإعادة فتحه) */
+      if(fileInputId==='cf_sq_file' && typeof showSqFileStatus==='function'){
+        showSqFileStatus(publicUrl);
+      }
       showToast('✓ رُفع الملف على السيرفر: '+(fileName||file.name));
     },
     function(err){
@@ -19008,16 +19165,37 @@ function clearMeetingMinutes(){
 
 function showSqFileStatus(sq){
   var nm=document.getElementById('cf_sq_file_name');
+  /* [FIX 2026-05-28] زر "عرض" لفتح ملف القرار المرفوع — كان مفقوداً فيظهر الاسم كنص فقط.
+     نُنشئه ديناميكياً (إن لم يوجد) ونُدرجه قبل زر الحذف، تماشياً مع نمط محضر الاجتماع (smm_view_btn). */
+  function _sqViewBtn(){
+    var b=document.getElementById('cf_sq_view_btn');
+    if(!b){
+      b=document.createElement('button');
+      b.type='button';b.id='cf_sq_view_btn';
+      b.style.cssText='background:#27ae60;color:#fff;border:none;border-radius:7px;padding:4px 11px;font-size:10px;cursor:pointer;font-family:inherit;display:none';
+      b.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> عرض';
+      var clr=document.getElementById('cf_sq_clear');
+      if(clr&&clr.parentNode){clr.parentNode.insertBefore(b,clr);}
+      else if(nm&&nm.parentNode){nm.parentNode.insertBefore(b,nm.nextSibling);}
+    }
+    return b;
+  }
   if(nm && sq && sq.startsWith('http')){
     /* publicUrl من Supabase Storage */
     var fileName = sq.split('/').pop().replace(/^\d+_[a-z0-9]+_/,'') || 'الملف المرفق';
     /* [Phase 1 fix C3] escape اسم الملف لمنع XSS — اسم ملف من URL قد يحوي %3Cscript%3E */
     nm.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="20 6 9 17 4 12"/></svg> '+e(fileName);
     nm.style.color='#27ae60';
+    var _vb=_sqViewBtn();
+    _vb.style.display='inline-flex';_vb.style.alignItems='center';_vb.style.gap='5px';
+    _vb.onclick=function(){window.open(sq,'_blank','noopener');};
     var clearBtn=document.getElementById('cf_sq_clear');
     if(clearBtn)clearBtn.style.display='inline-block';
     return;
   }
+  /* لا رابط http صالح — نُخفي زر العرض إن كان موجوداً */
+  var _vbHide=document.getElementById('cf_sq_view_btn');
+  if(_vbHide)_vbHide.style.display='none';
   /* nm الافتراضي */
   if(nm && sq && sq.startsWith('data:')){
     nm.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#155724" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="20 6 9 17 4 12"/></svg> ملف مرفق (قديم)';
@@ -19307,13 +19485,16 @@ function s4GetAllTasks(){
     if(!govInScope(di))return; /* [SCOPE-V3] عزل: تجاهل تكليفات لجان خارج نطاق المستخدم */
     GM(di).forEach(function(m,mi){
       m.tasks.forEach(function(t,ti){
+        markTaskOverdue(t); /* [OVERDUE-UNIFY] تحويل تلقائي على الأصل قبل القراءة */
         tasks.push({
           task:t.task||'',
           responsible:t.responsible||'',
-          status:t.status||'قيد الانتظار',
+          status:t.status||'على المسار',
           dateFrom:t.dateFrom||'',
           dateTo:t.dateTo||'',
           completedDate:t.completedDate||'',
+          completedLate:!!t.completedLate,
+          lateDays:t.lateDays||0,
           notes:t.notes||'',
           update:t.update||'',
           mailLog:t.mailLog||[],
@@ -19546,24 +19727,19 @@ function s4DueStatus(t){
 function s4RenStats(tasks){
   var el=document.getElementById('s4Stats');
   if(!el) return;
-  var wait=tasks.filter(function(t){return t.status==='قيد الانتظار';}).length;
-  var wip=tasks.filter(function(t){return t.status==='جارٍ';}).length;
+  /* [STATUS-UNIFY-V1] ثلاث حالات: على المسار / متأخر / منجز */
   var late=tasks.filter(function(t){return t.status==='متأخر';}).length;
   var done=tasks.filter(function(t){return t.status==='منجز';}).length;
   var esc=tasks.filter(function(t){return t.escalated;}).length;
-  var pend=tasks.filter(function(t){return t.status==='معلق';}).length;
+  var onTrack=tasks.filter(function(t){return t.status!=='متأخر'&&t.status!=='منجز';}).length;
   el.innerHTML=
     '<div class="s4-stat" style="border-color:#757bbb">'
       +'<span style="color:#208caa">'+tasks.length+'</span>'
       +'<span style="font-size:10px;color:#888">إجمالي</span>'
     +'</div>'
-    +'<div class="s4-stat" style="border-color:#ffe082;background:#fffde7">'
-      +'<span style="color:#382972">'+wait+'</span>'
-      +'<span style="font-size:10px;color:#382972">انتظار</span>'
-    +'</div>'
     +'<div class="s4-stat" style="border-color:#757bbb;background:#e3f2fd">'
-      +'<span style="color:#1673a4">'+wip+'</span>'
-      +'<span style="font-size:10px;color:#1673a4">جارٍ</span>'
+      +'<span style="color:#1673a4">'+onTrack+'</span>'
+      +'<span style="font-size:10px;color:#1673a4">على المسار</span>'
     +'</div>'
     +(late?'<div class="s4-stat" style="border-color:#ef9a9a;background:#ffebee">'
       +'<span style="color:#c62828">'+late+'</span>'
@@ -19581,11 +19757,9 @@ function s4RenStats(tasks){
 
 /* ══ كانبان ══ */
 function s4RenKanban(tasks){
-  var _kanbanLegend='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:#f8f5ff;border-bottom:1px solid #e8e0f5;font-size:10.5px;align-items:center"><span style="font-weight:700;color:#382972;margin-left:8px">دليل الألوان:</span><span style="background:#f3e5f5;color:#7030a0;padding:2px 10px;border-radius:6px;font-weight:700">معلق</span><span style="background:#fff3cd;color:#7a5000;padding:2px 10px;border-radius:6px;font-weight:700">انتظار</span><span style="background:#dceeff;color:#382972;padding:2px 10px;border-radius:6px;font-weight:700">جارٍ</span><span style="background:#fde8e8;color:#721c24;padding:2px 10px;border-radius:6px;font-weight:700">⚠️ متأخر</span><span style="background:#d4edda;color:#155724;padding:2px 10px;border-radius:6px;font-weight:700">✓ منجز</span></div>';
+  var _kanbanLegend='<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:#f8f5ff;border-bottom:1px solid #e8e0f5;font-size:10.5px;align-items:center"><span style="font-weight:700;color:#382972;margin-left:8px">دليل الألوان:</span><span style="background:#dceeff;color:#1673a4;padding:2px 10px;border-radius:6px;font-weight:700">➤ على المسار</span><span style="background:#fde8e8;color:#721c24;padding:2px 10px;border-radius:6px;font-weight:700">⚠️ متأخر</span><span style="background:#d4edda;color:#155724;padding:2px 10px;border-radius:6px;font-weight:700">✓ منجز</span></div>';
   var cols=[
-    {key:'معلق',        label:'معلق / يحتاج قرار',bg:'#f3e5f5',color:'#7030a0',badge:'#7030a0'},
-    {key:'قيد الانتظار',label:'قيد الانتظار',bg:'#e8dcff',color:'#382972',badge:'#f39c12'},
-    {key:'جارٍ',        label:'جارٍ',        bg:'#dceeff',color:'#382972',badge:'#48a883'},
+    {key:'على المسار',  label:'على المسار',  bg:'#dceeff',color:'#1673a4',badge:'#208caa'},
     {key:'متأخر',       label:'متأخر',       bg:'#fde8e8',color:'#721c24',badge:'#e74c3c'},
     {key:'منجز',        label:'منجز',        bg:'#d4edda',color:'#155724',badge:'#27ae60'},
   ];
@@ -19598,7 +19772,7 @@ function s4RenKanban(tasks){
       +'<span class="k-badge" style="background:'+col.badge+'">'+colTasks.length+'</span>'
       +'</div>'
       +'<div class="kanban-col-body">';
-    var colColor={'قيد الانتظار':'#f39c12','جارٍ':'#48a883','متأخر':'#e74c3c','منجز':'#27ae60'}[col.key]||'#95a5a6';
+    var colColor={'على المسار':'#48a883','قيد الانتظار':'#f39c12','جارٍ':'#48a883','متأخر':'#e74c3c','منجز':'#27ae60'}[col.key]||'#95a5a6';
     if(!colTasks.length){
       html+='<div style="text-align:center;padding:16px;color:#ccc;font-size:11px;font-family:inherit">لا توجد تكليفات</div>';
     } else {
@@ -19612,6 +19786,7 @@ function s4RenKanban(tasks){
         html+='<div class="kanban-card'+_kbCls+'" data-di="'+t.di+'" data-mi="'+t.mi+'" data-ti="'+t.ti+'" onclick="s4OpenTaskFromKanban(event,'+t.di+','+t.mi+','+t.ti+')" style="border-top:3px solid '+colColor+'">'
           +'<div class="kanban-card-comm">'+e(t.committee||'')+'</div>'
           +'<div class="kanban-card-title">'+e(t.task||'')+'</div>'
+          +((t.status==='منجز'&&t.completedLate&&t.lateDays>0)?'<div style="margin-bottom:4px;font-size:10px;font-weight:700;color:#b9770e;background:#fff4e0;border:1px solid #f0c674;border-radius:5px;padding:2px 8px;display:inline-block" title="أُنجز بعد تاريخ الاستحقاق">⚑ أُنجز متأخراً '+t.lateDays+' يوم</div>':'')
           +(function(){var rag=s4GetRAG(t);return '<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">'+'<span style="font-size:10px;background:'+rag.bg+';color:'+rag.color+';border-radius:5px;padding:2px 8px;font-weight:700;border:1px solid '+rag.color+'20">'+rag.dot+' '+rag.label+'</span>'+(t.escalated?'<span style="font-size:10px;background:#fff3e0;color:#e65100;border-radius:5px;padding:2px 7px;font-weight:700;border:1px solid #ffcc0240"> مُصعَّد</span>':'')+' </div>';})()
           +'<div class="kanban-card-meta">'
           +(t.responsible?'<span>المسؤول: <b>'+e(t.responsible)+'</b></span>':'')
@@ -20782,9 +20957,9 @@ function s4CalcEntityPerformance(tasks){
 
     if(t.status==='منجز')ent.done++;
     else if(t.status==='متأخر'||m.isOverdue)ent.late++;
-    else if(t.status==='جارٍ')ent.wip++;
-    else if(t.status==='معلق')ent.pending++;
-    else ent.wait++;
+    else ent.wip++;/* [STATUS-UNIFY-V1] على المسار */
+
+
 
     if(m.onTime!==null){
       ent.onTimeEligible++;
@@ -20859,9 +21034,9 @@ function s4CalcOverallKPIs(tasks){
     var m=s4CalcTaskMetrics(t);
     if(t.status==='منجز')done++;
     else if(t.status==='متأخر'||m.isOverdue)late++;
-    else if(t.status==='جارٍ')wip++;
-    else if(t.status==='معلق')pending++;
-    else wait++;
+        else wip++;/* على المسار */
+
+
 
     if(m.isAtRisk)atRiskCount++;
 
@@ -21157,7 +21332,8 @@ function s4GenerateInsights(tasks,meetings){
 
   /* 6️⃣ تكليفات معلَّقة طويلاً */
   var longPending=tasks.filter(function(t){
-    if(t.status!=='قيد الانتظار'||!t.dateFrom)return false;
+    /* [STATUS-UNIFY-V1] بعد التوحيد: "على المسار" تجمع المعلّق — نكتشف القديمة عبرها */
+    if(t.status==='منجز'||t.status==='متأخر'||!t.dateFrom)return false;
     var d=_dParseD(t.dateFrom);
     return d&&_dDaysBetween(d,today)>30;
   }).length;
@@ -22438,13 +22614,13 @@ function s4V2DrawDonut(){
 
   var statuses=[
     {label:'منجز',count:0,color:S4_COLORS.success},
-    {label:'جارٍ',count:0,color:S4_COLORS.accent},
-    {label:'قيد الانتظار',count:0,color:S4_COLORS.warning},
-    {label:'متأخر',count:0,color:S4_COLORS.critical},
-    {label:'معلق',count:0,color:S4_COLORS.neutralLight}
+    {label:'على المسار',count:0,color:S4_COLORS.accent},
+    {label:'متأخر',count:0,color:S4_COLORS.critical}
   ];
+
+
   tasks.forEach(function(t){
-    var s=statuses.find(function(x){return x.label===t.status;});
+    var _s=(t.status==='منجز'||t.status==='متأخر')?t.status:'على المسار';var s=statuses.find(function(x){return x.label===_s;});
     if(s)s.count++;
   });
   var total=tasks.length;
@@ -23329,16 +23505,16 @@ function s4ExportTasksReport(){
   var MOE_GOLD='#7358a5';
 
   /* ألوان الحالات — متناسقة مع الهوية الرسمية */
-  var sbg={'قيد الانتظار':'#FFF8E1','جارٍ':'#E3F2FD','منجز':'#E8F5E9','متأخر':'#FFEBEE'};
+  var sbg={'على المسار':'#E3F2FD','قيد الانتظار':'#FFF8E1','جارٍ':'#E3F2FD','منجز':'#E8F5E9','متأخر':'#FFEBEE'};
   var sco={'قيد الانتظار':'#795548','جارٍ':'#1673a4','منجز':'#1B5E20','متأخر':'#B71C1C'};
 
   /* حساب الإحصائيات */
-  var stats={total:tasks.length,done:0,doing:0,late:0,pending:0};
+  var stats={total:tasks.length,done:0,doing:0,late:0,pending:0,inTrack:0};
   tasks.forEach(function(t){
     if(t.status==='منجز')stats.done++;
-    else if(t.status==='جارٍ')stats.doing++;
-    else if(t.status==='متأخر')stats.late++;
-    else stats.pending++;
+      else if(t.status==='متأخر')stats.late++;
+      else stats.doing++;/* [STATUS-UNIFY-V1] على المسار */
+
   });
   var donePct=stats.total>0?Math.round((stats.done/stats.total)*100):0;
 
@@ -23616,9 +23792,9 @@ async function s4MergeAllReports(){
   });
   var total=tasks.length;
   var done=tasks.filter(function(t){return t.status==='منجز';}).length;
-  var inprog=tasks.filter(function(t){return t.status==='جارٍ';}).length;
+  var inprog=tasks.filter(function(t){return t.status!=='منجز'&&t.status!=='متأخر';}).length;
   var late=tasks.filter(function(t){return t.status==='متأخر';}).length;
-  var wait=tasks.filter(function(t){return t.status==='قيد الانتظار';}).length;
+  /* [STATUS-UNIFY-V1] أُزيل عدّاد "قيد الانتظار" — مدموج في على المسار */
   var pct=total>0?Math.round(done/total*100):0;
 
   /* ══════════════════════════════════════
@@ -23717,7 +23893,7 @@ async function s4MergeAllReports(){
   /* ══════════════════════════════════════
      القسم الأول: التقرير الشامل للتكليفات
   ══════════════════════════════════════ */
-  var sbg={'قيد الانتظار':'#FFF8E1','جارٍ':'#E3F2FD','منجز':'#E8F5E9','متأخر':'#FFEBEE','معلق':'#F3E5F5'};
+  var sbg={'على المسار':'#E3F2FD','قيد الانتظار':'#FFF8E1','جارٍ':'#E3F2FD','منجز':'#E8F5E9','متأخر':'#FFEBEE','معلق':'#F3E5F5'};
   var sco={'قيد الانتظار':'#E65100','جارٍ':'#1673a4','منجز':'#1B5E20','متأخر':'#B71C1C','معلق':'#7030a0'};
 
   var tasksHtml='<div class="pb">'
@@ -23779,17 +23955,16 @@ async function s4MergeAllReports(){
     +'<th>اللجنة / المجلس</th>'
     +'<th style="text-align:center;width:10%">إجمالي</th>'
     +'<th style="text-align:center;width:10%">منجز</th>'
-    +'<th style="text-align:center;width:10%">جارٍ</th>'
+    +'<th style="text-align:center;width:12%">على المسار</th>'
     +'<th style="text-align:center;width:10%">متأخر</th>'
-    +'<th style="text-align:center;width:10%">قيد الانتظار</th>'
     +'<th style="text-align:center;width:16%">نسبة الإنجاز</th>'
     +'</tr></thead><tbody>';
   Object.keys(byComm).forEach(function(comm,ci){
     var ct=byComm[comm];
     var cd=ct.filter(function(t){return t.status==='منجز';}).length;
-    var cj=ct.filter(function(t){return t.status==='جارٍ';}).length;
+    var cj=ct.filter(function(t){return t.status!=='منجز'&&t.status!=='متأخر';}).length;
     var cl=ct.filter(function(t){return t.status==='متأخر';}).length;
-    var cw=ct.filter(function(t){return t.status==='قيد الانتظار';}).length;
+      /* [STATUS-UNIFY-V1] أُزيل cw — مدموج في cj (على المسار) */
     var cp=ct.length>0?Math.round(cd/ct.length*100):0;
     execHtml+='<tr style="background:'+(ci%2?'#fafafa':'#fff')+'">'
       +'<td style="font-weight:600">'+comm+'</td>'
@@ -23797,7 +23972,6 @@ async function s4MergeAllReports(){
       +'<td style="text-align:center;color:#1B5E20;font-weight:700">'+cd+'</td>'
       +'<td style="text-align:center;color:#1673a4">'+cj+'</td>'
       +'<td style="text-align:center;color:#B71C1C">'+cl+'</td>'
-      +'<td style="text-align:center;color:#E65100">'+cw+'</td>'
       +'<td style="text-align:center">'
       +'<div style="background:#f0e8ff;border-radius:6px;height:8px;margin-bottom:3px;overflow:hidden">'
       +'<div style="background:'+C1+';border-radius:6px;height:8px;width:'+cp+'%;-webkit-print-color-adjust:exact;print-color-adjust:exact"></div>'
@@ -23904,17 +24078,11 @@ async function s4MergeAllReports(){
 function _s4NormalizeStatus(t){
   if(!t) return 'unknown';
   var s = (t.status || '').trim();
-  /* منجز */
+  /* [STATUS-UNIFY-V1] ثلاث حالات فقط: منجز / متأخر / على المسار */
   if(s === 'منجز' || s === 'منجزة' || t.done === true) return 'done';
-  /* متأخر — كانبان يضع هذه القيمة تلقائياً */
   if(s === 'متأخر' || s === 'متأخرة') return 'overdue';
-  /* ملغي/متوقف */
-  if(s === 'متوقفة' || s === 'ملغي' || s === 'ملغى') return 'cancelled';
-  /* قيد التنفيذ */
-  if(s === 'جارٍ' || s === 'جارٍ التنفيذ' || s === 'قيد التنفيذ') return 'in_progress';
-  /* لم يبدأ */
-  if(s === 'قيد الانتظار' || s === 'معلق' || s === '') return 'pending';
-  return 'unknown';
+  /* كل ما تبقّى (على المسار/جارٍ/قيد الانتظار/معلق/قيد التنفيذ/متوقفة/فارغ) → على المسار */
+  return 'on_track';
 }
 
 /* هل التكليف متأخر؟ — متطابق مع منطق كانبان (يستخدم dateTo) */
@@ -23936,13 +24104,16 @@ function _s4IsOverdue(t){
   }catch(e){ return false; }
 }
 
-/* تسمية ولون لكل تصنيف */
+/* تسمية ولون لكل تصنيف — [STATUS-UNIFY-V1] ثلاث حالات.
+   on_track هي الفئة الموحّدة؛ نُبقي مفاتيح in_progress/pending/cancelled كمرادفات
+   لها لتفادي كسر أي مرجع قديم في الكود. */
 var _S4_STATUS_META = {
-  done:         { label:'منجز',          color:'#1d8a4e', icon:'✓', bg:'#d4f5e0' },
-  in_progress:  { label:'قيد التنفيذ',   color:'#1673a4', icon:'⏳', bg:'#cee8f1' },
-  pending:      { label:'لم يبدأ بعد',   color:'#475569', icon:'⚪', bg:'#e5e7eb' },
-  overdue:      { label:'متأخر',         color:'#b91c1c', icon:'⚠', bg:'#fde8e8' },
-  cancelled:    { label:'ملغي/معلق',     color:'#94a3b8', icon:'⊘', bg:'#f1f5f9' }
+  done:         { label:'منجز',      color:'#1d8a4e', icon:'✓', bg:'#d4f5e0' },
+  on_track:     { label:'على المسار', color:'#1673a4', icon:'➤', bg:'#cee8f1' },
+  overdue:      { label:'متأخر',     color:'#b91c1c', icon:'⚠', bg:'#fde8e8' },
+  in_progress:  { label:'على المسار', color:'#1673a4', icon:'➤', bg:'#cee8f1' },
+  pending:      { label:'على المسار', color:'#1673a4', icon:'➤', bg:'#cee8f1' },
+  cancelled:    { label:'على المسار', color:'#1673a4', icon:'➤', bg:'#cee8f1' }
 };
 
 /* فتح نافذة الاختيار */
@@ -27644,7 +27815,7 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
   var d=D[di], m=GM(di)[mi];
   var label=m.meetNum?'اجتماع رقم '+m.meetNum:'اجتماع '+(mi+1);
   var items=m.agendaItems&&m.agendaItems.length?m.agendaItems:(m.agenda?[{text:m.agenda}]:[]);
-  var sbg={'قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
+  var sbg={'على المسار':'#dceeff','قيد الانتظار':'#fff3cd','جارٍ':'#dceeff','منجز':'#d4edda','متأخر':'#f8d7da'};
   var sco={'قيد الانتظار':'#856404','جارٍ':'#382972','منجز':'#155724','متأخر':'#721c24'};
 
   /* تكليفات الاجتماع الحالي */
@@ -28236,11 +28407,11 @@ var IMPORT_AC = {
     'متعثر':'متعثرة','blocked':'متعثرة','معلق':'متعثرة'
   },
   status_task: {
-    'waiting':'قيد الانتظار','انتظار':'قيد الانتظار','pending':'قيد الانتظار','في الانتظار':'قيد الانتظار',
-    'in progress':'جارٍ','جاري':'جارٍ','جارى':'جارٍ','قيد التنفيذ':'جارٍ','running':'جارٍ',
+    'waiting':'على المسار','انتظار':'على المسار','pending':'على المسار','في الانتظار':'على المسار','قيد الانتظار':'على المسار',
+    'in progress':'على المسار','جاري':'على المسار','جارى':'على المسار','جارٍ':'على المسار','قيد التنفيذ':'على المسار','running':'على المسار','on track':'على المسار',
     'done':'منجز','completed':'منجز','مكتمل':'منجز','مكتملة':'منجز','انجز':'منجز','أنجز':'منجز',
     'late':'متأخر','overdue':'متأخر','delayed':'متأخر','متاخر':'متأخر',
-    'hold':'معلق','on hold':'معلق','موقوف':'معلق','مؤجل':'معلق'
+    'hold':'على المسار','on hold':'على المسار','موقوف':'على المسار','مؤجل':'على المسار','معلق':'على المسار'
   },
   type: {
     'committee':'لجنة','لجان':'لجنة','work team':'فرق عمل','فريق':'فرق عمل',
@@ -28586,7 +28757,7 @@ function importParseFile(){if(isViewerBlocked('الاستيراد'))return;
         if(t.status){
           var fs=importAC(t.status,IMPORT_AC.status_task);
           if(fs!==t.status){corrections.push({sheet:'التكليفات',row:i+2,field:'الحالة',orig:t.status,fix:fs,type:'fix'});t.status=fs;}
-        } else {t.status='قيد الانتظار';}
+        } else {t.status='على المسار';}
         /* تواريخ */
         ['dateFrom','dateTo','date'].forEach(function(df){
           if(t[df]){
@@ -28747,7 +28918,7 @@ function importShowTab(tab){
     '</div>';
   } else {
     var rows2=p.tasks.slice(0,60).map(function(t,i){
-      var sc={'منجز':'#27ae60','جارٍ':'#208caa','قيد الانتظار':'#fb8c00','متأخر':'#e53935','معلق':'#7030a0'};
+      var sc={'منجز':'#27ae60','على المسار':'#208caa','جارٍ':'#208caa','قيد الانتظار':'#fb8c00','متأخر':'#e53935','معلق':'#7030a0'};
       var bc=sc[t.status]||'#888';
       return'<tr style="background:'+(i%2?'#f7f8fc':'#fff')+'">'+
         '<td style="padding:5px 8px;font-size:10px;color:#888;text-align:center">'+(i+1)+'</td>'+
@@ -28824,7 +28995,7 @@ function importExecute(){
       if(!meetMap[key]) meetMap[key]={committee:t.committee,meetNum:parseInt(t.meetNum)||1,date:t.date||'',loc:t.loc||'',agenda:t.agenda||'',tasks:[]};
       meetMap[key].tasks.push({
         task:t.task,responsible:t.responsible,
-        status:t.status||'قيد الانتظار',
+        status:t.status||'على المسار',
         dateFrom:t.dateFrom||'',dateTo:t.dateTo||'',
         notes:t.notes||'',update:t.update||''
       });
@@ -30785,23 +30956,42 @@ function gmRenderStats(){
   if(!box) return;
   var meetings = window.GM_DATA.meetings || [];
   var totalMtg = meetings.length;
+  if(typeof gmNormalizeAllTasks==='function') gmNormalizeAllTasks(); /* [STATUS-UNIFY-V1] */
   var allTasks = [];
   meetings.forEach(function(m){ (m.tasks||[]).forEach(function(t){ allTasks.push(t); }); });
   var total = allTasks.length;
   var done = allTasks.filter(function(t){return t.status==='منجز';}).length;
   var late = allTasks.filter(function(t){return t.status==='متأخر';}).length;
-  var wip = allTasks.filter(function(t){return t.status==='جارٍ';}).length;
+  var wip = allTasks.filter(function(t){return t.status==='على المسار';}).length;
   var pct = total ? Math.round(done/total*100) : 0;
   box.innerHTML =
     '<div class="gm-stat"><span class="gm-stat-n">'+totalMtg+'</span> اجتماع</div>'+
     '<div class="gm-stat"><span class="gm-stat-n">'+total+'</span> تكليف</div>'+
-    '<div class="gm-stat" style="background:linear-gradient(135deg,#fff3cd,#ffe082);color:#7a5000;border-color:#f39c12"><span class="gm-stat-n" style="color:#c87f0a">'+wip+'</span> جارٍ</div>'+
+    '<div class="gm-stat" style="background:linear-gradient(135deg,#e3f0fa,#bcdcf0);color:#1673a4;border-color:#208caa"><span class="gm-stat-n" style="color:#1673a4">'+wip+'</span> على المسار</div>'+
     '<div class="gm-stat" style="background:linear-gradient(135deg,#fde8e6,#f5c6c1);color:#922b21;border-color:#e74c3c"><span class="gm-stat-n" style="color:#c0392b">'+late+'</span> متأخر</div>'+
     '<div class="gm-stat" style="background:linear-gradient(135deg,#d4edda,#a8e6b3);color:#155724;border-color:#27ae60"><span class="gm-stat-n" style="color:#1d6a3b">'+done+' ('+pct+'%)</span> منجز</div>';
 }
 
 // ── جمع التكليفات المفلترة مع اسم الاجتماع ──
+/* [STATUS-UNIFY-V1] تطبيع تكليفات gm إلى الحالات الثلاث + تحويل تلقائي للمتأخر.
+   gm يستخدم حقل dueDate. نطبّق نفس منطق التكليفات الأساسي عبر window helpers. */
+function gmNormalizeAllTasks(){
+  var mig = window.migrateTaskStatus || function(s){return s;};
+  (window.GM_DATA && window.GM_DATA.meetings || []).forEach(function(m){
+    (m.tasks||[]).forEach(function(t){
+      /* ترحيل المسمى أولاً */
+      t.status = mig(t.status);
+      /* تحويل تلقائي إلى متأخر إذا تجاوز dueDate ولم يُنجز (اليوم التالي فأكثر) */
+      if(t.status!=='منجز' && t.status!=='متأخر' && t.dueDate){
+        var diff = (typeof daysDiff==='function') ? daysDiff(t.dueDate) : null;
+        if(diff!==null && diff<0) t.status='متأخر';
+      }
+    });
+  });
+}
+
 function gmFilteredTasks(){
+  gmNormalizeAllTasks(); /* [STATUS-UNIFY-V1] توحيد قبل الفلترة والعرض */
   var status = (document.getElementById('gmFltStatus')||{}).value || '';
   var prio = (document.getElementById('gmFltPrio')||{}).value || '';
   var resp = (document.getElementById('gmFltResp')||{}).value || '';
@@ -30999,13 +31189,13 @@ function gmShowMailLog(t){
 }
 function gmRenderKanban(container){
   var tasks = gmFilteredTasks();
-  var statuses = ['معلق','قيد الانتظار','جارٍ','متأخر','منجز'];
+  var statuses = (window.TASK_STATUSES || ["على المسار","متأخر","منجز"]);
   var byStatus = {};
   statuses.forEach(function(s){ byStatus[s]=[]; });
   tasks.forEach(function(t){
-    var st = t.task.status||'قيد الانتظار';
+    var st = t.task.status||'على المسار';
     if(byStatus[st]) byStatus[st].push(t);
-    else byStatus['قيد الانتظار'].push(t);
+    else byStatus['على المسار'].push(t);
   });
   var html = '<div class="gm-kanban">';
   statuses.forEach(function(st){
@@ -31033,7 +31223,7 @@ function gmRenderKanban(container){
           var _gt={
             di:t.meetingId, mi:0, ti:gmEsc(t.task.id),
             task:t.task.task||'', committee:t.meetingName||'',
-            responsible:t.task.responsible||'', status:t.task.status||'قيد الانتظار',
+            responsible:t.task.responsible||'', status:t.task.status||'على المسار',
             dateTo:t.task.dueDate||'', notes:t.task.notes||'',
             escalated:t.task.escalated===true,
             mailLog:Array.isArray(t.task.mailLog)?t.task.mailLog:[],
@@ -31117,10 +31307,8 @@ function gmRenderGantt(container){
   _ganttLegend.style.cssText='display:flex;flex-wrap:wrap;gap:8px;padding:8px 14px;background:#f5f8fb;border-bottom:1px solid #e2eaf2;font-size:10.5px;align-items:center;font-family:inherit';
   _ganttLegend.innerHTML='<span style="font-weight:700;color:#208caa;margin-left:8px">دليل الألوان:</span>'
     +'<span style="background:linear-gradient(135deg,#27ae60,#1d6a3b);color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">✓ منجز</span>'
-    +'<span style="background:linear-gradient(135deg,#f39c12,#c87f0a);color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">جارٍ</span>'
-    +'<span style="background:linear-gradient(135deg,#208caa,#208caa);color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">قيد الانتظار</span>'
+    +'<span style="background:linear-gradient(135deg,#208caa,#1673a4);color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">➤ على المسار</span>'
     +'<span style="background:linear-gradient(135deg,#e74c3c,#922b21);color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">⚠️ متأخر</span>'
-    +'<span style="background:#95a5a6;color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">معلق</span>'
     +'<span style="margin-right:12px;color:#666">|</span>'
     +'<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:3px;height:14px;background:#e74c3c;border-radius:2px"></span><span style="font-size:10px;color:#555">الخط الأحمر = اليوم</span></span>';
   container.innerHTML='';
@@ -31164,13 +31352,13 @@ function gmRenderGantt(container){
     /* [v5.3 UX] صف Gantt تفاعلي: النقر على الصف أو الشريط → يفتح الاجتماع */
     var _ganttTooltip = gmEsc(t.task.task) + ' | المسؤول: ' + gmEsc(t.task.responsible||'—') +
         ' | البداية: ' + (t.meetingDate||'—') + ' | الاستحقاق: ' + (t.task.dueDate||'—') +
-        ' | الحالة: ' + (t.task.status||'قيد الانتظار');
+        ' | الحالة: ' + (t.task.status||'على المسار');
     var _ganttMid = (window.GM_DATA && window.GM_DATA.meetings || []).find(function(_m){return _m.tasks && _m.tasks.indexOf(t.task)>=0;});
     var _ganttMidId = (_ganttMid && _ganttMid.id) || t.meetingId || '';
     html += '<div class="gm-gantt-row" data-mid="'+_ganttMidId+'" onclick="if(typeof gmOpenMeeting===\'function\' && this.dataset.mid) gmOpenMeeting(this.dataset.mid);" style="cursor:pointer" title="'+_ganttTooltip+'">'+
       '<div class="gm-gantt-task-col">'+gmEsc((t.task.task||'').substring(0,60))+'</div>'+
       '<div class="gm-gantt-bar-wrap">'+
-        '<div class="gm-gantt-bar" data-status="'+(t.task.status||'قيد الانتظار')+'" style="right:'+leftPct+'%;width:'+widthPct+'%" title="'+_ganttTooltip+'">'+
+        '<div class="gm-gantt-bar" data-status="'+(t.task.status||'على المسار')+'" style="right:'+leftPct+'%;width:'+widthPct+'%" title="'+_ganttTooltip+'">'+
           gmEsc(t.task.responsible||'')+
         '</div>'+
       '</div>'+
@@ -31657,7 +31845,7 @@ function gmBuildAttendeeRow(a, i){
 function gmBuildTaskRow(t, i){
   t = t || {};
   var tid = t.id || gmUID();
-  var statuses = ['معلق','قيد الانتظار','جارٍ','متأخر','منجز'];
+  var statuses = (window.TASK_STATUSES || ["على المسار","متأخر","منجز"]);
   var opts = statuses.map(function(s){
     return '<option value="'+s+'"'+(t.status===s?' selected':'')+'>'+s+'</option>';
   }).join('');
@@ -31702,7 +31890,7 @@ function gmAddTask(){if(isViewerBlocked('الإضافة'))return;
   // نحسب عدد التكليفات الحالية (كل تكليف = 3 divs)
   var currentRows = list.querySelectorAll('.gm-task-row').length;
   var wrap = document.createElement('div');
-  wrap.innerHTML = gmBuildTaskRow({status:'قيد الانتظار',priority:'med',progress:0}, currentRows);
+  wrap.innerHTML = gmBuildTaskRow({status:'على المسار',priority:'med',progress:0}, currentRows);
   // التكليف كـ 3 صفوف (row + priority/progress row + notes row)
   while(wrap.firstElementChild) list.appendChild(wrap.firstElementChild);
 }
@@ -33786,6 +33974,15 @@ window.DTextLayer={
    الآن: نشغّله فوراً بالتوازي (لا ينتظر). الدالة تطبّق النصوص الحديثة فور
    وصولها وتدمجها فوق localStorage. لا تأخير = لا وميض نصوص قديمة. */
 function _dtBootstrap(){
+  /* [NO-STALE-FLASH-V2 2026-05-28] تطبيق فوري متزامن لتعديلات DText المحمّلة محلياً
+     قبل أي تأخير. السبب الجذري للوميض: _loadDTEarly كان يملأ DT في الذاكرة فقط،
+     والتطبيق الفعلي على DOM يتأخر 1000ms (أول dtextRescan) — فتظهر النصوص الأصلية
+     المحذوفة/المعدّلة لمدة ~1-2 ثانية. الحل: نطبّق فوراً إن توفّرت تعديلات محلية. */
+  if(Object.keys(DT).length>0){
+    try{ window.dtextRescan(); }catch(e){}
+    /* استدعاء ثانٍ بعد إطار رسم واحد لالتقاط أي عنصر تأخّر بناؤه */
+    if(window.requestAnimationFrame){ requestAnimationFrame(function(){try{window.dtextRescan();}catch(e){}}); }
+  }
   setTimeout(function(){try{window.dtextRescan();}catch(e){}},1000);
   setTimeout(function(){window.dtextScanDOM();},3000);
   /* استدعاء فوري بالتوازي بدل setTimeout 4000 — يجلب النصوص الحديثة أسرع */
@@ -36507,8 +36704,8 @@ function execPrint(){
   html+='<div class="chart-body"><div class="chart-svg">'+pieSvg+'</div>';
   html+='<div class="chart-legend">';
   html+='<div class="lg-item"><span class="lg-dot" style="background:#27ae60"></span><span class="lg-l">منجز</span><span class="lg-v">'+doneT+' ('+Math.round(doneT/totalT*100)+'%)</span></div>';
-  html+='<div class="lg-item"><span class="lg-dot" style="background:#f39c12"></span><span class="lg-l">جارٍ التنفيذ</span><span class="lg-v">'+wipT+' ('+Math.round(wipT/totalT*100)+'%)</span></div>';
-  html+='<div class="lg-item"><span class="lg-dot" style="background:#9338ff"></span><span class="lg-l">في الانتظار</span><span class="lg-v">'+waitT+' ('+Math.round(waitT/totalT*100)+'%)</span></div>';
+html+='<div class="lg-item"><span class="lg-dot" style="background:#1673a4"></span><span class="lg-l">على المسار</span><span class="lg-v">'+(wipT+waitT)+' ('+Math.round((wipT+waitT)/totalT*100)+'%)</span></div>';
+
   html+='<div class="lg-item"><span class="lg-dot" style="background:#e74c3c"></span><span class="lg-l">متأخر</span><span class="lg-v">'+lateT+' ('+Math.round(lateT/totalT*100)+'%)</span></div>';
   html+='</div></div></div>';
 
