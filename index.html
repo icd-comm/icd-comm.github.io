@@ -9076,7 +9076,12 @@ function _docsSafeName(s){
     ascii = 'f' + Date.now().toString(36) + Math.random().toString(36).substring(2,6);
   }
 
-  return (ascii + ext).slice(0,80);
+  /* [SAFENAME-FIX 2026-05-28] الحدّ الأقصى 80 حرفاً مع الحفاظ على الامتداد كاملاً:
+     slice(0,80) السابق كان يقتطع الامتداد نفسه عند الأسماء الطويلة (مثلاً .docx→.do)
+     فيفسد نوع الملف. نقتطع الاسم فقط ونُبقي الامتداد. */
+  var maxBase = 80 - ext.length;
+  if(maxBase < 1) maxBase = 1;
+  return ascii.slice(0, maxBase) + ext;
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -9164,8 +9169,8 @@ function _dndEnableUploadButtons(container){
       if(btn._dndEnabled) return;
       var onclickStr = btn.getAttribute('onclick') || '';
       /* استخراج المعاملات من onclick */
-      var m = onclickStr.match(/_docsUpload\s*\(\s*(\d+)\s*,\s*([\dnull]+)\s*,\s*&quot;(\w+)&quot;/);
-      if(!m) m = onclickStr.match(/_docsUpload\s*\(\s*(\d+)\s*,\s*([\dnull]+)\s*,\s*['"](\w+)['"]/);
+      var m = onclickStr.match(/_docsUpload\s*\(\s*(\d+)\s*,\s*(\d+|null)\s*,\s*&quot;(\w+)&quot;/);
+      if(!m) m = onclickStr.match(/_docsUpload\s*\(\s*(\d+)\s*,\s*(\d+|null)\s*,\s*['"](\w+)['"]/);
       if(!m) return;
       var di = parseInt(m[1], 10);
       var mi = m[2] === 'null' ? null : parseInt(m[2], 10);
@@ -9420,6 +9425,10 @@ function _docsFileCard(file, di, mi, scope, arrayIdx){
      arrayIdx: فهرس في documents[] للحذف (يُتجاهل لـ decree/minutes) */
   if(!file) return '';
   var url = (typeof file==='object' && file.url) ? file.url : file;
+  /* [XSS-HARDEN 2026-05-28] لا نُصدِر رابط "فتح" إلا لمخططات http/https — يمنع
+     حقن javascript:/data: عبر بيانات مستوردة أو محقونة في حقل url. الروابط
+     الفعلية كلها https من Supabase Storage فلا يتأثر الاستخدام العادي. */
+  if(url && !/^https?:\/\//i.test(String(url))) url = '';
   var name = (typeof file==='object' && file.name) ? file.name : 'وثيقة';
   var date = (typeof file==='object' && file.uploadedAt) ? String(file.uploadedAt).slice(0,10) : '';
   var by = (typeof file==='object' && file.by) ? file.by : '';
@@ -9516,18 +9525,35 @@ function _docsUpload(di, mi, scope, droppedFile){
           uploadedAt: new Date().toISOString(),
           by: (currentUser && (currentUser.name||currentUser.email)) || ''
         };
-        /* حفظ metadata في المكان المناسب */
+        /* [RACE-FIX 2026-05-28] حفظ metadata على الكائن الحيّ بعد await:
+           الرفع يستغرق ثوانٍ، وقد تُعيد المزامنة الدورية بناء D/M أثناءها فيصبح
+           الكائن الملتقَط قبل await منفصلاً، فتضيع الـ metadata صامتاً (ملف يُرفع
+           دون مرجع). لذا نُعيد جلب D[di] و GM(di)[mi] الآن مع حماية الغياب. */
+        var dLive = (typeof D!=='undefined') ? D[di] : null;
+        if(!dLive){
+          if(typeof showToast==='function') showToast('تعذّر حفظ الوثيقة: تغيّرت بيانات اللجنة أثناء الرفع — أعد المحاولة',true);
+          return;
+        }
         if(scope==='decree'){
-          d.decree = meta;
+          dLive.decree = meta;
         } else if(scope==='committee'){
-          if(!Array.isArray(d.documents)) d.documents = [];
-          d.documents.push(meta);
+          if(!Array.isArray(dLive.documents)) dLive.documents = [];
+          dLive.documents.push(meta);
         } else if(scope==='meeting'){
           var m = GM(di)[mi];
+          if(!m){
+            if(typeof showToast==='function') showToast('تعذّر حفظ الوثيقة: تغيّر الاجتماع أثناء الرفع — أعد المحاولة',true);
+            return;
+          }
           if(!Array.isArray(m.documents)) m.documents = [];
           m.documents.push(meta);
         } else if(scope==='minutes'){
-          GM(di)[mi].minutes_pdf = meta;
+          var mMin = GM(di)[mi];
+          if(!mMin){
+            if(typeof showToast==='function') showToast('تعذّر حفظ المحضر: تغيّر الاجتماع أثناء الرفع — أعد المحاولة',true);
+            return;
+          }
+          mMin.minutes_pdf = meta;
         }
         /* حفظ للقاعدة */
         if(typeof saveImmediately==='function') saveImmediately();
@@ -9568,13 +9594,17 @@ function _docsDelete(di, mi, scope, arrayIdx){
       return;
     }
     if(!confirm('تأكيد حذف الوثيقة؟ (لا يمكن التراجع)')) return;
-    var d = D[di];
+    var d = (typeof D!=='undefined') ? D[di] : null;
+    if(!d){
+      if(typeof showToast==='function') showToast('تعذّر الحذف: اللجنة غير موجودة',true);
+      return;
+    }
     /* [DOCDEL-FIX 2026-05-25] دعم كل scopes: committee/meeting/decree/minutes */
     if(scope==='committee' && arrayIdx!=null && Array.isArray(d.documents)){
       d.documents.splice(arrayIdx,1);
     } else if(scope==='meeting' && mi!=null && arrayIdx!=null){
       var m = GM(di)[mi];
-      if(Array.isArray(m.documents)) m.documents.splice(arrayIdx,1);
+      if(m && Array.isArray(m.documents)) m.documents.splice(arrayIdx,1);
     } else if(scope==='decree'){
       /* حذف قرار التشكيل */
       d.decree = null;
