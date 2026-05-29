@@ -1,6 +1,70 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
+<!-- ════════════════════════════════════════════════════════════════
+     [NO-DTEXT-FLASH-V3 2026-05-29] منع وميض النصوص الأصلية:
+     يعمل قبل أي رسم — يحقن CSS يخفي العناصر المعدَّلة عبر محرر النصوص
+     لمنع ظهور النص الأصلي قبل تطبيق التعديل من localStorage.
+     شبكة أمان: timeout 1500ms يكشف كل المخفي حتى لو فشل JS.
+     ════════════════════════════════════════════════════════════════ -->
+<script>
+/* [PROD-LOG-GATE] إسكات console.log في الإنتاج مع إبقاء warn/error للتشخيص */(function(){try{var __DBG=/[?&]debug=1/.test(location.search);if(!__DBG){var _n=function(){};console.log=_n;console.debug=_n;}}catch(e){}})();
+
+(function(){
+  try{
+    /* قراءة DT لكلا النظامين (لا نعرف الفعّال قبل تسجيل الدخول) */
+    var hasEdits = false;
+    var keys = ['lajan_dtext_store_v1','intl_dtext_store_v1'];
+    for(var i=0;i<keys.length;i++){
+      try{
+        var raw = localStorage.getItem(keys[i]);
+        if(raw){
+          var obj = JSON.parse(raw);
+          if(obj && typeof obj==='object' && Object.keys(obj).length>0){ hasEdits=true; break; }
+        }
+      }catch(e){}
+    }
+    if(!hasEdits) return; /* لا تعديلات → لا حاجة لإخفاء */
+
+    /* احقن CSS مؤقت يخفي محتوى body فقط (لا الإطار كله):
+       opacity:0 + transition قصير → ظهور سلس بعد تطبيق التعديلات.
+       لا نستخدم visibility/display لتفادي قفز التخطيط (layout shift). */
+    var style = document.createElement('style');
+    style.id = '_dtextHideStyle';
+    style.textContent =
+      'body.dtext-loading{opacity:0!important;transition:none!important}' +
+      'body.dtext-loaded{opacity:1!important;transition:opacity .12s ease-out!important}';
+    (document.head||document.documentElement).appendChild(style);
+
+    /* أضف class الإخفاء فور توفر body (DOMContentLoaded أو polling قصير) */
+    function _markLoading(){
+      if(document.body){ document.body.classList.add('dtext-loading'); return true; }
+      return false;
+    }
+    if(!_markLoading()){
+      var _waitBody = setInterval(function(){ if(_markLoading()) clearInterval(_waitBody); }, 10);
+      setTimeout(function(){ clearInterval(_waitBody); }, 500);
+    }
+
+    /* علم عالمي تستخدمه dtextRescan لاحقاً لرفع الإخفاء */
+    window._dtextHasEdits = true;
+    window._dtextReveal = function(){
+      try{
+        if(document.body){
+          document.body.classList.remove('dtext-loading');
+          document.body.classList.add('dtext-loaded');
+        }
+        var s=document.getElementById('_dtextHideStyle');
+        /* أبقِ على الـ style لإتمام transition، ثم أزله */
+        setTimeout(function(){ try{ if(s&&s.parentNode) s.parentNode.removeChild(s); }catch(e){} }, 300);
+      }catch(e){}
+    };
+
+    /* شبكة أمان: بعد 1500ms أزل الإخفاء حتى لو فشل JS */
+    setTimeout(function(){ try{ window._dtextReveal&&window._dtextReveal(); }catch(e){} }, 1500);
+  }catch(e){ /* لا نوقف أي شيء في حال الفشل */ }
+})();
+</script>
 <!-- ════════════════════════════════════════════════════════════
      ║  BUILD VERSION: MOBILE-V2-FIX-2026-05-22                 ║
      ║  Date: 2026-05-22 | Mobile/iPad responsive complete       ║
@@ -16,7 +80,7 @@
 
 <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>نظام إدارة المجالس واللجان</title>
 <style id="critical-panel-isolation">
 /* ═══════════════════════════════════════════════════════════════
@@ -5720,7 +5784,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
     </button>
   </div>
   <div class="home-footer" style="display:flex;align-items:center;justify-content:space-between;gap:14px">
-  <span>© وحدة المجالس واللجان — وكالة التعاون الدولي — وزارة التعليم</span>
+  <span id="footerCopy">© وحدة المجالس واللجان — وكالة التعاون الدولي — وزارة التعليم</span>
   <button onclick="if(currentUser&&currentUser.role==='admin'){openAdminPanel();}else{showLogoutModal();}" id="homeUserBtn"
     style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.85);border-radius:8px;padding:5px 14px;font-size:11px;font-family:inherit;cursor:pointer" title="المستخدم الحالي"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> <span id="homeUserLbl">—</span></button>
 </div>
@@ -5744,7 +5808,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
       </div>
       <div class="lsb-logo-text">
         <span class="lsb-logo-title">وكالة التعاون الدولي</span>
-        <span class="lsb-logo-sub">وحدة المجالس واللجان</span>
+        <span class="lsb-logo-sub" id="lsbLogoSub">وحدة المجالس واللجان</span>
       </div>
     </div>
     <!-- [MOBILE-OPTIMIZED-V1] معلومات الشريط العلوي على الموبايل (مخفية على الكمبيوتر) -->
@@ -10235,7 +10299,7 @@ function _es_printForManager(di, mi){
     var meetingLabel = (m.meetNum ? 'اجتماع رقم '+m.meetNum : 'اجتماع '+(mi+1));
     var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>الملخّص التنفيذي — '+e(d.n)+'</title>'
       +'<style>'
-      +'@page{size:A4;margin:14mm}'
+      +'@page{size:A4;margin:15mm}'
       +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;direction:rtl;color:#1f2937;line-height:1.85;margin:0;padding:0}'
       +'.cover{padding:24px 28px;border-bottom:3px solid #1d8a4e;margin-bottom:20px}'
       +'.cover h1{margin:0 0 6px;font-size:22pt;color:#003944}'
@@ -11505,6 +11569,13 @@ function getTypes(){return activeSystem==='intl'?TYPES_INTL:TYPES_MAIN;}
 /* عناوين الأقسام حسب النظام */
 function getSysLabel(){return activeSystem==='intl'?'المجالس التنسيقية واللجان الدولية':'المجالس واللجان';}
 function getSysShort(){return activeSystem==='intl'?'دولي':'رئيسي';}
+/* [UNIT-NAME-V1 2026-05-29] الاسم الكامل للجهة المُعِدّة في الترويسة والتذييل والتقارير.
+   الرئيسي: وحدة المجالس واللجان — وكالة التعاون الدولي
+   الدولي : الإدارة العامة للعلاقات الدولية — وكالة التعاون الدولي
+   كل ظهور للنص في كل التقارير والمعاينات يمرّ عبر هذه الدالة لضمان الاتساق. */
+function getUnitName(){return activeSystem==='intl'?'الإدارة العامة للعلاقات الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي';}
+function getUnitShort(){return activeSystem==='intl'?'الإدارة العامة للعلاقات الدولية':'وحدة المجالس واللجان';}
+try{ if(typeof window!=='undefined'){ window.getUnitName=getUnitName; window.getUnitShort=getUnitShort; } }catch(e){}
 /* تبديل النظام — يُستدعى من زر التبديل في شاشة اللوجين */
 function switchSystem(sys){
   if(sys===activeSystem)return;
@@ -11546,8 +11617,10 @@ function switchSystem(sys){
   window.GM_DATA = { meetings: [] };
   window.GM_SB_ROW_ID = null;
   window.GM_LOADED = false;
-  /* مسح INITIATIVES عند تبديل للنظام الرئيسي */
-  if(sys!=='intl') INITIATIVES=[];
+  /* [ISOLATION-V2] مسح INITIATIVES دائماً عند تبديل النظام لتجنّب أي خلط مؤقت قبل إعادة التحميل */
+  INITIATIVES=[];
+  INIT_EDITED=false;
+  INIT_ACTIVE_COUNCIL=null;
   /* تعيين النظام الجديد */
   activeSystem=sys;
   /* تحديث واجهة اللوجين */
@@ -11757,12 +11830,10 @@ function updateSystemUI(){
     :'نظام إدارة المجالس واللجان وفرق العمل';
 
   var _footerCopy=document.getElementById('footerCopy');
-  if(_footerCopy)_footerCopy.textContent=isIntl
-    ?'© وحدة اللجان الدولية — وكالة التعاون الدولي — وزارة التعليم'
-    :'© وحدة المجالس واللجان — وكالة التعاون الدولي — وزارة التعليم';
+  if(_footerCopy)_footerCopy.textContent='© '+getUnitShort()+' — وكالة التعاون الدولي — وزارة التعليم';
 
   var _lsbSub=document.getElementById('lsbLogoSub');
-  if(_lsbSub)_lsbSub.textContent=isIntl?'وحدة اللجان الدولية':'وحدة المجالس واللجان';
+  if(_lsbSub)_lsbSub.textContent=getUnitShort();
 
   /* ── تحديث فلتر النطاق في قسم الاجتماعات ── */
   var s3scEl=document.getElementById('s3sc');
@@ -12861,6 +12932,33 @@ async function doSave(skipSafetyCheck){
     var _payloadC = _buildPayload(_saveD, !SB_ROW_C);
     _payloadC.updated_at = ts;
 
+    /* [CONFLICT-GUARD-V1] كشف التحرير المتزامن قبل الكتابة:
+       نقرأ updated_at الحالي من الخادم ونقارنه بآخر قيمة نعرفها. إن اختلف،
+       فهذا يعني أن مستخدماً آخر حفظ بعد آخر تحميل لدينا — فبدل الدهس الصامت
+       نحذّر المستخدم. فشل الفحص نفسه (شبكة) لا يمنع الحفظ (fail-open للسلوك القديم). */
+    if(SB_ROW_C && !skipSafetyCheck && SB_LAST_UPDATED_C){
+      try{
+        var _chk = await sbFetch(SB_TABLES[activeSystem].committees+'?id=eq.'+SB_ROW_C+'&select=updated_at');
+        var _remoteTs = (_chk && _chk[0] && _chk[0].updated_at) || null;
+        if(_remoteTs && _remoteTs !== SB_LAST_UPDATED_C){
+          var _cMsg = '⚠️ تنبيه تعارض تحرير\n\n'
+            + 'قام مستخدم آخر بحفظ تغييرات على البيانات بعد آخر تحميل لديك.\n'
+            + 'إذا تابعت الحفظ الآن، قد تُمحى تعديلاتهم.\n\n'
+            + 'الموصى به: اضغط "إلغاء"، أعد تحميل الصفحة لجلب أحدث البيانات، ثم أعد تطبيق تغييرك.\n\n'
+            + 'اضغط "موافق" للحفظ فوق تغييراتهم رغم ذلك، أو "إلغاء" للتراجع.';
+          if(!window.confirm(_cMsg)){
+            _doSaveInProgress = false;
+            if(typeof setSyncUI==='function') setSyncUI('err','أُلغي الحفظ — يوجد تعارض');
+            throw new Error('CONFLICT_ABORT: ألغى المستخدم الحفظ بسبب تعارض تحرير');
+          }
+          try{ auditLog('تعارض حفظ','اللجان','تجاوز المستخدم تحذير تعارض التحرير المتزامن'); }catch(_){}
+        }
+      }catch(_cf){
+        if(_cf && String(_cf.message).indexOf('CONFLICT_ABORT')===0) throw _cf;
+        /* فشل فحص التعارض (شبكة/غيره) — لا نمنع الحفظ */
+      }
+    }
+
     if(SB_ROW_C){
       await sbFetch(SB_TABLES[activeSystem].committees+'?id=eq.'+SB_ROW_C, 'PATCH', _payloadC);
     } else {
@@ -13450,7 +13548,7 @@ function printSelectedReport(){
     +'<div class="np" style="margin-bottom:14px"><button onclick="window.print()" style="background:linear-gradient(135deg,#208caa,#1673a4);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-family:inherit;cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> طباعة</button></div>'
     +body
     +'<div style="margin-top:20px;border-top:2px solid #208caa;padding-top:10px;display:flex;justify-content:space-between;font-family:inherit;font-size:12px;color:#888">'
-    +'<span>'+(activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي</span><span>'+new Date().toLocaleDateString('en-GB')+'</span></div>'
+    +'<span>'+(getUnitShort())+' — وكالة التعاون الدولي</span><span>'+new Date().toLocaleDateString('en-GB')+'</span></div>'
     +'</body></html>';
   html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
@@ -13776,7 +13874,7 @@ function buildCoverPage(opts){
   var subtitle = o.subtitle || '';
   var meta     = o.meta     || [];
   var logoSrc  = o.logoSrc  || (typeof LOGO2_SRC!=='undefined'?LOGO2_SRC:'');
-  var prepUnit = o.prepUnit || 'وحدة المجالس واللجان — وكالة التعاون الدولي';
+  var prepUnit = o.prepUnit || getUnitName();
   var dateStr  = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'});
   /* ── معامل اختياري: حجم الغلاف يطابق المساحة المتاحة للمحتوى بعد @page margin ── */
   /* opts.pageMargin: قيمة margin @page (مثل "8mm" أو "10mm 12mm" أو "0") */
@@ -14377,7 +14475,7 @@ async function exportPPTX(pMode){
     slide1.addText(String(s.n),{x:x,y:4.6,w:1.6,h:0.7,fontSize:28,color:C.white,fontFace:FONT,align:'center',bold:true});
     slide1.addText(s.l,{x:x,y:5.3,w:1.6,h:0.5,fontSize:10,color:'AAAAAA',fontFace:FONT,align:'center'});
   });
-  slide1.addText((activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي',{
+  slide1.addText((getUnitShort())+' — وكالة التعاون الدولي',{
     x:0.3,y:6.9,w:9.5,h:0.4,fontSize:10,color:'666666',fontFace:FONT,align:'center'
   });
 
@@ -14554,7 +14652,7 @@ async function exportPPTX(pMode){
   slideLast.addShape(pptx.ShapeType.rect,{x:0,y:0,w:10,h:0.1,fill:{color:C.green}});
   slideLast.addShape(pptx.ShapeType.rect,{x:0,y:7.4,w:10,h:0.1,fill:{color:C.green}});
   slideLast.addText('شكراً',{x:0,y:2.5,w:10,h:1.2,fontSize:44,color:C.white,fontFace:FONT,align:'center',bold:true});
-  slideLast.addText((activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي — وزارة التعليم',{
+  slideLast.addText((getUnitShort())+' — وكالة التعاون الدولي — وزارة التعليم',{
     x:0,y:4,w:10,h:0.5,fontSize:13,color:'AAAAAA',fontFace:FONT,align:'center'
   });
   slideLast.addText(today,{x:0,y:4.6,w:10,h:0.4,fontSize:11,color:'666666',fontFace:FONT,align:'center'});
@@ -14862,11 +14960,11 @@ function dashPrint(printMode){
     +'.type-grid{grid-template-columns:repeat(3,1fr);gap:4px}'
     +'.kpi-grid{grid-template-columns:repeat(4,1fr);gap:8px}'
     +'.pg-break{page-break-before:always}'
-    +'canvas{max-width:100%!important}'    +'.kpi-grid{break-inside:avoid;page-break-inside:avoid;gap:5px!important}'    +'.type-grid{break-inside:avoid;page-break-inside:avoid;gap:3px!important}'    +'.chart-grid-2{break-inside:avoid;page-break-inside:avoid;gap:6px!important}'    +'.chart-grid-3{break-inside:avoid;page-break-inside:avoid;gap:5px!important}'    +'.chart-box{break-inside:avoid;page-break-inside:avoid;padding:6px!important}'    +'.insight{break-before:avoid;page-break-before:avoid;padding:7px 10px!important;font-size:8.5pt!important;margin-top:5px!important}'    +'.sec-hdr{padding:7px 12px!important;break-after:avoid;page-break-after:avoid}'    +'.sec-title{font-size:11pt!important}'    +'.sec-sub{font-size:8.5pt!important}'    +'.sec-icon{font-size:14pt!important}'    +'.sec-body{padding:7px 10px!important;break-before:avoid;page-break-before:avoid}'    +'.kpi-val{font-size:18pt!important}'    +'.kpi-lbl{font-size:8.5pt!important}'    +'.kpi-desc{font-size:7.5pt!important}'    +'.kpi-card{padding:7px 5px!important}'    +'.type-num{font-size:13pt!important}'    +'.type-lbl{font-size:8.5pt!important;margin-top:1px!important}'    +'.type-icon{font-size:8pt!important;margin-bottom:1px!important}'    +'.type-total{font-size:9pt!important;line-height:1!important}'    +'.type-label{font-size:8.5pt!important}'    +'.scope-row{padding:2px 5px!important;font-size:7.5pt!important}'    +'.scope-num{font-size:8.5pt!important;min-width:20px!important}'    +'.chart-title{font-size:9.5pt!important;margin-bottom:2px!important}'    +'.chart-sub{font-size:7.5pt!important}'    +'.prog-lbl{font-size:8.5pt!important}'    +'.prog-val{font-size:8.5pt!important}'    +'.exec-sum-page{padding:14px 18px!important}'    +'.esp-kpis{gap:7px!important;margin-bottom:10px!important}'    +'.esp-kpi{padding:7px 5px!important}'    +'.esp-kpi-n{font-size:15pt!important}'    +'.esp-kpi-l{font-size:8pt!important}'    +'.esp-bullets{gap:5px!important}'    +'.esp-bullet{padding:6px 8px!important;font-size:8.5pt!important;line-height:1.4!important}'    +'.esp-note{padding:7px 9px!important;font-size:8.5pt!important;line-height:1.5!important}'    +'.esp-section-title{font-size:9.5pt!important;margin-bottom:5px!important}'    +'.esp-section{margin-bottom:10px!important}'    +'.report-footer{padding:5px 10px!important}'    +'.cover-page-title{font-size:22pt!important}'    +'.cover-page-content{padding:28px 30px!important}'        +'@page{margin:6mm 8mm;size:13.333in 7.5in;orphans:3;widows:3}'+'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
+    +'canvas{max-width:100%!important}'    +'.kpi-grid{break-inside:avoid;page-break-inside:avoid;gap:5px!important}'    +'.type-grid{break-inside:avoid;page-break-inside:avoid;gap:3px!important}'    +'.chart-grid-2{break-inside:avoid;page-break-inside:avoid;gap:6px!important}'    +'.chart-grid-3{break-inside:avoid;page-break-inside:avoid;gap:5px!important}'    +'.chart-box{break-inside:avoid;page-break-inside:avoid;padding:6px!important}'    +'.insight{break-before:avoid;page-break-before:avoid;padding:7px 10px!important;font-size:8.5pt!important;margin-top:5px!important}'    +'.sec-hdr{padding:7px 12px!important;break-after:avoid;page-break-after:avoid}'    +'.sec-title{font-size:11pt!important}'    +'.sec-sub{font-size:8.5pt!important}'    +'.sec-icon{font-size:14pt!important}'    +'.sec-body{padding:7px 10px!important;break-before:avoid;page-break-before:avoid}'    +'.kpi-val{font-size:18pt!important}'    +'.kpi-lbl{font-size:8.5pt!important}'    +'.kpi-desc{font-size:7.5pt!important}'    +'.kpi-card{padding:7px 5px!important}'    +'.type-num{font-size:13pt!important}'    +'.type-lbl{font-size:8.5pt!important;margin-top:1px!important}'    +'.type-icon{font-size:8pt!important;margin-bottom:1px!important}'    +'.type-total{font-size:9pt!important;line-height:1!important}'    +'.type-label{font-size:8.5pt!important}'    +'.scope-row{padding:2px 5px!important;font-size:7.5pt!important}'    +'.scope-num{font-size:8.5pt!important;min-width:20px!important}'    +'.chart-title{font-size:9.5pt!important;margin-bottom:2px!important}'    +'.chart-sub{font-size:7.5pt!important}'    +'.prog-lbl{font-size:8.5pt!important}'    +'.prog-val{font-size:8.5pt!important}'    +'.exec-sum-page{padding:14px 18px!important}'    +'.esp-kpis{gap:7px!important;margin-bottom:10px!important}'    +'.esp-kpi{padding:7px 5px!important}'    +'.esp-kpi-n{font-size:15pt!important}'    +'.esp-kpi-l{font-size:8pt!important}'    +'.esp-bullets{gap:5px!important}'    +'.esp-bullet{padding:6px 8px!important;font-size:8.5pt!important;line-height:1.4!important}'    +'.esp-note{padding:7px 9px!important;font-size:8.5pt!important;line-height:1.5!important}'    +'.esp-section-title{font-size:9.5pt!important;margin-bottom:5px!important}'    +'.esp-section{margin-bottom:10px!important}'    +'.report-footer{padding:5px 10px!important}'    +'.cover-page-title{font-size:22pt!important}'    +'.cover-page-content{padding:28px 30px!important}'        +'@page{margin:8mm;size:13.333in 7.5in;orphans:3;widows:3}'+'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
     +'}'
     +'</style>'
     +'</head><body>'
-    +buildCoverPage({title:pModeLbl,subtitle:'وزارة التعليم — وكالة التعاون الدولي',logoSrc:(typeof LOGO2_SRC!=='undefined'?LOGO2_SRC:''),bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),pageMargin:'6mm 8mm',meta:[{label:'إجمالي اللجان',val:FDP.length},{label:'المستمرة',val:ok},{label:'التكليفات',val:tt}]})
+    +buildCoverPage({title:pModeLbl,subtitle:'وزارة التعليم — وكالة التعاون الدولي',logoSrc:(typeof LOGO2_SRC!=='undefined'?LOGO2_SRC:''),bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:getUnitName(),pageMargin:'6mm 8mm',meta:[{label:'إجمالي اللجان',val:FDP.length},{label:'المستمرة',val:ok},{label:'التكليفات',val:tt}]})
     /* toolbar */
     +'<div id="toolbar">'
     +'<button class="btn-print" onclick="window.print()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> طباعة / حفظ PDF</button>'
@@ -14903,7 +15001,7 @@ function dashPrint(printMode){
   var _v2_totalTasks=tt;
   var _v2_pctDone=tt?Math.round(tDone/tt*100):0;
   /* تسميات النظام */
-  var _v2_unit=activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان';
+  var _v2_unit=getUnitShort();
   var _v2_ministry=activeSystem==='intl'?'وزارة التعليم · وكالة التعاون الدولي':'وزارة التعليم · وكالة التعاون الدولي';
   var _v2_ministryEn=activeSystem==='intl'?'Ministry of Education · International Cooperation Agency':'Ministry of Education · International Cooperation Agency';
   var _v2_kicker=pMode==='committees'?'STRATEGIC REPORT · COMMITTEES':(pMode==='tasks'?'STRATEGIC REPORT · TASKS':'STRATEGIC REPORT · COMPREHENSIVE');
@@ -16594,7 +16692,7 @@ function blobDL(title,body,meta){
     +'<div style="margin-top:20px;border-top:2px solid #208caa;padding-top:10px;display:flex;align-items:center;justify-content:space-between">'
     +'<div style="display:flex;align-items:center;gap:10px">'
     +'<img src="'+LOGO2_SRC+'" alt="" style="height:32px;object-fit:contain;opacity:.8;filter:brightness(0) invert(1)" loading="lazy">'
-    +'<div style="font-size:13px;color:#208caa;font-weight:700;font-family:inherit">وحدة المجالس واللجان — وكالة التعاون الدولي</div>'
+    +'<div style="font-size:13px;color:#208caa;font-weight:700;font-family:inherit">'+getUnitName()+'</div>'
     +'</div>'
     +'<div style="font-size:11px;color:#aaa">'+new Date().toLocaleDateString('en-GB')+'</div>'
     +'</div>'
@@ -16744,7 +16842,7 @@ function printAll(di){
     +'<div style="color:rgba(255,255,255,.8);font-size:13px;font-family:inherit">'+e(d.n)+'</div></div></div>'
     +meetSections
     +'<div style="margin-top:20px;border-top:2px solid #208caa;padding-top:10px;display:flex;justify-content:space-between;font-size:11px;color:#888">'
-    +'<span>'+(activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي</span>'
+    +'<span>'+(getUnitShort())+' — وكالة التعاون الدولي</span>'
     +'<span>'+new Date().toLocaleDateString('en-GB')+'</span></div>'
     +'</div>'
     +'</body></html>';
@@ -17049,7 +17147,7 @@ function printFullReport(fi){
     +'.rpt-leg-bar{height:6px;border-radius:3px;display:inline-block}'
     +__PRINT_CSS_BASE  /* [STEP-4] CSS طباعة موحّد */
     +'</style></head><body>'
-    +buildCoverPage({title:e(d.n),subtitle:(activeSystem==='intl'?'تقرير المجلس/اللجنة الدولية':'التقرير التنفيذي للمجالس واللجان'),logoSrc:LOGO2_SRC,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),pageMargin:'8mm',meta:[{label:'ممثل الوكالة',val:e(d.r||'—')},{label:'الحالة',val:e(d.st||'—')},{label:'النوع',val:e(d.ty||'—')}]})
+    +buildCoverPage({title:e(d.n),subtitle:(activeSystem==='intl'?'تقرير المجلس/اللجنة الدولية':'التقرير التنفيذي للمجالس واللجان'),logoSrc:LOGO2_SRC,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:getUnitName(),pageMargin:'8mm',meta:[{label:'ممثل الوكالة',val:e(d.r||'—')},{label:'الحالة',val:e(d.st||'—')},{label:'النوع',val:e(d.ty||'—')}]})
     +'<div style="color:rgba(255,255,255,.4);font-size:10px;font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;margin-top:12px">'+new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'})+'</div>'
     +'</div>'
     +'<div class="np" style="margin-bottom:14px"><button onclick="window.print()" style="background:#382972;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:12px;font-family:inherit;cursor:pointer">طباعة</button></div>'
@@ -17059,7 +17157,7 @@ function printFullReport(fi){
     +'<div style="margin-top:28px;border-top:1px solid #ddd;padding-top:12px;display:flex;align-items:center;justify-content:space-between">'
     +'<div style="display:flex;align-items:center;gap:8px">'
     +'<img src="'+LOGO2_SRC+'" alt="" style="height:30px;object-fit:contain;filter:brightness(0)" loading="lazy">'
-    +'<span style="font-size:10px;color:#888;font-family:inherit">'+(activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي</span></div>'
+    +'<span style="font-size:10px;color:#888;font-family:inherit">'+(getUnitShort())+' — وكالة التعاون الدولي</span></div>'
     +'<span style="font-size:10px;color:#aaa;font-family:inherit">'+new Date().toLocaleDateString('en-GB')+'</span></div>'
     +chartScript
     +'</body></html>';
@@ -18272,7 +18370,18 @@ async function auditLog(action,target,details){
       details:details||null,
       created_at:new Date().toISOString()
     });
-  }catch(e){}
+  }catch(e){
+    /* [AUDIT-RESILIENCE-V1] لا نبتلع فشل التدقيق بصمت — نحتفظ به محلياً
+       في طابور احتياطي ونُبقي أثراً في الكونسول، حفاظاً على اكتمال سجل الحوكمة. */
+    try{
+      var _qk=(activeSystem==='intl'?'intl_audit_queue':'lajan_audit_queue');
+      var _q=JSON.parse(localStorage.getItem(_qk)||'[]');
+      _q.push({user_email:currentUser.email,action:action,target:target,details:details||null,created_at:new Date().toISOString(),_failedAt:Date.now()});
+      if(_q.length>500) _q=_q.slice(-500);
+      localStorage.setItem(_qk,JSON.stringify(_q));
+    }catch(_){}
+    console.warn('[auditLog] فشل تسجيل التدقيق في الخادم — حُفظ محلياً:', e&&e.message);
+  }
 }
 
 /* ── سلة المحذوفات ── */
@@ -20720,7 +20829,7 @@ function ecExportPDF(){
     +'.print-controls button:hover{opacity:.9}'
     /* إعدادات الطباعة */
     +'@media print{'
-    +'@page{size:13.333in 7.5in;margin:10mm 12mm}'
+    +'@page{size:13.333in 7.5in;margin:8mm}'
     +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
     +'.print-controls{display:none!important}'
     +'.report-header{page-break-after:avoid}'
@@ -20751,12 +20860,12 @@ function ecExportPDF(){
 
   var footerHTML='<div class="report-footer">'
     +'<div class="footer-date">◷ '+today2+'</div>'
-    +'<div class="footer-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>'
+    +'<div class="footer-unit">'+getUnitName()+'</div>'
     +'</div>';
 
   var runningFooterHTML='<div class="page-footer-running">'
     +'<div class="pf-date">◷ '+today2+'</div>'
-    +'<div class="pf-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>'
+    +'<div class="pf-unit">'+getUnitName()+'</div>'
     +'</div>';
 
   var controlsHTML='<div class="print-controls">'
@@ -23247,7 +23356,7 @@ function s4DashExportPDF(){
     +'.print-controls button:hover{opacity:.9}'
     /* إعدادات الطباعة - استخدام running headers/footers */
     +'@media print{'
-    +'@page{size:13.333in 7.5in;margin:10mm 12mm}'
+    +'@page{size:13.333in 7.5in;margin:8mm}'
     +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
     +'.print-controls{display:none!important}'
     +'.report-header{page-break-after:avoid}'
@@ -23277,13 +23386,13 @@ function s4DashExportPDF(){
   /* تذييل يظهر في نهاية المحتوى (مرئي على الشاشة وفي PDF) */
   var footerHTML='<div class="report-footer">'
     +'<div class="footer-date">◷ '+today2+'</div>'
-    +'<div class="footer-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>'
+    +'<div class="footer-unit">'+getUnitName()+'</div>'
     +'</div>';
 
   /* تذييل ثابت يظهر في كل صفحة عند الطباعة (position:fixed يعمل في الطباعة لكل صفحة في Chrome PDF) */
   var runningFooterHTML='<div class="page-footer-running">'
     +'<div class="pf-date">◷ '+today2+'</div>'
-    +'<div class="pf-unit">وحدة المجالس واللجان - وكالة التعاون الدولي</div>'
+    +'<div class="pf-unit">'+getUnitName()+'</div>'
     +'</div>';
 
   var controlsHTML='<div class="print-controls">'
@@ -23685,7 +23794,7 @@ function s4ExportTasksReport(){
     +'font-size:12pt;cursor:pointer;font-family:inherit}'
     /* الطباعة */
     +'@media print{'
-    +'@page{size:13.333in 7.5in;margin:10mm 12mm}'
+    +'@page{size:13.333in 7.5in;margin:8mm}'
     +'.no-print,.toolbar{display:none!important}'
     +'body{background:#fff!important;font-size:12pt}'
     +'.report-wrapper{box-shadow:none;max-width:none}'
@@ -23719,7 +23828,7 @@ function s4ExportTasksReport(){
     +'</div>'
     /* الغلاف */
     +'<div class="report-wrapper">'
-    +buildCoverPage({title:'تقرير التكليفات الشامل',subtitle:'متابعة وإدارة تكليفات المجالس واللجان',logoSrc:logoSrc,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),pageMargin:'10mm 12mm',meta:[{label:'عدد اللجان',val:Object.keys(byComm).length},{label:'إجمالي التكليفات',val:stats.total},{label:'تاريخ التقرير',val:reportDate}]})
+    +buildCoverPage({title:'تقرير التكليفات الشامل',subtitle:'متابعة وإدارة تكليفات المجالس واللجان',logoSrc:logoSrc,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:getUnitName(),pageMargin:'10mm 12mm',meta:[{label:'عدد اللجان',val:Object.keys(byComm).length},{label:'إجمالي التكليفات',val:stats.total},{label:'تاريخ التقرير',val:reportDate}]})
 
     +'<main class="report-body">'
     +rows
@@ -23873,7 +23982,7 @@ async function s4MergeAllReports(){
       title:'تقرير',
       subtitle:'التكليفات والمؤشرات والأداء التنفيذي',
       logoSrc:logoSrc,bgImg:bgImg,
-      prepUnit:(activeSystem==='intl'?'وحدة المجالس واللجان الدولية — وكالة التعاون الدولي':'وحدة المجالس واللجان — وكالة التعاون الدولي'),
+      prepUnit:getUnitName(),
       pageMargin:'8mm',
       stats:[],
       meta:[{label:'تاريخ التقرير',val:today}]
@@ -24027,7 +24136,7 @@ async function s4MergeAllReports(){
   /* ── تذييل ── */
   var footerHtml='<div class="pg-footer no-print">'
     +'<strong>وزارة التعليم — المملكة العربية السعودية</strong>'
-    +'<span>وحدة المجالس واللجان — وكالة التعاون الدولي</span>'
+    +'<span>'+getUnitName()+'</span>'
     +'<span>'+today+'</span>'
     +'</div>';
 
@@ -24204,15 +24313,13 @@ function s4OpenCommitteePrintDialog(){
     + '<div style="font-size:10px;color:#94a3b8;margin-top:4px">💡 اختر "كل اللجان" لجلب التكليفات من جميع اللجان حسب الحالات المحدَّدة</div>'
     + '</div>'
 
-    /* اختيار الحالات */
+    /* اختيار الحالات — [STATUS-UNIFY-V1] ثلاث حالات فقط بالمفاتيح الصحيحة */
     + '<div style="margin-bottom:18px">'
     + '<label style="display:block;font-size:12px;font-weight:700;color:#1f2937;margin-bottom:6px">٢. حدد حالات التكليفات المراد طباعتها:</label>'
-    + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'
-    + _s4BuildStatusCheckbox('done', true)            /* ✓ افتراضي */
-    + _s4BuildStatusCheckbox('in_progress', true)     /* ✓ افتراضي */
-    + _s4BuildStatusCheckbox('overdue', true)         /* ✓ افتراضي */
-    + _s4BuildStatusCheckbox('pending', false)        /* اختياري */
-    + _s4BuildStatusCheckbox('cancelled', false)      /* اختياري */
+    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">'
+    + _s4BuildStatusCheckbox('done', true)           /* ✓ افتراضي */
+    + _s4BuildStatusCheckbox('on_track', true)       /* ✓ افتراضي */
+    + _s4BuildStatusCheckbox('overdue', true)        /* ✓ افتراضي */
     + '</div>'
     + '<div style="margin-top:8px;display:flex;gap:8px">'
     + '<button onclick="_s4ToggleAllStatus(true)" style="flex:1;background:#e3f2fd;color:#1673a4;border:1px solid #1673a4;border-radius:6px;padding:5px;font-size:10px;cursor:pointer;font-family:inherit">تحديد الكل</button>'
@@ -24367,7 +24474,8 @@ function s4UpdatePrintPreview(){
    di = -1  →  كل اللجان (مع مراعاة scope)
    di >= 0  →  لجنة محدَّدة فقط */
 function _s4CountTasksByStatus(di, selectedStatuses){
-  var result = { total: 0, commitCount: 0, byStatus: { done:0, in_progress:0, pending:0, overdue:0, cancelled:0 } };
+  /* [STATUS-UNIFY-V1] ثلاث حالات: done / on_track / overdue */
+  var result = { total: 0, commitCount: 0, byStatus: { done:0, on_track:0, overdue:0 } };
   if(typeof GM!=='function') return result;
 
   var indices = [];
@@ -24478,9 +24586,9 @@ function s4ExecuteCommitteePrint(){
     }
   });
 
-  /* إحصائيات إجمالية */
-  var stats = { total: allRows.length, done:0, in_progress:0, pending:0, overdue:0, cancelled:0 };
-  allRows.forEach(function(r){ stats[r.status]++; });
+  /* إحصائيات إجمالية — [STATUS-UNIFY-V1] ثلاث حالات */
+  var stats = { total: allRows.length, done:0, on_track:0, overdue:0 };
+  allRows.forEach(function(r){ if(stats[r.status]!==undefined) stats[r.status]++; });
 
   /* دالة بناء شارة الحالة */
   var statusBadge = function(st, days){
@@ -24569,7 +24677,7 @@ function s4ExecuteCommitteePrint(){
   /* بطاقات الإحصائيات الإجمالية */
   var statsHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;padding:12px;background:#f8fafc;border-radius:8px;border:1px solid #e5e7eb;justify-content:center">'
     + '<div style="text-align:center;min-width:80px"><div style="font-size:22px;font-weight:800;color:#1f2937">'+stats.total+'</div><div style="font-size:10px;color:#475569">إجمالي</div></div>';
-  ['done','in_progress','pending','overdue','cancelled'].forEach(function(st){
+  ['done','on_track','overdue'].forEach(function(st){
     if(stats[st] > 0){
       var m = _S4_STATUS_META[st];
       statsHtml += '<div style="text-align:center;min-width:80px;padding:0 10px;border-right:1px solid #e5e7eb"><div style="font-size:22px;font-weight:800;color:'+m.color+'">'+stats[st]+'</div><div style="font-size:10px;color:'+m.color+'">'+m.label+'</div></div>';
@@ -24637,7 +24745,7 @@ function s4ExecuteCommitteePrint(){
     + '<div class="h-brand">'
     + ((typeof LOGO2_SRC!=='undefined' && LOGO2_SRC)?'<img src="'+LOGO2_SRC+'" alt="شعار وزارة التعليم" loading="lazy">':'')
     + '<div class="b1">وكالة التعاون الدولي</div>'
-    + '<div class="b2">وحدة المجالس واللجان</div>'
+    + '<div class="b2">'+getUnitShort()+'</div>'
     + '</div>'
     + '<div class="h-title">'
     + '<h1>'+_esc(titleText)+'</h1>'
@@ -24650,7 +24758,7 @@ function s4ExecuteCommitteePrint(){
     + '</div>'
     + statsHtml
     + allTablesHtml
-    + '<div class="footer">وحدة المجالس واللجان — وكالة التعاون الدولي — وزارة التعليم</div>'
+    + '<div class="footer">'+getUnitName()+' — وزارة التعليم'+'</div>'
     + '<div class="no-print" style="text-align:center;margin-top:20px"><button onclick="window.print()" style="background:#1673a4;color:#fff;border:none;border-radius:6px;padding:10px 24px;font-size:13px;cursor:pointer;font-family:inherit">🖨 طباعة</button></div>'
     + '</body></html>';
 
@@ -27945,7 +28053,7 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
 
     /* الفوتر */
     +'<div style="margin-top:28px;border-top:2px solid #208caa;padding-top:10px;display:flex;justify-content:space-between;font-size:11pt;color:#888">'
-    +'<span>'+(activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي</span>'
+    +'<span>'+(getUnitShort())+' — وكالة التعاون الدولي</span>'
     +'<span>'+new Date().toLocaleDateString('en-GB')+'</span>'
     +'</div>'
     +'</div>'
@@ -28018,7 +28126,7 @@ function printExecSummary(){
       :'<div style="background:#f8f9fa;border:1px dashed #ccc;border-radius:10px;padding:14px 18px;color:#aaa;font-size:14pt;text-align:center">لم يتم إدخال توجيهات</div>')
     +'</div>'
     +'<div style="margin-top:30px;border-top:2px solid #208caa;padding-top:12px;display:flex;justify-content:space-between;font-size:12pt;color:#888">'
-    +'<span>'+(activeSystem==='intl'?'وحدة اللجان الدولية':'وحدة المجالس واللجان')+' — وكالة التعاون الدولي</span>'
+    +'<span>'+(getUnitShort())+' — وكالة التعاون الدولي</span>'
     +'<span>'+new Date().toLocaleDateString('en-GB')+'</span></div>'
     +'</div></body></html>';
 
@@ -32071,7 +32179,7 @@ function gmPrintReport(){if(isViewerBlocked('الطباعة'))return;
     title: 'تقرير الاجتماعات والتكليفات العامة',
     subtitle: 'متابعة شاملة لاجتماعات وكالة التعاون الدولي والتكليفات الناتجة عنها',
     logoSrc: logoSrc,
-    prepUnit: 'وحدة المجالس واللجان — وكالة التعاون الدولي',
+    prepUnit: getUnitName(),
     pageMargin: '0',
     meta: [
       {label:'الاجتماعات', val: meetings.length},
@@ -32224,7 +32332,7 @@ function gmPrintReport(){if(isViewerBlocked('الطباعة'))return;
 
   function pgFtr(num){
     return '<div class="pg-ftr">'
-      +'<div class="right">وحدة المجالس واللجان</div>'
+      +'<div class="right">'+getUnitShort()+'</div>'
       +'<div class="center">وكالة التعاون الدولي - وزارة التعليم</div>'
       +'<div class="left">صفحة '+num+'</div>'
       +'</div>';
@@ -32583,7 +32691,7 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
   if(!m){ alert('الاجتماع غير موجود'); return; }
   var now = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', {year:'numeric',month:'long',day:'numeric'});
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>محضر اجتماع - '+gmEsc(m.name||'')+'</title>';
-  html += '<style>@page{size:A4;margin:18mm 15mm}';
+  html += '<style>@page{size:A4;margin:15mm}';
   html += 'body{font-family:"Sakkal Majalla","Arial",sans-serif;direction:rtl;color:#003944;margin:0;padding:0;font-size:12pt}';
   html += '.cover{text-align:center;padding:40px 20px;border-bottom:4px double #208caa;margin-bottom:30px}';
   html += '.cover h1{color:#1673a4;font-size:22pt;margin:8px 0}';
@@ -32672,7 +32780,7 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
   }
   /* [PRINT-UNIT-V9] إضافة ذيل اسم الوحدة الموحّد */
   html += '<div style="margin-top:20px;border-top:2px solid #208caa;padding-top:10px;display:flex;align-items:center;justify-content:space-between">'
-       +'<div style="font-size:13px;color:#208caa;font-weight:700;font-family:\'Sakkal Majalla\',serif">وحدة المجالس واللجان — وكالة التعاون الدولي</div>'
+       +'<div style="font-size:13px;color:#208caa;font-weight:700;font-family:\'Sakkal Majalla\',serif">'+getUnitName()+'</div>'
        +'<div style="font-size:11px;color:#aaa">'+new Date().toLocaleDateString('en-GB')+'</div>'
        +'</div>';
   html += '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},500);};</scr'+'ipt>';
@@ -33218,15 +33326,22 @@ function _applyStored(){
       if(el){
         if(s[k]==='__DELETED__'){el.style.display='none';}
         else {
-          /* تعديل text node فقط */
-          var applied=false;
-          for(var i=0;i<el.childNodes.length;i++){
-            if(el.childNodes[i].nodeType===3&&el.childNodes[i].textContent.trim()){
-              el.childNodes[i].textContent=s[k];
-              applied=true;break;
-            }
+          /* [NO-DUP-TEXT-V1] تطبيق idempotent: احذف كل text nodes ثم ضع واحداً */
+          el.style.display='';
+          var _hasElChild=false;
+          for(var _ci=0;_ci<el.childNodes.length;_ci++){
+            if(el.childNodes[_ci].nodeType===1){ _hasElChild=true; break; }
           }
-          if(!applied)el.textContent=s[k];
+          if(!_hasElChild){
+            el.textContent=s[k];
+          } else {
+            var _tns=[];
+            for(var _i=0;_i<el.childNodes.length;_i++){
+              if(el.childNodes[_i].nodeType===3) _tns.push(el.childNodes[_i]);
+            }
+            _tns.forEach(function(tn){ if(tn.parentNode===el) el.removeChild(tn); });
+            el.appendChild(el.ownerDocument.createTextNode(' '+s[k]));
+          }
         }
       }
       /* placeholder */
@@ -33327,17 +33442,21 @@ async function _loadFromSupabase(){
       /* دمج: Supabase يُقدَّم على localStorage */
       Object.keys(remote).forEach(function(k){DT[k]=remote[k];});
       try{localStorage.setItem(_getLS(),JSON.stringify(DT));}catch(e){}
-      /* [DTEXT-FIX-2026-05] تطبيق على text node فقط (يحفظ svg والعناصر التزيينية) */
+      /* [NO-DUP-TEXT-V1 2026-05-29] تطبيق idempotent لمنع تكرار النص عند race */
       function _applyToTextNodeLoad(el,val){
         if(val==='__DELETED__'){el.style.display='none';return;}
         el.style.display='';
-        var applied=false;
+        var hasEl=false;
         for(var i=0;i<el.childNodes.length;i++){
-          if(el.childNodes[i].nodeType===3&&el.childNodes[i].textContent.trim()){
-            el.childNodes[i].textContent=val;applied=true;break;
-          }
+          if(el.childNodes[i].nodeType===1){ hasEl=true; break; }
         }
-        if(!applied)el.textContent=val;
+        if(!hasEl){ el.textContent=val; return; }
+        var tns=[];
+        for(var j=0;j<el.childNodes.length;j++){
+          if(el.childNodes[j].nodeType===3) tns.push(el.childNodes[j]);
+        }
+        tns.forEach(function(tn){ if(tn.parentNode===el) el.removeChild(tn); });
+        el.appendChild(el.ownerDocument.createTextNode(' '+val));
       }
       Object.keys(DT).forEach(function(k){
         /* تطبيق على كل أنواع التعديلات */
@@ -33502,18 +33621,30 @@ window.dtextRescan=function(){
     Object.keys(lsData).forEach(function(k){if(DT[k]!==lsData[k])DT[k]=lsData[k];});
   }catch(_){}
   var sel='h1,h2,h3,h4,h5,h6,th,button,label,span,li,a,strong,b,em,small,caption,legend,summary,figcaption,p,td,div';
-  /* دالة محلية لتطبيق نص على text node (بدون تدمير svg وغيره) */
+  /* دالة محلية لتطبيق نص على text node (بدون تدمير svg وغيره)
+     [NO-DUP-TEXT-V1 2026-05-29] إصلاح race condition للتكرار:
+     بدل استبدال أول text node فقط (الذي يترك text nodes أخرى موجودة)،
+     نحذف كل text nodes النصية ثم نضع text node واحد بالنص الجديد. */
   function _applyToTextNode(el,val){
     if(val==='__DELETED__'){el.style.display='none';return;}
     el.style.display='';
-    var applied=false;
+    /* اجمع كل text nodes (نصية أو whitespace) */
+    var textNodes=[];
     for(var i=0;i<el.childNodes.length;i++){
-      if(el.childNodes[i].nodeType===3&&el.childNodes[i].textContent.trim()){
-        el.childNodes[i].textContent=val;
-        applied=true;break;
-      }
+      if(el.childNodes[i].nodeType===3) textNodes.push(el.childNodes[i]);
     }
-    if(!applied)el.textContent=val;
+    /* إن لم يحوِ العنصر عناصر فرعية (svg/i/b/...) → استبدال آمن للنص الكامل */
+    var hasNonTextChild=false;
+    for(var j=0;j<el.childNodes.length;j++){
+      if(el.childNodes[j].nodeType===1){ hasNonTextChild=true; break; }
+    }
+    if(!hasNonTextChild){
+      el.textContent=val;
+      return;
+    }
+    /* العنصر يحوي svg/etc + text → احذف كل text nodes ثم ضع واحداً في النهاية */
+    textNodes.forEach(function(tn){ if(tn.parentNode===el) el.removeChild(tn); });
+    el.appendChild(el.ownerDocument.createTextNode(' '+val));
   }
   document.querySelectorAll(sel).forEach(function(el){
     if(el.id==='dtext-toggle-btn'||el.id==='dtext-badge'||el.id==='dtext-sync-status')return;
@@ -33794,14 +33925,20 @@ window.dtextResetAll=function(){
     /* [DTEXT-EXPAND-V14] استعادة كل أنواع التعديلات */
     var el=document.querySelector('[data-dtext-id="'+k+'"]');
     if(el){
-      var applied=false;
+      /* [NO-DUP-TEXT-V1] idempotent reset */
+      var hasEl=false;
       for(var i=0;i<el.childNodes.length;i++){
-        if(el.childNodes[i].nodeType===3&&el.childNodes[i].textContent.trim()){
-          el.childNodes[i].textContent=DD[k];
-          applied=true;break;
-        }
+        if(el.childNodes[i].nodeType===1){ hasEl=true; break; }
       }
-      if(!applied)el.textContent=DD[k];
+      if(!hasEl){ el.textContent=DD[k]; }
+      else {
+        var tns=[];
+        for(var j=0;j<el.childNodes.length;j++){
+          if(el.childNodes[j].nodeType===3) tns.push(el.childNodes[j]);
+        }
+        tns.forEach(function(tn){ if(tn.parentNode===el) el.removeChild(tn); });
+        el.appendChild(el.ownerDocument.createTextNode(' '+DD[k]));
+      }
       el.style.display='';
     }
     var optEl=document.querySelector('[data-dtext-opt="'+k+'"]');
@@ -33978,12 +34115,29 @@ function _dtBootstrap(){
      قبل أي تأخير. السبب الجذري للوميض: _loadDTEarly كان يملأ DT في الذاكرة فقط،
      والتطبيق الفعلي على DOM يتأخر 1000ms (أول dtextRescan) — فتظهر النصوص الأصلية
      المحذوفة/المعدّلة لمدة ~1-2 ثانية. الحل: نطبّق فوراً إن توفّرت تعديلات محلية. */
+  /* [NO-DTEXT-FLASH-V3 2026-05-29] بعد التطبيق، نستدعي _dtextReveal لرفع
+     إخفاء body. كل _dtextReveal idempotent — آمن للاستدعاء مرات عدة. */
   if(Object.keys(DT).length>0){
     try{ window.dtextRescan(); }catch(e){}
     /* استدعاء ثانٍ بعد إطار رسم واحد لالتقاط أي عنصر تأخّر بناؤه */
-    if(window.requestAnimationFrame){ requestAnimationFrame(function(){try{window.dtextRescan();}catch(e){}}); }
+    if(window.requestAnimationFrame){
+      requestAnimationFrame(function(){
+        try{ window.dtextRescan(); }catch(e){}
+        /* رفع الإخفاء بعد أول تطبيق */
+        try{ window._dtextReveal && window._dtextReveal(); }catch(e){}
+      });
+    } else {
+      try{ window._dtextReveal && window._dtextReveal(); }catch(e){}
+    }
+  } else {
+    /* لا تعديلات → ارفع الإخفاء فوراً (إن كان موجوداً) */
+    try{ window._dtextReveal && window._dtextReveal(); }catch(e){}
   }
-  setTimeout(function(){try{window.dtextRescan();}catch(e){}},1000);
+  setTimeout(function(){
+    try{ window.dtextRescan(); }catch(e){}
+    /* ضمان نهائي لرفع الإخفاء */
+    try{ window._dtextReveal && window._dtextReveal(); }catch(e){}
+  },1000);
   setTimeout(function(){window.dtextScanDOM();},3000);
   /* استدعاء فوري بالتوازي بدل setTimeout 4000 — يجلب النصوص الحديثة أسرع */
   (function _tryLoadDTNow(_attempt){
@@ -36471,7 +36625,7 @@ function execPrint(){
   html+='<div class="hdr-t"><h1>لوحة الحوكمة التنفيذية</h1><div class="sub">منظومة إدارة المجالس واللجان وفرق العمل</div></div></div>';
   html+='<div class="hdr-r">';
   html+='<div>'+todayTime+'</div>';
-  html+='<div>إعداد: وحدة المجالس واللجان - وكالة التعاون الدولي</div>';
+  html+='<div>إعداد: '+getUnitName()+'</div>';
   html+='</div></div>';
   /* [EXEC-SUMMARY-V7] الملخص التنفيذي في صفحة الطباعة */
   var _isIntlPrint=(typeof activeSystem!=='undefined'&&activeSystem==='intl');
