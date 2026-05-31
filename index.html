@@ -3169,11 +3169,14 @@ body {
    يمنع وميض البيانات القديمة نهائياً (لا cache مرئي تحته) */
 #proDataLoader{
   position:fixed; inset:0; z-index:2147483600;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  display:none; flex-direction:column; align-items:center; justify-content:center;
   background:linear-gradient(135deg,#003944 0%,#1673a4 55%,#208caa 100%);
   font-family:'Sakkal Majalla','Sakkal Majalla 2',serif; direction:rtl;
   opacity:1; transition:opacity .45s ease;
 }
+/* [LOADER-AFTER-AUTH-V1] لا يظهر مؤشّر التحميل إلا بعد ثبوت المستخدم
+   (تسجيل دخول جديد أو استعادة جلسة). قبل ذلك تظهر شاشة الدخول مباشرةً. */
+#proDataLoader.pdl-armed{ display:flex; }
 #proDataLoader.fading{ opacity:0; pointer-events:none; }
 #proDataLoader .pdl-emblem{
   width:104px; height:104px; margin-bottom:26px;
@@ -3327,6 +3330,17 @@ body {
     try{
       var s = document.getElementById('pdlStatusText');
       if(s && txt) s.textContent = txt;
+    }catch(_){}
+  };
+  /* [LOADER-AFTER-AUTH-V1] إظهار المؤشّر عند الطلب فقط (بعد ثبوت المستخدم) */
+  window.showProLoader = function(txt){
+    try{
+      var el = document.getElementById('proDataLoader');
+      if(!el) return;
+      _pdlHidden = false;
+      el.classList.remove('fading');
+      el.classList.add('pdl-armed');
+      if(txt) window.showProLoaderStatus(txt);
     }catch(_){}
   };
   window.isProLoaderVisible = function(){ return !_pdlHidden; };
@@ -5960,7 +5974,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
     <div class="spanel" id="panel-s3">
       <div class="s3-sidebar">
         <div class="s3-sidebar-header">
-          <div class="s3-sidebar-search"><span class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="s3q" placeholder="ابحث عن لجنة..." id="s3SearchInput"></div>
+          <div class="s3-sidebar-search"><span class="si"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="s3q" placeholder="ابحث عن لجنة..."></div>
           <div class="s3-sidebar-filters" id="s3FiltersHost">
             <select class="s3-sflt" id="s3st"><option value="">كل الحالات</option><option>مستمرة</option><option>منتهية</option><option>لم تبدأ</option><option>متعثرة</option></select>
             <select class="s3-sflt" id="s3sc"><option value="">كل النطاقات</option><option>داخلية</option><option>خارج نطاق الوزارة</option></select>
@@ -6098,10 +6112,10 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
         </select>
         <select class="gm-flt" id="gmFltPrio" onchange="gmRender()">
           <option value="">كل الأولويات</option>
-          <option value="crit"><span class="status-dot dot-red"></span> حرجة</option>
-          <option value="high"><span class="status-dot dot-orange"></span> عالية</option>
-          <option value="med"><span class="status-dot dot-yellow"></span> متوسطة</option>
-          <option value="low"><span class="status-dot dot-green"></span> منخفضة</option>
+          <option value="crit">🔴 حرجة</option>
+          <option value="high">🟠 عالية</option>
+          <option value="med">🟡 متوسطة</option>
+          <option value="low">🟢 منخفضة</option>
         </select>
         <select class="gm-flt" id="gmFltResp" onchange="gmRender()">
           <option value="">كل المسؤولين</option>
@@ -6163,22 +6177,152 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
       </div>
     </div>
 
-    <!-- [DOCS-V1] لوحة قسم الوثائق -->
+    <!-- [DOCS-V2 2026-05-31] لوحة قسم الوثائق — مستكشف ملفات احترافي -->
+    <style id="dlx-styles">
+      /* نطاق معزول .dlx- لتجنّب أي تعارض مع بقية النظام */
+      #panel-sdocs .dlx-toolbar{background:linear-gradient(135deg,#fff,#fbfdfe);border-bottom:2px solid #e4eef1;padding:11px 16px;display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+      #panel-sdocs .dlx-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      #panel-sdocs .dlx-search{position:relative;flex:1;min-width:200px}
+      #panel-sdocs .dlx-search input{width:100%;border:1.5px solid #e4eef1;border-radius:11px;padding:9px 38px 9px 13px;font-size:13px;font-family:inherit;direction:rtl;background:linear-gradient(180deg,#eef5f7,#fff);transition:.2s;color:#0c2630}
+      #panel-sdocs .dlx-search input:focus{outline:none;border-color:#208caa;background:#fff;box-shadow:0 0 0 4px rgba(32,140,170,.12)}
+      #panel-sdocs .dlx-search svg{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#0f6588;opacity:.6}
+      #panel-sdocs .dlx-upload{background:linear-gradient(135deg,#34c97b,#1d8a4e 55%,#12603a);color:#fff;border:none;border-radius:11px;padding:9px 17px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px;box-shadow:0 6px 16px rgba(29,138,78,.3);transition:.18s;white-space:nowrap}
+      #panel-sdocs .dlx-upload:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(29,138,78,.4)}
+      #panel-sdocs .dlx-divider{height:1px;background:linear-gradient(90deg,transparent,#e4eef1,transparent)}
+      #panel-sdocs .dlx-filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+      #panel-sdocs .dlx-flbl{font-size:11px;font-weight:800;color:#8aa1ab;margin-inline-end:2px;display:inline-flex;align-items:center;gap:5px}
+      #panel-sdocs .dlx-chip{border:1.5px solid #e4eef1;background:#fff;color:#3a5560;border-radius:30px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:.18s;display:inline-flex;align-items:center;gap:6px}
+      #panel-sdocs .dlx-chip:hover{border-color:#3fb6d4;color:#0f6588;transform:translateY(-1px)}
+      #panel-sdocs .dlx-chip .dlx-cnt{background:#eef5f7;color:#8aa1ab;font-size:10px;font-weight:800;padding:1px 7px;border-radius:20px;transition:.18s}
+      #panel-sdocs .dlx-chip.active{color:#fff;border-color:transparent;box-shadow:0 5px 14px rgba(32,140,170,.3)}
+      #panel-sdocs .dlx-chip.active .dlx-cnt{background:rgba(255,255,255,.25);color:#fff}
+      #panel-sdocs .dlx-chip.active[data-t="all"]{background:linear-gradient(135deg,#3fb6d4,#0f6588)}
+      #panel-sdocs .dlx-chip.active[data-t="decree"]{background:linear-gradient(135deg,#9579c9,#6d4f9c)}
+      #panel-sdocs .dlx-chip.active[data-t="minutes"]{background:linear-gradient(135deg,#8b6fc4,#5b3f8c)}
+      #panel-sdocs .dlx-chip.active[data-t="doc"]{background:linear-gradient(135deg,#3fb6d4,#0f6588)}
+      #panel-sdocs .dlx-right{margin-inline-start:auto;display:flex;align-items:center;gap:8px}
+      #panel-sdocs .dlx-selw{position:relative}
+      #panel-sdocs .dlx-selw svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:#8aa1ab}
+      #panel-sdocs .dlx-toolbar select{appearance:none;border:1.5px solid #e4eef1;background:#fff;color:#3a5560;border-radius:10px;padding:8px 30px 8px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;direction:rtl;transition:.16s}
+      #panel-sdocs .dlx-toolbar select:hover{border-color:#3fb6d4}
+      #panel-sdocs .dlx-toolbar select:focus{outline:none;border-color:#208caa;box-shadow:0 0 0 3px rgba(32,140,170,.1)}
+      #panel-sdocs .dlx-vtog{display:flex;border:1.5px solid #e4eef1;border-radius:10px;overflow:hidden;background:#fff}
+      #panel-sdocs .dlx-vtog button{border:none;background:#fff;padding:8px 11px;cursor:pointer;color:#8aa1ab;display:grid;place-items:center;transition:.16s}
+      #panel-sdocs .dlx-vtog button:hover{color:#0f6588}
+      #panel-sdocs .dlx-vtog button.active{background:linear-gradient(135deg,#3fb6d4,#0f6588);color:#fff}
+      #panel-sdocs .dlx-body{flex:1;overflow-y:auto;padding:16px 20px;background:radial-gradient(900px 360px at 92% -6%,rgba(32,140,170,.07),transparent 56%),radial-gradient(700px 360px at -6% 4%,rgba(29,138,78,.06),transparent 54%),linear-gradient(160deg,#eef5f7,#f6fafb 60%)}
+      #panel-sdocs .dlx-crumbs{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:15px;font-size:13px}
+      #panel-sdocs .dlx-crumbs a{color:#0f6588;font-weight:700;cursor:pointer;padding:5px 11px;border-radius:9px;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+      #panel-sdocs .dlx-crumbs a:hover{background:#fff;box-shadow:0 1px 3px rgba(12,38,48,.06)}
+      #panel-sdocs .dlx-crumbs .dlx-sep{color:#bcd0d6;font-size:14px;transform:scaleX(-1);margin:0 1px}
+      #panel-sdocs .dlx-crumbs .dlx-cur{color:#0c2630;font-weight:800;padding:5px 11px;background:linear-gradient(135deg,#fff,#f3f9fb);border-radius:9px;box-shadow:0 1px 3px rgba(12,38,48,.06)}
+      #panel-sdocs .dlx-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+      #panel-sdocs .dlx-stat{background:linear-gradient(135deg,#fff,#fbfdfe);border:1px solid #e4eef1;border-radius:13px;padding:11px 14px;box-shadow:0 1px 3px rgba(12,38,48,.05);display:flex;align-items:center;gap:11px;position:relative;overflow:hidden;transition:.2s}
+      #panel-sdocs .dlx-stat::before{content:"";position:absolute;inset:0 auto 0 0;width:4px}
+      #panel-sdocs .dlx-stat:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(12,38,48,.09)}
+      #panel-sdocs .dlx-stat.g::before{background:linear-gradient(#34c97b,#1d8a4e)}
+      #panel-sdocs .dlx-stat.t::before{background:linear-gradient(#3fb6d4,#0f6588)}
+      #panel-sdocs .dlx-stat.p::before{background:linear-gradient(#9579c9,#6d4f9c)}
+      #panel-sdocs .dlx-stat.o::before{background:linear-gradient(#e0b864,#b8842b)}
+      #panel-sdocs .dlx-stat .dlx-si{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none}
+      #panel-sdocs .dlx-stat.g .dlx-si{background:linear-gradient(135deg,#e7f7ee,#d3f1df);color:#1d8a4e}
+      #panel-sdocs .dlx-stat.t .dlx-si{background:linear-gradient(135deg,#e3f4f9,#cfeaf3);color:#0f6588}
+      #panel-sdocs .dlx-stat.p .dlx-si{background:linear-gradient(135deg,#efeaf8,#e3daf3);color:#6d4f9c}
+      #panel-sdocs .dlx-stat.o .dlx-si{background:linear-gradient(135deg,#fdf3e0,#f8e8c8);color:#b8842b}
+      #panel-sdocs .dlx-stat .dlx-sn{font-size:19px;font-weight:800;line-height:1}
+      #panel-sdocs .dlx-stat .dlx-sl{font-size:11px;color:#8aa1ab;margin-top:3px;font-weight:600}
+      #panel-sdocs .dlx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:13px}
+      #panel-sdocs .dlx-grid.list{grid-template-columns:1fr;gap:8px}
+      #panel-sdocs .dlx-node{background:linear-gradient(150deg,#fff,#fbfdfe);border:1px solid #e4eef1;border-radius:15px;padding:16px;cursor:pointer;transition:.22s cubic-bezier(.2,.7,.3,1);position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(12,38,48,.05);animation:dlxRise .4s cubic-bezier(.2,.7,.3,1) backwards}
+      #panel-sdocs .dlx-node:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(32,140,170,.18),0 18px 40px rgba(12,38,48,.12);border-color:transparent}
+      #panel-sdocs .dlx-node::before{content:"";position:absolute;inset:0 0 auto 0;height:3.5px;opacity:0;transition:.22s;transform:scaleX(.4);transform-origin:right}
+      #panel-sdocs .dlx-node:hover::before{opacity:1;transform:scaleX(1)}
+      #panel-sdocs .dlx-node.committee::before{background:linear-gradient(90deg,#1d8a4e,#34c97b)}
+      #panel-sdocs .dlx-node.meeting::before{background:linear-gradient(90deg,#0f6588,#3fb6d4)}
+      #panel-sdocs .dlx-node.file::before{background:linear-gradient(90deg,#6d4f9c,#9579c9)}
+      #panel-sdocs .dlx-node .dlx-ico{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;margin-bottom:13px;transition:.22s}
+      #panel-sdocs .dlx-node:hover .dlx-ico{transform:scale(1.04)}
+      #panel-sdocs .dlx-node.committee .dlx-ico{background:linear-gradient(140deg,#eafaf1,#d6f2e1);color:#1d8a4e;box-shadow:inset 0 0 0 1px rgba(29,138,78,.1)}
+      #panel-sdocs .dlx-node.meeting .dlx-ico{background:linear-gradient(140deg,#e6f5fa,#d2ecf4);color:#0f6588;box-shadow:inset 0 0 0 1px rgba(32,140,170,.1)}
+      #panel-sdocs .dlx-node.file .dlx-ico{background:linear-gradient(140deg,#f1ecf9,#e6ddf4);color:#6d4f9c;box-shadow:inset 0 0 0 1px rgba(109,79,156,.1)}
+      #panel-sdocs .dlx-node .dlx-nm{font-size:13.5px;font-weight:800;line-height:1.45;margin-bottom:6px;color:#0c2630;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+      #panel-sdocs .dlx-node .dlx-meta{font-size:11px;color:#8aa1ab;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:600}
+      #panel-sdocs .dlx-node .dlx-meta .dlx-dot{width:3px;height:3px;border-radius:50%;background:#c8d8dd}
+      #panel-sdocs .dlx-bnew{background:linear-gradient(135deg,#e8f7ee,#d5f0df);color:#1d8a4e;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;box-shadow:inset 0 0 0 1px rgba(29,138,78,.12)}
+      #panel-sdocs .dlx-bnew .dlx-pulse{width:5px;height:5px;border-radius:50%;background:#1d8a4e;animation:dlxPulse 1.8s infinite}
+      #panel-sdocs .dlx-btype{font-size:9px;font-weight:800;padding:3px 9px;border-radius:7px}
+      #panel-sdocs .dlx-btype.decree{background:linear-gradient(135deg,#f4ecff,#ecdfff);color:#6b28c4}
+      #panel-sdocs .dlx-btype.minutes{background:linear-gradient(135deg,#ede9fe,#ddd4fb);color:#5b3f8c}
+      #panel-sdocs .dlx-btype.doc{background:linear-gradient(135deg,#e3f4f9,#d2ecf4);color:#0f6588}
+      #panel-sdocs .dlx-bauto{background:linear-gradient(135deg,#e8f5e9,#d5efda);color:#1d8a4e;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px}
+      #panel-sdocs .dlx-grid.list .dlx-node{display:flex;align-items:center;gap:15px;padding:13px 17px}
+      #panel-sdocs .dlx-grid.list .dlx-node .dlx-ico{margin-bottom:0;width:40px;height:40px;border-radius:11px}
+      #panel-sdocs .dlx-grid.list .dlx-node .dlx-bd{flex:1;min-width:0}
+      #panel-sdocs .dlx-grid.list .dlx-node .dlx-nm{margin-bottom:4px;-webkit-line-clamp:1}
+      #panel-sdocs .dlx-grid.list .dlx-node .dlx-actions{margin-inline-start:auto;display:flex;gap:7px;flex:none}
+      #panel-sdocs .dlx-node.file .dlx-actions{display:flex;gap:7px;margin-top:13px;align-items:center}
+      #panel-sdocs .dlx-grid.list .dlx-node.file .dlx-actions{margin-top:0}
+      #panel-sdocs .dlx-mb{border:1.5px solid #e4eef1;background:#fff;border-radius:9px;padding:6px 11px;font-size:10.5px;font-weight:800;cursor:pointer;font-family:inherit;color:#3a5560;display:inline-flex;align-items:center;gap:5px;transition:.16s;text-decoration:none}
+      #panel-sdocs .dlx-mb.primary{background:linear-gradient(135deg,#3fb6d4,#0f6588);color:#fff;border-color:transparent;box-shadow:0 3px 9px rgba(32,140,170,.25)}
+      #panel-sdocs .dlx-mb.primary:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(32,140,170,.35)}
+      #panel-sdocs .dlx-mb:not(.primary):hover{border-color:#3fb6d4;color:#0f6588;background:#eef5f7}
+      #panel-sdocs .dlx-mb.danger{padding:6px 9px}
+      #panel-sdocs .dlx-mb.danger:hover{border-color:#e5484d;color:#e5484d;background:#fef2f3}
+      #panel-sdocs .dlx-empty{text-align:center;padding:60px 20px;color:#a4bac1;grid-column:1/-1}
+      #panel-sdocs .dlx-empty .dlx-ec{width:72px;height:72px;border-radius:20px;margin:0 auto 14px;display:grid;place-items:center;background:linear-gradient(140deg,#fff,#f1f7f9);box-shadow:0 1px 3px rgba(12,38,48,.05)}
+      #panel-sdocs .dlx-empty div{font-size:14px;font-weight:600}
+      #panel-sdocs .dlx-emptyfolder{background:#fff;border:1px dashed #d4d4d8;border-radius:10px;padding:14px;color:#94a3b8;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;grid-column:1/-1}
+      @keyframes dlxRise{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes dlxPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+      @media(max-width:680px){#panel-sdocs .dlx-stats{grid-template-columns:repeat(2,1fr)}#panel-sdocs .dlx-right{margin-inline-start:0}}
+    </style>
     <div class="spanel" id="panel-sdocs">
-      <div style="background:#fff;border-bottom:2px solid #d4edf0;padding:8px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,#1d8a4e,#1f4c3a);color:#fff;border-radius:9px;padding:6px 14px;font-size:12px;font-weight:700">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          قسم الوثائق
+      <div class="dlx-toolbar">
+        <div class="dlx-row">
+          <div style="display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,#1d8a4e,#1f4c3a);color:#fff;border-radius:9px;padding:7px 14px;font-size:12px;font-weight:700;flex:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            مكتبة الوثائق
+          </div>
+          <div class="dlx-search">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="docsSearch" placeholder="ابحث باسم اللجنة أو الاجتماع أو الوثيقة…" oninput="renderDocs()">
+          </div>
+          <button class="dlx-upload" id="dlxTopUpload" onclick="_dlxTopUpload()" title="رفع وثيقة للموقع الحالي">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            رفع وثيقة
+          </button>
         </div>
-        <span id="docsStats" style="font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;background:#e8f5e9;color:#1d8a4e">جارٍ التحميل…</span>
-        <input type="text" id="docsSearch" placeholder="بحث في الوثائق…" oninput="renderDocsList()" style="flex:1;max-width:280px;border:1px solid #d4edf0;border-radius:8px;padding:6px 12px;font-size:12px;font-family:inherit;direction:rtl">
-        <button onclick="renderDocs()" style="margin-right:auto;background:linear-gradient(135deg,#48a883,#1f4c3a);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          تحديث
-        </button>
+        <div class="dlx-divider"></div>
+        <div class="dlx-row">
+          <div class="dlx-filters" id="dlxFilters">
+            <span class="dlx-flbl"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>تصفية</span>
+            <button class="dlx-chip active" data-t="all" onclick="_dlxFilter(this)">الكل <span class="dlx-cnt" id="dlxCnt-all">0</span></button>
+            <button class="dlx-chip" data-t="decree" onclick="_dlxFilter(this)">قرارات التشكيل <span class="dlx-cnt" id="dlxCnt-decree">0</span></button>
+            <button class="dlx-chip" data-t="minutes" onclick="_dlxFilter(this)">المحاضر <span class="dlx-cnt" id="dlxCnt-minutes">0</span></button>
+            <button class="dlx-chip" data-t="doc" onclick="_dlxFilter(this)">عروض ومرفقات <span class="dlx-cnt" id="dlxCnt-doc">0</span></button>
+          </div>
+          <div class="dlx-right">
+            <span id="docsStats" style="font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px;background:#e8f5e9;color:#1d8a4e;white-space:nowrap">…</span>
+            <div class="dlx-selw">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="6 9 12 15 18 9"/></svg>
+              <select id="dlxSort" onchange="renderDocs()">
+                <option value="recent">الأحدث تعديلاً</option>
+                <option value="name">الاسم (أ – ي)</option>
+                <option value="count">الأكثر وثائق</option>
+              </select>
+            </div>
+            <div class="dlx-vtog">
+              <button id="dlxVGrid" class="active" onclick="_dlxView('grid')" title="عرض شبكي"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+              <button id="dlxVList" onclick="_dlxView('list')" title="عرض قائمة"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg></button>
+            </div>
+            <button onclick="renderDocs()" title="تحديث" style="background:#fff;border:1.5px solid #e4eef1;border-radius:10px;padding:8px 10px;cursor:pointer;color:#8aa1ab;display:grid;place-items:center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
-      <div style="flex:1;overflow-y:auto;padding:18px 22px;background:#f7fbfd" id="docsBody">
-        <div style="text-align:center;padding:60px 20px;color:#757bbb">جارٍ تحميل قسم الوثائق…</div>
+      <div class="dlx-body" id="docsBody">
+        <div style="text-align:center;padding:60px 20px;color:#757bbb">جارٍ تحميل مكتبة الوثائق…</div>
       </div>
     </div>
 
@@ -9359,166 +9503,238 @@ function _docsCollectAll(){
   return out;
 }
 
+/* [DOCS-V2 2026-05-31] مستكشف ملفات — يقرأ من _docsCollectAll() ويحافظ على
+   الصلاحيات (canDo) ودوال الرفع/الحذف (_docsUpload/_docsDelete) والسحب والإفلات.
+   حالة التنقّل: _dlxNav.path = [] جذر | [di] داخل لجنة | [di,mi] داخل اجتماع. */
+window._dlxNav = window._dlxNav || { path:[], filter:'all', view:'grid' };
+
+var _DLX_ICON = {
+  committee:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
+  meeting:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-3H5a2 2 0 0 0-2 2z"/></svg>',
+  decree:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>',
+  minutes:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>',
+  doc:'<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>'
+};
+var _DLX_TLBL = { decree:'قرار تشكيل', minutes:'محضر', doc:'مرفق' };
+
+function _dlxFilter(btn){
+  try{
+    var p=document.getElementById('dlxFilters');
+    if(p) p.querySelectorAll('.dlx-chip').forEach(function(c){c.classList.remove('active');});
+    btn.classList.add('active');
+    window._dlxNav.filter = btn.getAttribute('data-t') || 'all';
+    renderDocs();
+  }catch(e){ console.warn('[dlxFilter]',e); }
+}
+function _dlxView(v){
+  window._dlxNav.view = v;
+  var g=document.getElementById('dlxVGrid'), l=document.getElementById('dlxVList');
+  if(g) g.classList.toggle('active', v==='grid');
+  if(l) l.classList.toggle('active', v==='list');
+  renderDocs();
+}
+function _dlxGo(depth){ window._dlxNav.path = window._dlxNav.path.slice(0,depth); renderDocs(); }
+function _dlxEnter(i){ window._dlxNav.path.push(i); renderDocs(); }
+
+/* أيام منذ تاريخ */
+function _dlxDays(d){ if(!d) return 1e9; var t=new Date(d).getTime(); if(isNaN(t)) return 1e9; return Math.floor((Date.now()-t)/(1000*60*60*24)); }
+function _dlxFmt(d){ if(!d) return ''; var x=_dlxDays(d); if(x<=0)return'اليوم'; if(x===1)return'أمس'; if(x<7)return'قبل '+x+' أيام'; if(x<30)return'قبل '+Math.floor(x/7)+' أسابيع'; return String(d).slice(0,10); }
+function _dlxNew(d){ return _dlxDays(d)<=7; }
+
+/* زر الرفع العلوي: يرفع للموقع الحالي حسب مسار التنقّل */
+function _dlxTopUpload(){
+  var nav=window._dlxNav, p=nav.path;
+  if(p.length===0){ if(typeof showToast==='function') showToast('افتح لجنة أولاً لرفع وثيقة إليها',true); return; }
+  var tree=_docsCollectAll();
+  if(p.length===1){
+    var c=tree[p[0]]; if(!c) return;
+    if(!canDo('edit_committee')){ if(typeof showToast==='function') showToast('ليس لديك صلاحية الرفع لهذه اللجنة',true); return; }
+    _docsUpload(c.di, null, 'committee');
+  } else {
+    var c2=tree[p[0]]; if(!c2) return; var m=c2.meetings[p[1]]; if(!m) return;
+    if(!canDo('edit_meeting')){ if(typeof showToast==='function') showToast('ليس لديك صلاحية الرفع لهذا الاجتماع',true); return; }
+    _docsUpload(c2.di, m.mi, 'meeting');
+  }
+}
+
+/* بطاقة ملف بنمط المستكشف — تعيد استخدام منطق الصلاحيات والحذف نفسه */
+function _dlxFileCard(file, di, mi, scope, arrayIdx, idx){
+  if(!file) return '';
+  var url = (typeof file==='object' && file.url) ? file.url : file;
+  if(url && !/^https?:\/\//i.test(String(url))) url='';
+  var name = (typeof file==='object' && file.name) ? file.name : 'وثيقة';
+  var date = (typeof file==='object' && file.uploadedAt) ? String(file.uploadedAt).slice(0,10) : '';
+  var by = (typeof file==='object' && file.by) ? file.by : '';
+  var size = (typeof file==='object' && file.size) ? _docsHumanSize(file.size) : '';
+  var auto = (typeof file==='object' && file.autoSync) ? true : false;
+  var tkey = (scope==='decree')?'decree':((scope==='minutes')?'minutes':'doc');
+  var canDelete=false;
+  if(scope==='decree' || scope==='committee') canDelete = canDo('edit_committee') || canDo('edit_meeting');
+  else if(scope==='meeting' || scope==='minutes') canDelete = canDo('edit_meeting');
+  var nb = _dlxNew(date) ? '<span class="dlx-bnew"><span class="dlx-pulse"></span>حديث</span>' : '';
+  var autoB = auto ? '<span class="dlx-bauto">مرتبط تلقائياً</span>' : '';
+  var delAttr = (canDelete && !auto)
+    ? '<button class="dlx-mb danger" title="حذف" onclick="event.stopPropagation();_docsDelete('+di+','+(mi===null?'null':mi)+',&quot;'+scope+'&quot;,'+(arrayIdx==null?'null':arrayIdx)+')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+    : '';
+  var openBtn = url
+    ? '<a class="dlx-mb primary" href="'+e(url)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>فتح</a>'
+    : '<span class="dlx-mb" style="opacity:.5;cursor:default">لا يوجد رابط</span>';
+  var delay='style="animation-delay:'+((idx||0)*28)+'ms"';
+  if(window._dlxNav.view==='list'){
+    return '<div class="dlx-node file" '+delay+'><div class="dlx-ico">'+_DLX_ICON[tkey]+'</div>'
+      +'<div class="dlx-bd"><div class="dlx-nm">'+e(name)+'</div><div class="dlx-meta">'
+      +'<span class="dlx-btype '+tkey+'">'+_DLX_TLBL[tkey]+'</span>'
+      +(date?'<span class="dlx-dot"></span>'+_dlxFmt(date):'')
+      +(by?'<span class="dlx-dot"></span>'+e(by):'')+(size?'<span class="dlx-dot"></span>'+size:'')
+      +(nb?'<span class="dlx-dot"></span>'+nb:'')+(autoB?' '+autoB:'')+'</div></div>'
+      +'<div class="dlx-actions">'+openBtn+delAttr+'</div></div>';
+  }
+  return '<div class="dlx-node file" '+delay+'><div class="dlx-ico">'+_DLX_ICON[tkey]+'</div>'
+    +'<div class="dlx-nm">'+e(name)+'</div><div class="dlx-meta">'
+    +'<span class="dlx-btype '+tkey+'">'+_DLX_TLBL[tkey]+'</span>'+(nb?'<span class="dlx-dot"></span>'+nb:'')+(autoB?' '+autoB:'')+'</div>'
+    +'<div class="dlx-meta" style="margin-top:5px">'+(_dlxFmt(date)||'—')+(by?' · '+e(by):'')+(size?' · '+size:'')+'</div>'
+    +'<div class="dlx-actions">'+openBtn+delAttr+'</div></div>';
+}
+
 function renderDocs(){
   try{
     var body = document.getElementById('docsBody');
     if(!body) return;
     var tree = _docsCollectAll();
+    var nav = window._dlxNav;
 
-    /* الإحصاءات */
-    var totalComm = tree.length;
-    var totalMeetings = 0, totalDocs = 0, totalDecrees = 0;
+    /* الإحصاءات الإجمالية + عدّادات الفلاتر (دائماً من كامل الشجرة) */
+    var totalComm=tree.length, totalMeetings=0, totalDocs=0, totalDecrees=0;
+    var cAll=0,cDec=0,cMin=0,cDoc=0;
     tree.forEach(function(c){
       totalMeetings += c.meetings.length;
-      if(c.decree) totalDecrees++;
+      if(c.decree){ totalDecrees++; cDec++; cAll++; }
+      (c.docs||[]).forEach(function(){ cDoc++; cAll++; });
       totalDocs += (c.docs||[]).length;
       c.meetings.forEach(function(m){
-        if(m.minutes_pdf) totalDocs++;
+        if(m.minutes_pdf){ totalDocs++; cMin++; cAll++; }
+        (m.docs||[]).forEach(function(){ cDoc++; cAll++; });
         totalDocs += (m.docs||[]).length;
       });
     });
-    var statsEl = document.getElementById('docsStats');
-    if(statsEl){
-      statsEl.textContent = totalComm+' لجنة · '+totalMeetings+' اجتماع · '+totalDocs+' وثيقة';
-    }
+    totalDocs += totalDecrees;
+    var statsEl=document.getElementById('docsStats');
+    if(statsEl) statsEl.textContent = totalComm+' لجنة · '+totalMeetings+' اجتماع · '+totalDocs+' وثيقة';
+    var setc=function(id,v){var el=document.getElementById(id); if(el) el.textContent=v;};
+    setc('dlxCnt-all',cAll); setc('dlxCnt-decree',cDec); setc('dlxCnt-minutes',cMin); setc('dlxCnt-doc',cDoc);
 
     if(!tree.length){
-      body.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#94a3b8;font-size:13px">'
-        +'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.45;margin-bottom:12px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
-        +'<div>لا توجد لجان في نطاق صلاحياتك</div>'
-        +'</div>';
+      body.innerHTML='<div class="dlx-empty"><div class="dlx-ec"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#bcd0d6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><div>لا توجد لجان في نطاق صلاحياتك</div></div>';
       return;
     }
 
-    var search = (document.getElementById('docsSearch') || {}).value || '';
+    var search = (document.getElementById('docsSearch')||{}).value||'';
     search = String(search).trim().toLowerCase();
+    var filter = nav.filter||'all';
+    var view = nav.view||'grid';
+    var sortBy = (document.getElementById('dlxSort')||{}).value||'recent';
 
-    var html = '';
-    tree.forEach(function(c){
-      var commId = 'comm_'+c.di;
-      var isOpen = !!window._docsState.expanded[commId];
-      /* فلترة البحث: نُظهر اللجنة إن اسمها يطابق أو إن أيّ وثيقة فيها تطابق */
-      var matchesSearch = !search || c.name.toLowerCase().indexOf(search)!==-1
-        || (c.decree && (c.decree.name||'').toLowerCase().indexOf(search)!==-1)
-        || c.meetings.some(function(m){
-            return ('اجتماع '+m.meetNum).toLowerCase().indexOf(search)!==-1
-              || (m.minutes_pdf && (m.minutes_pdf.name||'محضر').toLowerCase().indexOf(search)!==-1)
-              || (m.docs||[]).some(function(dd){ return (dd.name||'').toLowerCase().indexOf(search)!==-1; });
-          })
-        || (c.docs||[]).some(function(dd){ return (dd.name||'').toLowerCase().indexOf(search)!==-1; });
-      if(!matchesSearch) return;
+    /* مسار التنقّل (Breadcrumb) */
+    var cb = '<a onclick="_dlxGo(0)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>المكتبة</a>';
+    if(nav.path.length>=1 && tree[nav.path[0]]){
+      var c0=tree[nav.path[0]];
+      cb += '<span class="dlx-sep">‹</span>';
+      cb += (nav.path.length===1) ? '<span class="dlx-cur">'+e(c0.name)+'</span>' : '<a onclick="_dlxGo(1)">'+e(c0.name)+'</a>';
+    }
+    if(nav.path.length>=2 && tree[nav.path[0]] && tree[nav.path[0]].meetings[nav.path[1]]){
+      var m0=tree[nav.path[0]].meetings[nav.path[1]];
+      cb += '<span class="dlx-sep">‹</span><span class="dlx-cur">اجتماع #'+e(m0.meetNum)+(m0.date?' · '+e(m0.date):'')+'</span>';
+    }
 
-      var commCount = (c.decree?1:0) + (c.docs||[]).length + c.meetings.reduce(function(a,m){
-        return a + (m.minutes_pdf?1:0) + (m.docs||[]).length;
-      },0);
-
-      /* [SORT 2026-05-25] تنسيق آخر تعديل للعرض */
-      var lastModInfo = '';
-      if(c.lastModified > 0){
-        var lastDate = new Date(c.lastModified);
-        var now = new Date();
-        var diffDays = Math.floor((now - lastDate) / (1000*60*60*24));
-        var dateStr;
-        if(diffDays === 0) dateStr = 'اليوم';
-        else if(diffDays === 1) dateStr = 'أمس';
-        else if(diffDays < 7) dateStr = 'قبل ' + diffDays + ' أيام';
-        else if(diffDays < 30) dateStr = 'قبل ' + Math.floor(diffDays/7) + ' أسابيع';
-        else dateStr = lastDate.toISOString().slice(0,10);
-        var isRecent = diffDays <= 7;
-        lastModInfo = '<span style="font-size:10px;color:'+(isRecent?'#1d8a4e':'#94a3b8')+';margin-right:8px;display:inline-flex;align-items:center;gap:3px'+(isRecent?';background:#e8f5e9;padding:2px 7px;border-radius:10px':'')+'">'
-          +(isRecent?'<svg width="9" height="9" viewBox="0 0 24 24" fill="#1d8a4e"><circle cx="12" cy="12" r="6"/></svg>':'')
-          +'آخر تعديل: '+dateStr+'</span>';
-      } else {
-        lastModInfo = '<span style="font-size:10px;color:#cbd5e1;margin-right:8px">بدون ملفات</span>';
-      }
-
-      html += '<div style="background:#fff;border:1px solid #d4edf0;border-radius:11px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
-        +'<div onclick="_docsToggle(\''+commId+'\')" style="background:linear-gradient(135deg,#fafdfd,#f0f7f9);padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:'+(isOpen?'1px solid #e0e9e3':'none')+'">'
-          +'<span style="font-size:14px;color:#1d8a4e;transition:transform .2s;display:inline-block'+(isOpen?';transform:rotate(90deg)':'')+'">&#9656;</span>'
-          +'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1d8a4e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
-          +'<div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#003944">'+e(c.name)+'</div>'
-          +'<div style="font-size:11px;color:#757bbb;margin-top:2px;display:flex;align-items:center;flex-wrap:wrap">'+commCount+' وثيقة · '+c.meetings.length+' اجتماع'+lastModInfo+'</div></div>'
-          +(canDo('edit_committee')?'<button onclick="event.stopPropagation();_docsUpload('+c.di+',null,&quot;committee&quot;)" title="رفع وثيقة جديدة للجنة" style="background:linear-gradient(135deg,#1d8a4e,#27ae60);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">&#43; رفع وثيقة</button>':'')
+    /* شريط الإحصاء يظهر في الجذر فقط */
+    var statsStrip='';
+    if(nav.path.length===0){
+      statsStrip = '<div class="dlx-stats">'
+        +_dlxStat('g','committee',totalComm,'لجنة')
+        +_dlxStat('t','meeting',totalMeetings,'اجتماع')
+        +_dlxStat('p','doc',totalDocs,'وثيقة')
+        +_dlxStat('o','decree',totalDecrees,'قرار تشكيل')
         +'</div>';
+    }
 
-      if(isOpen){
-        html += '<div style="padding:12px 16px;background:#fafbfd">';
-        /* قرار التشكيل (وثيقة الأساس) */
-        html += '<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#7e22ce;margin-bottom:6px;display:flex;align-items:center;gap:5px">'
-          +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7e22ce" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
-          +'قرار التشكيل</div>';
-        if(c.decree){
-          html += _docsFileCard(c.decree, c.di, null, 'decree');
-        } else {
-          html += '<div style="background:#fff;border:1px dashed #d4d4d8;border-radius:8px;padding:10px;color:#94a3b8;font-size:11.5px;display:flex;align-items:center;justify-content:space-between">'
-            +'<span>لم يُرفع قرار التشكيل بعد</span>'
-            +(canDo('edit_committee')?'<button onclick="_docsUpload('+c.di+',null,&quot;decree&quot;)" style="background:#7e22ce;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit">رفع قرار التشكيل</button>':'')
-            +'</div>';
-        }
-        html += '</div>';
-
-        /* وثائق عامة للجنة */
-        if((c.docs||[]).length){
-          html += '<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#1d8a4e;margin-bottom:6px">وثائق عامة للجنة</div>';
-          c.docs.forEach(function(dd,idx){
-            html += _docsFileCard(dd, c.di, null, 'committee', idx);
-          });
-          html += '</div>';
-        }
-
-        /* مجلدات الاجتماعات */
-        if(c.meetings.length){
-          html += '<div style="margin-top:8px"><div style="font-size:11px;font-weight:700;color:#1673a4;margin-bottom:6px">مجلدات الاجتماعات</div>';
-          c.meetings.forEach(function(m){
-            var meetingId = 'meet_'+c.di+'_'+m.mi;
-            var mOpen = !!window._docsState.expanded[meetingId];
-            var mCount = (m.minutes_pdf?1:0) + (m.docs||[]).length;
-            html += '<div style="background:#fff;border:1px solid #e0e9f5;border-radius:9px;margin-bottom:7px;overflow:hidden">'
-              +'<div onclick="_docsToggle(\''+meetingId+'\')" style="padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:8px;background:'+(mOpen?'#f0f7ff':'#fafbfd')+'">'
-                +'<span style="font-size:12px;color:#1673a4;display:inline-block'+(mOpen?';transform:rotate(90deg)':'')+'">&#9656;</span>'
-                +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1673a4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-3H5a2 2 0 0 0-2 2z"/></svg>'
-                +'<div style="flex:1"><div style="font-size:12.5px;font-weight:700;color:#1673a4">اجتماع #'+e(m.meetNum)+(m.date?' · '+e(m.date):'')+'</div>'
-                +'<div style="font-size:10.5px;color:#757bbb">'+mCount+' وثيقة</div></div>'
-                +(canDo('edit_meeting')?'<button onclick="event.stopPropagation();_docsUpload('+c.di+','+m.mi+',&quot;meeting&quot;)" title="رفع وثيقة للاجتماع" style="background:#1673a4;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit">&#43; رفع</button>':'')
-              +'</div>';
-            if(mOpen){
-              html += '<div style="padding:10px 14px;background:#fff">';
-              if(m.minutes_pdf){
-                html += '<div style="font-size:10.5px;font-weight:700;color:#9338ff;margin-bottom:5px">المحضر الرسمي</div>';
-                html += _docsFileCard(m.minutes_pdf, c.di, m.mi, 'minutes');
-              }
-              if((m.docs||[]).length){
-                html += '<div style="font-size:10.5px;font-weight:700;color:#208caa;margin:8px 0 5px">العروض والمرفقات</div>';
-                m.docs.forEach(function(dd,idx){
-                  html += _docsFileCard(dd, c.di, m.mi, 'meeting', idx);
-                });
-              }
-              if(!m.minutes_pdf && !(m.docs||[]).length){
-                html += '<div style="color:#94a3b8;font-size:11px;text-align:center;padding:10px">لا توجد وثائق في هذا الاجتماع</div>';
-              }
-              html += '</div>';
-            }
-            html += '</div>';
-          });
-          html += '</div>';
-        }
-
-        html += '</div>';
+    /* بناء العناصر حسب المستوى */
+    var nodes=[];
+    if(nav.path.length===0){
+      tree.forEach(function(c,i){
+        var count=(c.decree?1:0)+(c.docs||[]).length+c.meetings.reduce(function(a,m){return a+(m.minutes_pdf?1:0)+(m.docs||[]).length;},0);
+        nodes.push({kind:'committee',name:c.name,sub:count+' وثيقة · '+c.meetings.length+' اجتماع',
+          last:c.lastModified||0,count:count,treeIdx:i,search:(c.name||'').toLowerCase()});
+      });
+      if(sortBy==='name') nodes.sort(function(a,b){return String(a.name).localeCompare(String(b.name),'ar');});
+      else if(sortBy==='count') nodes.sort(function(a,b){return b.count-a.count;});
+      else nodes.sort(function(a,b){return (b.last||0)-(a.last||0);});
+    } else if(nav.path.length===1){
+      var c=tree[nav.path[0]];
+      if(c){
+        if(c.decree) nodes.push({kind:'file',file:c.decree,di:c.di,mi:null,scope:'decree',arrayIdx:null,ftype:'decree',search:((c.decree.name||'')).toLowerCase()});
+        (c.docs||[]).forEach(function(dd,idx){ nodes.push({kind:'file',file:dd,di:c.di,mi:null,scope:'committee',arrayIdx:idx,ftype:'doc',search:((dd.name||'')).toLowerCase()}); });
+        c.meetings.forEach(function(m,i){
+          var cnt=(m.minutes_pdf?1:0)+(m.docs||[]).length;
+          nodes.push({kind:'meeting',name:'اجتماع #'+m.meetNum,sub:(m.date?m.date+' · ':'')+cnt+' وثيقة',
+            meetIdx:i,search:('اجتماع '+m.meetNum+' '+(m.date||'')).toLowerCase()});
+        });
       }
-      html += '</div>';
+    } else {
+      var c2=tree[nav.path[0]];
+      var m=c2?c2.meetings[nav.path[1]]:null;
+      if(m){
+        if(m.minutes_pdf) nodes.push({kind:'file',file:m.minutes_pdf,di:c2.di,mi:m.mi,scope:'minutes',arrayIdx:null,ftype:'minutes',search:((m.minutes_pdf.name||'محضر')).toLowerCase()});
+        (m.docs||[]).forEach(function(dd,idx){ nodes.push({kind:'file',file:dd,di:c2.di,mi:m.mi,scope:'meeting',arrayIdx:idx,ftype:'doc',search:((dd.name||'')).toLowerCase()}); });
+      }
+    }
+
+    /* فلترة بالنوع + البحث */
+    nodes = nodes.filter(function(n){
+      if(filter!=='all'){ if(n.kind!=='file') return false; if(n.ftype!==filter) return false; }
+      if(search && (n.search||'').indexOf(search)===-1) return false;
+      return true;
     });
 
-    body.innerHTML = html || '<div style="text-align:center;padding:40px;color:#94a3b8">لا توجد نتائج للبحث</div>';
-
-    /* [DND 2026-05-25] تفعيل Drag & Drop على كل أزرار الرفع */
-    if(typeof _dndEnableUploadButtons === 'function'){
-      _dndEnableUploadButtons(body);
+    var gridHtml = '<div class="dlx-grid'+(view==='list'?' list':'')+'">';
+    if(!nodes.length){
+      /* داخل اجتماع/لجنة فارغة: نعرض زر رفع إن كانت الصلاحية موجودة */
+      var emptyUpload='';
+      if(nav.path.length===1 && tree[nav.path[0]] && canDo('edit_committee')){
+        emptyUpload='<button class="dlx-mb primary" onclick="_docsUpload('+tree[nav.path[0]].di+',null,&quot;committee&quot;)">رفع وثيقة للجنة</button>';
+      } else if(nav.path.length===2 && tree[nav.path[0]] && tree[nav.path[0]].meetings[nav.path[1]] && canDo('edit_meeting')){
+        emptyUpload='<button class="dlx-mb primary" onclick="_docsUpload('+tree[nav.path[0]].di+','+tree[nav.path[0]].meetings[nav.path[1]].mi+',&quot;meeting&quot;)">رفع وثيقة للاجتماع</button>';
+      }
+      gridHtml += '<div class="dlx-emptyfolder"><span>'+(search||filter!=='all'?'لا توجد عناصر مطابقة':'لا توجد وثائق هنا بعد')+'</span>'+emptyUpload+'</div>';
+    } else {
+      nodes.forEach(function(n,idx){
+        var delay='style="animation-delay:'+(idx*28)+'ms"';
+        if(n.kind==='committee'){
+          var nb = (n.last && _dlxNew(new Date(n.last).toISOString())) ? '<span class="dlx-bnew"><span class="dlx-pulse"></span>حديث</span>' : '';
+          gridHtml += '<div class="dlx-node committee" '+delay+' onclick="_dlxEnter('+n.treeIdx+')"><div class="dlx-ico">'+_DLX_ICON.committee+'</div>'
+            +'<div class="dlx-nm">'+e(n.name)+'</div><div class="dlx-meta">'+e(n.sub)+(nb?'<span class="dlx-dot"></span>'+nb:'')+'</div></div>';
+        } else if(n.kind==='meeting'){
+          gridHtml += '<div class="dlx-node meeting" '+delay+' onclick="_dlxEnter('+n.meetIdx+')"><div class="dlx-ico">'+_DLX_ICON.meeting+'</div>'
+            +'<div class="dlx-nm">'+e(n.name)+'</div><div class="dlx-meta">'+e(n.sub)+'</div></div>';
+        } else {
+          gridHtml += _dlxFileCard(n.file, n.di, n.mi, n.scope, n.arrayIdx, idx);
+        }
+      });
     }
+    gridHtml += '</div>';
+
+    body.innerHTML = '<div class="dlx-crumbs">'+cb+'</div>'+statsStrip+gridHtml;
+
+    /* تفعيل السحب والإفلات على كل أزرار الرفع المعروضة */
+    if(typeof _dndEnableUploadButtons==='function') _dndEnableUploadButtons(body);
   }catch(err){
     console.error('[renderDocs]', err);
-    var b = document.getElementById('docsBody');
-    if(b) b.innerHTML = '<div style="color:#dc2626;padding:20px;text-align:center">تعذّر تحميل قسم الوثائق: '+e(err.message||err)+'</div>';
+    var b=document.getElementById('docsBody');
+    if(b) b.innerHTML='<div style="color:#dc2626;padding:20px;text-align:center">تعذّر تحميل مكتبة الوثائق: '+e(err.message||err)+'</div>';
   }
+}
+
+function _dlxStat(cls,ico,n,l){
+  return '<div class="dlx-stat '+cls+'"><div class="dlx-si">'+_DLX_ICON[ico]+'</div><div><div class="dlx-sn">'+n+'</div><div class="dlx-sl">'+l+'</div></div></div>';
 }
 
 function renderDocsList(){
@@ -10299,7 +10515,7 @@ function _es_printForManager(di, mi){
     var meetingLabel = (m.meetNum ? 'اجتماع رقم '+m.meetNum : 'اجتماع '+(mi+1));
     var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>الملخّص التنفيذي — '+e(d.n)+'</title>'
       +'<style>'
-      +'@page{size:A4;margin:15mm}'
+      +'@page{size:13.333in 7.5in;margin:0}'  /* [PP-UNIFY-2026-05-31] مقاس موحّد */
       +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;direction:rtl;color:#1f2937;line-height:1.85;margin:0;padding:0}'
       +'.cover{padding:24px 28px;border-bottom:3px solid #1d8a4e;margin-bottom:20px}'
       +'.cover h1{margin:0 0 6px;font-size:22pt;color:#003944}'
@@ -10328,6 +10544,7 @@ function _es_printForManager(di, mi){
       +(m.directives?'<div class="section dir"><h2>التوجيهات والقرارات</h2><p>'+e(m.directives)+'</p></div>':'')
       +(m.es_hash?'<div class="sig"><b>البصمة الرقميّة:</b> <span style="font-family:monospace;direction:ltr;display:inline-block;word-break:break-all">'+e(m.es_hash)+'</span></div>':'')
       +'</body></html>';
+    html=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(html):html;
     var w = window.open('','_blank');
     if(w){ w.document.write(html); w.document.close(); }
     else if(typeof showToast==='function') showToast('فعِّل النوافذ المنبثقة في المتصفّح',true);
@@ -11217,19 +11434,17 @@ var __PP_FRAME_GRAD = 'linear-gradient(135deg,#208caa 0%,#208caa 40%,#48a883 78%
    (4) box-decoration-break:clone + max-width:100% → الخلفيات تُقصّ
        عند حدود الحشوة فلا يتجاوز أي عنصر الإطار إطلاقاً.
    ════════════════════════════════════════════════════════════════════════ */
-var __PP_FRAME_INSET = '6mm';    /* بُعد الإطار عن حافة الورق الحقيقية */
-var __PP_FRAME_THICK = '2.6mm';  /* سماكة حلقة الإطار */
-var __PP_FRAME_GAP   = '5mm';    /* فجوة أمان بين الإطار والمحتوى */
-var __PP_FRAME_RADIUS = '7mm';   /* زوايا شبه دائرية أنيقة */
+var __PP_FRAME_INSET = '4mm';    /* بُعد الإطار عن حافة الورق — قُرّب للحافة (كان 6mm) لتوسيع مساحة التصميم */
+var __PP_FRAME_THICK = '2.4mm';  /* سماكة حلقة الإطار */
+var __PP_FRAME_GAP   = '4mm';    /* فجوة أمان بين الإطار والمحتوى */
+var __PP_FRAME_RADIUS = '6mm';   /* زوايا شبه دائرية أنيقة */
 /* ════════════════════════════════════════════════════════════════════════
-   [PP-MATCH-GM-2026-05-17] توحيد كل التقارير على نموذج gmPrintReport
-   المرجع الممتاز gmPrintReport يستخدم: .pg{padding:16mm 18mm} مع
-   @page{margin:0}. نطابق حشوة الجسم الموحّدة لنفس القيم بالضبط
-   (16mm رأسي، 18mm أفقي) فيبدأ كل المحتوى في *كل* التقارير عند
-   نفس مكان gmPrintReport تماماً — داخل الإطار (عند 6mm) بأمان.
-   ملاحظة: 16mm/18mm > 13.6mm السابقة، ويطابق المرجع الممتاز حرفياً. */
-var __PP_PAD_V = '16mm';   /* حشوة رأسية = gmPrintReport .pg أعلى/أسفل */
-var __PP_PAD_H = '18mm';   /* حشوة أفقية = gmPrintReport .pg يمين/يسار */
+   [PP-WIDEN-2026-05-31] توسيع منطقة المحتوى: الإطار قُرّب للحافة (4mm)
+   والحشوة قُلّصت من 16/18mm إلى 11/13mm. النتيجة: مساحة محتوى أكبر،
+   هوامش بيضاء داخلية أقل، والمحتوى لم يعد محصوراً في منتصف ضيّق.
+   تبقى فجوة أمان كافية (المحتوى عند 11mm > الإطار عند 4mm) فلا يلمسه. */
+var __PP_PAD_V = '11mm';   /* حشوة رأسية — قُلّصت لتوسيع المحتوى */
+var __PP_PAD_H = '13mm';   /* حشوة أفقية — قُلّصت لتوسيع المحتوى */
 var __PP_PAD   = __PP_PAD_V+' '+__PP_PAD_H;  /* للتوافق العكسي */
 var __PP_FRAME_CSS =
    '@media print{'
@@ -11276,6 +11491,23 @@ var __PP_FRAME_CSS =
   +  'max-height:calc(7.5in - '+__PP_PAD_V+' - '+__PP_PAD_V+') !important;'
   +  'margin:0 !important;padding:0 !important;box-shadow:none !important;'
   +  'overflow:hidden !important;border-radius:'+__PP_FRAME_RADIUS+' !important}'
+  /* [PP-BREAK-GUARD-2026-05-31] حماية موحّدة لكل المولّدات:
+     (3) لا قصّ للجداول/الرسوم  (4) العنوان لا ينفصل عن محتواه */
+  /* رؤوس الجداول تتكرّر عند الانكسار، والصفوف لا تُقصّ في منتصفها */
+  +'thead{display:table-header-group !important}'
+  +'tfoot{display:table-footer-group !important}'
+  +'tr{page-break-inside:avoid !important;break-inside:avoid !important}'
+  /* الرسوم والصور لا تُقصّ ولا تتجاوز العرض */
+  +'canvas,img,svg{page-break-inside:avoid !important;break-inside:avoid !important;max-width:100% !important}'
+  /* العناوين تبقى ملتصقة بأول جزء من محتواها (لا عنوان وحيد آخر صفحة) */
+  +'h1,h2,h3,h4,h5,.sec-hdr,.sec-title,.chart-title,.esp-section-title,.rpt-h3,'
+  +'.committee-header,.report-section-title{page-break-after:avoid !important;break-after:avoid !important}'
+  /* البطاقات/الأقسام/صناديق الرسوم تبقى ككتلة واحدة غير مقصوصة */
+  +'.sec,.rpt-section,.rpt-card,.rpt-chart-box,.chart-box,.chart-grid-2,.chart-grid-3,'
+  +'.kpi-card,.kpi-grid,.type-card,.type-grid,.exec-sum-page,.esp-section,.esp-kpi,'
+  +'.no-break,.card,[class*="card"]{page-break-inside:avoid !important;break-inside:avoid !important}'
+  /* أيتام/أرامل: لا يقل عن 3 أسطر أعلى/أسفل أي انكسار */
+  +'p,li,td{orphans:3 !important;widows:3 !important}'
   +'}'
   +'@media screen{.pp-print-frame{display:none}}';
 var __PP_FRAME_STYLE_TAG = '<style id="__pp_universal_frame">'+__PP_FRAME_CSS+'</style>';
@@ -11810,7 +12042,7 @@ function updateSystemUI(){
   var _cfSecLbl=document.getElementById('cf_sec_lbl');
   if(_cfSecLbl)_cfSecLbl.textContent=isIntl?'أمين المجلس/اللجنة':'أمين المجلس/اللجنة';
   /* تحديث placeholder البحث في s3 */
-  var _s3SI=document.getElementById('s3SearchInput');
+  var _s3SI=document.getElementById('s3q');
   if(_s3SI)_s3SI.placeholder=isIntl?'ابحث عن مجلس / لجنة...':'ابحث عن لجنة...';
   /* تحديث secMeta ديناميكياً حسب النظام */
   if(secMeta&&secMeta.s1){
@@ -12276,7 +12508,7 @@ async function govRender(){
     window.goTo=function(sec){
       var r=_origGoTo.apply(this,arguments);
       if(sec==='sgov'){ try{ setTimeout(govRender,80); }catch(e){} }
-      if(sec==='sdocs'){ try{ setTimeout(renderDocs,80); }catch(e){} }
+      if(sec==='sdocs'){ try{ if(window._dlxNav) window._dlxNav.path=[]; setTimeout(renderDocs,80); }catch(e){} }
       return r;
     };
   }
@@ -15395,21 +15627,21 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
       +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">'
       /* GREEN — لا مخاطر */
       +'<div style="background:linear-gradient(135deg,#E1F5E8,#757bbb);border:2px solid #118C5A;border-radius:12px;padding:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:14px;height:14px;border-radius:50%;background:#118C5A"></div><div style="font-weight:700;font-size:11pt;color:#0B4D2E"><span class="status-dot dot-green"></span> منخفض المخاطر</div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:14px;height:14px;border-radius:50%;background:#118C5A"></div><div style="font-weight:700;font-size:11pt;color:#0B4D2E">🟢 منخفض المخاطر</div></div>'
       +'<div style="font-size:28pt;font-weight:800;color:#118C5A;line-height:1">'+_rg_green.length+'</div>'
       +'<div style="font-size:9pt;color:#003944;margin-top:2px">'+Math.round(_rg_green.length/_rg_max*100)+'% من الإجمالي</div>'
       +'<div style="margin-top:8px;padding-top:8px;border-top:1px solid #118C5A50;font-size:8.5pt;color:#0B4D2E;line-height:1.6">'+(activeSystem==='intl'?'مجالس ولجان مستمرة تعمل بشكل طبيعي':'لجان مستمرة تعمل وفق الخطة')+'</div>'
       +'</div>'
       /* AMBER — مراقبة */
       +'<div style="background:linear-gradient(135deg,#FEF5DC,#FEEEB0);border:2px solid #382972;border-radius:12px;padding:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:14px;height:14px;border-radius:50%;background:#382972"></div><div style="font-weight:700;font-size:11pt;color:#7A4E00"><span class="status-dot dot-yellow"></span> متوسط المخاطر</div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:14px;height:14px;border-radius:50%;background:#382972"></div><div style="font-weight:700;font-size:11pt;color:#7A4E00">🟡 متوسط المخاطر</div></div>'
       +'<div style="font-size:28pt;font-weight:800;color:#382972;line-height:1">'+_rg_amber.length+'</div>'
       +'<div style="font-size:9pt;color:#7A4E00;margin-top:2px">'+Math.round(_rg_amber.length/_rg_max*100)+'% من الإجمالي</div>'
       +'<div style="margin-top:8px;padding-top:8px;border-top:1px solid #38297250;font-size:8.5pt;color:#7A4E00;line-height:1.6">لم تبدأ أعمالها بعد — تحتاج متابعة وتفعيل</div>'
       +'</div>'
       /* RED — خطر مرتفع */
       +'<div style="background:linear-gradient(135deg,#FDECEC,#F8D0D0);border:2px solid #991B1B;border-radius:12px;padding:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:14px;height:14px;border-radius:50%;background:#991B1B"></div><div style="font-weight:700;font-size:11pt;color:#7A1414"><span class="status-dot dot-red"></span> مرتفع المخاطر</div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:14px;height:14px;border-radius:50%;background:#991B1B"></div><div style="font-weight:700;font-size:11pt;color:#7A1414">🔴 مرتفع المخاطر</div></div>'
       +'<div style="font-size:28pt;font-weight:800;color:#991B1B;line-height:1">'+_rg_red.length+'</div>'
       +'<div style="font-size:9pt;color:#7A1414;margin-top:2px">'+Math.round(_rg_red.length/_rg_max*100)+'% من الإجمالي</div>'
       +'<div style="margin-top:8px;padding-top:8px;border-top:1px solid #991B1B50;font-size:8.5pt;color:#7A1414;line-height:1.6">متعثرة — تتطلب تدخلاً إدارياً فورياً</div>'
@@ -15577,7 +15809,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
         var _tl_diffDays=Math.round((_tl_evDate-_tl_today)/(1000*60*60*24));
         var _tl_isLate=_tl_diffDays<0;
         var _tl_isToday=_tl_diffDays===0;
-        var _tl_urgencyLabel=_tl_isLate?'⚠️ متأخر '+Math.abs(_tl_diffDays)+' يوم':_tl_isToday?'<span class="status-dot dot-red"></span> اليوم':_tl_diffDays<=3?'<span class="status-dot dot-yellow"></span> خلال '+_tl_diffDays+' أيام':'';
+        var _tl_urgencyLabel=_tl_isLate?'⚠️ متأخر '+Math.abs(_tl_diffDays)+' يوم':_tl_isToday?'🔴 اليوم':_tl_diffDays<=3?'🟡 خلال '+_tl_diffDays+' أيام':'';
         html+='<div style="position:relative;margin-bottom:12px;padding-right:40px;display:flex;align-items:flex-start;gap:10px;'
           +(_tl_isLate?'background:rgba(231,76,60,.03);border-radius:10px;padding:6px 40px 6px 6px;':'')+'">'
           /* النقطة */
@@ -18651,6 +18883,9 @@ function doLogin(){
         if(typeof window._loaderResetForLogin==='function') window._loaderResetForLogin();
       }
     }catch(_){}
+    /* [LOADER-AFTER-AUTH-V1] أظهِر المؤشّر صراحةً بعد نجاح الدخول
+       (يعمل سواء أُعيد إنشاء العنصر أو كان موجوداً مخفياً بالفئة) */
+    try{ if(typeof window.showProLoader==='function') window.showProLoader('جارٍ تحميل البيانات'); }catch(_){}
     if(ls){ls.style.opacity='0';ls.style.transition='opacity .4s';setTimeout(function(){ls.style.display='none';},400);}
     btn.disabled=false;btn.style.opacity='1';btn.textContent='دخول ←';
     applyRoleUI();
@@ -19572,19 +19807,19 @@ var s4MailTask=null;
 /* ══ نظام RAG (Red/Amber/Green) للتكليفات ══ */
 function s4GetRAG(t){
   /* منجز → رمادي */
-  if(t.status==='منجز') return {rag:'G',color:'#27ae60',bg:'#e8f5e9',label:'منجز',dot:'<span class="status-dot dot-green"></span>'};
+  if(t.status==='منجز') return {rag:'G',color:'#27ae60',bg:'#e8f5e9',label:'منجز',dot:'🟢 '};
   /* متأخر → أحمر */
-  if(t.status==='متأخر') return {rag:'R',color:'#c62828',bg:'#ffebee',label:'متأخر',dot:'<span class="status-dot dot-red"></span>'};
+  if(t.status==='متأخر') return {rag:'R',color:'#c62828',bg:'#ffebee',label:'متأخر',dot:'🔴 '};
   /* إذا لا يوجد تاريخ استحقاق */
-  if(!t.dateTo) return {rag:'A',color:'#f57f17',bg:'#fffde7',label:'متابعة',dot:'<span class="status-dot dot-yellow"></span>'};
+  if(!t.dateTo) return {rag:'A',color:'#f57f17',bg:'#fffde7',label:'متابعة',dot:'🟡 '};
   /* حساب الأيام المتبقية */
   var today=new Date(); today.setHours(0,0,0,0);
   var p=t.dateTo.split('-');
   var due=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));
   var diff=Math.round((due-today)/86400000);
-  if(diff<0) return {rag:'R',color:'#c62828',bg:'#ffebee',label:'متأخر '+Math.abs(diff)+' يوم',dot:'<span class="status-dot dot-red"></span>'};
-  if(diff<=7) return {rag:'A',color:'#f57f17',bg:'#f0e8ff',label:'ينتهي خلال '+diff+' أيام',dot:'<span class="status-dot dot-yellow"></span>'};
-  return {rag:'G',color:'#2e7d32',bg:'#e8f5e9',label:'على المسار',dot:'<span class="status-dot dot-green"></span>'};
+  if(diff<0) return {rag:'R',color:'#c62828',bg:'#ffebee',label:'متأخر '+Math.abs(diff)+' يوم',dot:'🔴 '};
+  if(diff<=7) return {rag:'A',color:'#f57f17',bg:'#f0e8ff',label:'ينتهي خلال '+diff+' أيام',dot:'🟡 '};
+  return {rag:'G',color:'#2e7d32',bg:'#e8f5e9',label:'على المسار',dot:'🟢 '};
 }
 
 function s4GetAllTasks(){
@@ -20375,7 +20610,7 @@ function ecRenAlerts(k){
   if(k.blocked>0){
     alerts.push({
       level:'critical',
-      icon:'<span class="status-dot dot-red"></span>',
+      icon:'🔴 ',
       title:'لجان متعثرة',
       count:k.blocked,
       desc:k.blocked+' '+entityWord+' في حالة تعثر — تحتاج خطة إنقاذ تشغيلية',
@@ -20385,7 +20620,7 @@ function ecRenAlerts(k){
   if(k.notStarted>0){
     alerts.push({
       level:'warning',
-      icon:'<span class="status-dot dot-yellow"></span>',
+      icon:'🟡 ',
       title:'لجان لم تباشر',
       count:k.notStarted,
       desc:k.notStarted+' '+entityWord+' مشكَّلة ولم تبدأ أعمالها — يُوصى بالتفعيل',
@@ -20395,7 +20630,7 @@ function ecRenAlerts(k){
   if(k.overloaded>0){
     alerts.push({
       level:'warning',
-      icon:'<span class="status-dot dot-yellow"></span>',
+      icon:'🟡 ',
       title:'تشبع تمثيلي',
       count:k.overloaded,
       desc:k.overloaded+' من الممثلين يحملون 5 لجان أو أكثر — مخاطرة إجهاد',
@@ -20844,7 +21079,10 @@ function ecExportPDF(){
     /* عرض الشاشة */
     +'@media screen{'
     +'body{background:#f5f5f5;padding:20px}'
-    +'.report-content{background:#fff;max-width:297mm;margin:0 auto;padding:20mm 0;box-shadow:0 0 20px rgba(0,0,0,.1);position:relative}'
+    /* [PP-PREVIEW-MATCH-2026-05-31] عرض المعاينة = مقاس الطباعة الفعلي
+       (13.333in) بدل 297mm، ويُقيّد الغلاف بنفس العرض فلا يبدو أوسع. */
+    +'.report-content{background:#fff;max-width:13.333in;margin:0 auto;padding:20mm 0;box-shadow:0 0 20px rgba(0,0,0,.1);position:relative}'
+    +'.cover-page{max-width:13.333in !important;margin:0 auto !important}'
     +'.report-footer{margin:30px 14mm 0 14mm;border-top:2px solid #208caa;padding-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:13pt;color:#7358a5;background:#fff}'
     +'.report-footer .footer-date{color:#1673a4;font-weight:700}'
     +'.report-footer .footer-unit{color:#1673a4;font-weight:700;text-align:left}'
@@ -23371,7 +23609,8 @@ function s4DashExportPDF(){
     /* عرض الشاشة */
     +'@media screen{'
     +'body{background:#f5f5f5;padding:20px}'
-    +'.report-content{background:#fff;max-width:297mm;margin:0 auto;padding:20mm 0;box-shadow:0 0 20px rgba(0,0,0,.1);position:relative}'
+    +'.report-content{background:#fff;max-width:13.333in;margin:0 auto;padding:20mm 0;box-shadow:0 0 20px rgba(0,0,0,.1);position:relative}'
+    +'.cover-page{max-width:13.333in !important;margin:0 auto !important}'
     +'.report-footer{margin:30px 14mm 0 14mm;border-top:2px solid #208caa;padding-top:10px}'
     +'.page-footer-running{display:none}'
     +'}';
@@ -23710,7 +23949,7 @@ function s4ExportTasksReport(){
     +'*{box-sizing:border-box;margin:0;padding:0}'
     +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2","Traditional Arabic",serif;direction:rtl;'
     +'color:#1a1a1a;background:#f5f5f5;font-size:15pt;line-height:1.6}'
-    +'.report-wrapper{max-width:297mm;margin:0 auto;background:#fff;padding:0;box-shadow:0 0 20px rgba(0,0,0,.08)}'
+    +'.report-wrapper{max-width:13.333in;margin:0 auto;background:#fff;padding:0;box-shadow:0 0 20px rgba(0,0,0,.08)}'
     /* الترويسة الرسمية */
     +'.official-header{background:linear-gradient(135deg,'+MOE_GREEN+' 0%,'+MOE_GREEN_DARK+' 100%);'
     +'color:#fff;padding:24px 32px;border-bottom:4px solid '+MOE_GOLD+';}'
@@ -24704,7 +24943,7 @@ function s4ExecuteCommitteePrint(){
 
   var fullHtml = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>'+_esc(titleText)+'</title>'
     + '<style>'
-    + '@page{size:A4;margin:15mm}'
+    + '@page{size:13.333in 7.5in;margin:0}'  /* [PP-UNIFY-2026-05-31] */
     + 'body{font-family:"Sakkal Majalla","Arial",serif;direction:rtl;margin:0;padding:20px;color:#1f2937;background:#fff}'
     + '.header{background:linear-gradient(135deg,#003944,#1673a4);color:#fff;padding:18px 20px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;gap:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     + '.header .h-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;text-align:center;color:#fff;line-height:1.35}'
@@ -24772,6 +25011,7 @@ function s4ExecuteCommitteePrint(){
     if(typeof showToast==='function') showToast('يرجى السماح بفتح النوافذ المنبثقة',true);
     return;
   }
+  fullHtml=(typeof __ppInjectFrameHTML==='function')?__ppInjectFrameHTML(fullHtml):fullHtml;
   w.document.write(fullHtml);
   w.document.close();
   s4ClosePrintDialog();
@@ -25457,7 +25697,7 @@ var INIT_STAGES = [
   {key:'s4',label:'التقييم والإغلاق',  icon:'⚐',color:'#208caa',rgb:'16,185,129',
    desc:'قياس الأثر + توثيق النتائج + إغلاق أو تطوير'}
 ];
-var RISK_LABELS = {high:'<span class="status-dot dot-red"></span> عالي',med:'<span class="status-dot dot-yellow"></span> متوسط',low:'<span class="status-dot dot-green"></span> منخفض'};
+var RISK_LABELS = {high:'🔴 عالي',med:'🟡 متوسط',low:'🟢 منخفض'};
 
 /* مصفوفة المخاطر المرحلية — من الفصل الخامس من الدليل */
 var STAGE_RISKS = {
@@ -25603,7 +25843,7 @@ function openTrackingModal(ri){
   if(currentStageRisks){
     var rColors = {high:'#fde8e8',med:'#fffbeb',low:'#f0fdf4'};
     var rBorder = {high:'#ef4444',med:'#f59e0b',low:'#208caa'};
-    var rLabel  = {high:'<span class="status-dot dot-red"></span> مرتفع',med:'<span class="status-dot dot-yellow"></span> متوسط',low:'<span class="status-dot dot-green"></span> منخفض'};
+    var rLabel  = {high:'🔴 مرتفع',med:'🟡 متوسط',low:'🟢 منخفض'};
     stageRiskHtml = '<div style="margin-bottom:12px">'
       +'<div style="font-size:11px;font-weight:700;color:#382972;margin-bottom:6px;display:flex;align-items:center;gap:5px">'
       +'☰ مخاطر المرحلة الحالية وفق الدليل — '+currentStageRisks.label+'</div>'
@@ -25876,9 +26116,9 @@ function showEditRisk(ri, btn){
   el.innerHTML = '<div style="padding:10px 12px;background:#fffbeb;border:1px solid #fcd34d;border-radius:9px;margin-bottom:8px">'
     +'<select id="riskLevelEdit_'+ri+'" class="init-finp" style="background:#fff;margin-bottom:6px">'
     +'<option value="">لا توجد مخاطر</option>'
-    +'<option value="high"'+(it.riskLevel==='high'?' selected':'')+'><span class="status-dot dot-red"></span> عالي</option>'
-    +'<option value="med"'+(it.riskLevel==='med'?' selected':'')+'><span class="status-dot dot-yellow"></span> متوسط</option>'
-    +'<option value="low"'+(it.riskLevel==='low'?' selected':'')+'><span class="status-dot dot-green"></span> منخفض</option>'
+    +'<option value="high"'+(it.riskLevel==='high'?' selected':'')+'>🔴 عالي</option>'
+    +'<option value="med"'+(it.riskLevel==='med'?' selected':'')+'>🟡 متوسط</option>'
+    +'<option value="low"'+(it.riskLevel==='low'?' selected':'')+'>🟢 منخفض</option>'
     +'</select>'
     +'<input id="riskDescEdit_'+ri+'" class="init-finp" type="text" value="'+e(it.riskDesc||'')+'" placeholder="وصف المخطر" style="margin-bottom:6px">'
     +'<textarea id="riskPlanEdit_'+ri+'" class="init-finp" rows="2" placeholder="خطة التعامل..." style="resize:none;margin-bottom:6px">'+e(it.riskPlan||'')+'</textarea>'
@@ -25971,7 +26211,7 @@ function printInitiativeStatusReport(ri){if(isViewerBlocked('الطباعة'))re
   if(currentStageRisks){
     var rColors = {high:'#fde8e8',med:'#fffbeb',low:'#f0fdf4'};
     var rBorder = {high:'#ef4444',med:'#f59e0b',low:'#208caa'};
-    var rLabel  = {high:'<span class="status-dot dot-red"></span> مرتفع',med:'<span class="status-dot dot-yellow"></span> متوسط',low:'<span class="status-dot dot-green"></span> منخفض'};
+    var rLabel  = {high:'🔴 مرتفع',med:'🟡 متوسط',low:'🟢 منخفض'};
     stageRiskHtml = '<div style="margin-bottom:12px">'
       +'<div style="font-size:11px;font-weight:700;color:#382972;margin-bottom:6px;display:flex;align-items:center;gap:5px">'
       +'☰ مخاطر المرحلة الحالية وفق الدليل — '+currentStageRisks.label+'</div>'
@@ -26249,7 +26489,7 @@ function printQuarterlyReport(period){if(isViewerBlocked('الطباعة'))retur
           +'<td style="padding:6px 10px;border-bottom:1px solid #fee2e2;font-weight:600;color:#003944">'+e(it.title)+'</td>'
           +'<td style="padding:6px 10px;border-bottom:1px solid #fee2e2"><span style="background:'+stC+'22;color:'+stC+';border-radius:10px;padding:2px 8px;font-size:10px">'+it.status+'</span></td>'
           +'<td style="padding:6px 10px;border-bottom:1px solid #fee2e2;font-size:10.5px">'+stageLbl+'</td>'
-          +'<td style="padding:6px 10px;border-bottom:1px solid #fee2e2;text-align:center"><span class="status-dot dot-red"></span> مرتفع</td>'
+          +'<td style="padding:6px 10px;border-bottom:1px solid #fee2e2;text-align:center">🔴 مرتفع</td>'
           +'<td style="padding:6px 10px;border-bottom:1px solid #fee2e2;font-size:10.5px">'+(it.riskDesc?e(it.riskDesc):'—')+'</td>'
           +'<td style="padding:6px 10px;border-bottom:1px solid #fee2e2;font-size:10.5px">'+(it.owner?e(it.owner):'—')+'</td>'
           +'</tr>';
@@ -26742,9 +26982,9 @@ function _initFormHTML(it){
         iF('القيمة المضافة للشراكة',
           '<select id="initPartnerValue" class="init-finp" style="background:#fff">'
           +'<option value=""'+(!(it.partnerValue)?' selected':'')+'>— غير محدد —</option>'
-          +'<option value="عالية"'+(it.partnerValue==='عالية'?' selected':'')+'><span class="status-dot dot-green"></span> عالية</option>'
-          +'<option value="متوسطة"'+(it.partnerValue==='متوسطة'?' selected':'')+'><span class="status-dot dot-yellow"></span> متوسطة</option>'
-          +'<option value="منخفضة"'+(it.partnerValue==='منخفضة'?' selected':'')+'><span class="status-dot dot-red"></span> منخفضة</option>'
+          +'<option value="عالية"'+(it.partnerValue==='عالية'?' selected':'')+'>🟢 عالية</option>'
+          +'<option value="متوسطة"'+(it.partnerValue==='متوسطة'?' selected':'')+'>🟡 متوسطة</option>'
+          +'<option value="منخفضة"'+(it.partnerValue==='منخفضة'?' selected':'')+'>🔴 منخفضة</option>'
           +'</select>'
         )
       ])
@@ -26782,9 +27022,9 @@ function _initFormHTML(it){
         iF('مستوى الخطر',
           '<select id="initRiskLevel" class="init-finp" style="background:#fff">'
           +'<option value=""'+(!(it.riskLevel)?' selected':'')+'>— لا توجد مخاطر محددة —</option>'
-          +'<option value="high"'+(it.riskLevel==='high'?' selected':'')+'><span class="status-dot dot-red"></span> عالي</option>'
-          +'<option value="med"'+(it.riskLevel==='med'?' selected':'')+'><span class="status-dot dot-yellow"></span> متوسط</option>'
-          +'<option value="low"'+(it.riskLevel==='low'?' selected':'')+'><span class="status-dot dot-green"></span> منخفض</option>'
+          +'<option value="high"'+(it.riskLevel==='high'?' selected':'')+'>🔴 عالي</option>'
+          +'<option value="med"'+(it.riskLevel==='med'?' selected':'')+'>🟡 متوسط</option>'
+          +'<option value="low"'+(it.riskLevel==='low'?' selected':'')+'>🟢 منخفض</option>'
           +'</select>'
         ),
         iF('وصف المخطر', iInp('initRiskDesc',it.riskDesc,'وصف مختصر للمخاطر...'))
@@ -26821,9 +27061,9 @@ function _initFormHTML(it){
         iF('قابلية التنفيذ والاستدامة',
           '<select id="initFeasibility" class="init-finp" style="background:#fff">'
           +'<option value=""'+(!(it.feasibility)?' selected':'')+'>— لم يُحدَّد —</option>'
-          +'<option value="عالية"'+(it.feasibility==='عالية'?' selected':'')+'><span class="status-dot dot-green"></span> عالية</option>'
-          +'<option value="متوسطة"'+(it.feasibility==='متوسطة'?' selected':'')+'><span class="status-dot dot-yellow"></span> متوسطة</option>'
-          +'<option value="منخفضة"'+(it.feasibility==='منخفضة'?' selected':'')+'><span class="status-dot dot-red"></span> منخفضة</option>'
+          +'<option value="عالية"'+(it.feasibility==='عالية'?' selected':'')+'>🟢 عالية</option>'
+          +'<option value="متوسطة"'+(it.feasibility==='متوسطة'?' selected':'')+'>🟡 متوسطة</option>'
+          +'<option value="منخفضة"'+(it.feasibility==='منخفضة'?' selected':'')+'>🔴 منخفضة</option>'
           +'</select>'
         )
       ])
@@ -27489,6 +27729,14 @@ document.addEventListener('input', function(ev){
     if(localStorage.getItem('intl_session')){activeSystem='intl';}
     else if(localStorage.getItem('lajan_session')){activeSystem='main';}
   }catch(e){}
+  /* [LOADER-AFTER-AUTH-V1] أظهر مؤشّر التحميل فقط إذا كانت هناك جلسة محفوظة
+     (سنستعيدها ونجلب بياناتها). بلا جلسة → تظهر شاشة الدخول مباشرةً بلا مؤشّر. */
+  try{
+    if((localStorage.getItem('intl_session')||localStorage.getItem('lajan_session'))
+        && typeof window.showProLoader==='function'){
+      window.showProLoader('جارٍ تحميل البيانات');
+    }
+  }catch(_){}
   /* [SCOPED-REFRESH-FIX] بعد اكتمال loadAuthUsers (async)، حدّث
      currentUser.permissions بأحدث نسخة من Supabase. هذا يضمن أن
      النسخة المحلية الاحتياطية (المُستخدَمة لحظياً في restoreSession)
@@ -30349,10 +30597,10 @@ function goToHome(){
           <div style="flex:1">
             <label style="font-size:11px;color:#666;display:block;margin-bottom:4px;font-family:inherit">الصلاحية</label>
             <select id="nuRole" style="width:100%;padding:8px 11px;border:1.5px solid #757bbb;border-radius:8px;font-size:12px;font-family:'Sakkal Majalla','Sakkal Majalla 2',serif;outline:none">
-              <option value="viewer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> مشاهدة فقط</option>
-              <option value="editor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> تحرير</option>
-              <option value="admin"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> مدير</option>
-              <option value="scoped"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7030a0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> مخصّص (خارج الفريق)</option>
+              <option value="viewer">👁 مشاهدة فقط</option>
+              <option value="editor">✏️ تحرير</option>
+              <option value="admin">⭐ مدير</option>
+              <option value="scoped">🔒 مخصّص (خارج الفريق)</option>
             </select>
           </div>
           <button onclick="adminAddUser()" style="background:linear-gradient(135deg,#1d6a3b,#27ae60);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">إضافة المستخدم</button>
@@ -31131,10 +31379,10 @@ function gmFilteredTasks(){
 // ── دالة الأولوية → label + class ──
 function gmPrioInfo(p){
   var map = {
-    'low':  {lbl:'منخفضة', cls:'gm-prio-low', icon:'<span class="status-dot dot-green"></span>'},
-    'med':  {lbl:'متوسطة', cls:'gm-prio-med', icon:'<span class="status-dot dot-yellow"></span>'},
-    'high': {lbl:'عالية',   cls:'gm-prio-high', icon:'<span class="status-dot dot-orange"></span>'},
-    'crit': {lbl:'حرجة',   cls:'gm-prio-crit', icon:'<span class="status-dot dot-red"></span>'}
+    'low':  {lbl:'منخفضة', cls:'gm-prio-low', icon:'🟢 '},
+    'med':  {lbl:'متوسطة', cls:'gm-prio-med', icon:'🟡 '},
+    'high': {lbl:'عالية',   cls:'gm-prio-high', icon:'🟠 '},
+    'crit': {lbl:'حرجة',   cls:'gm-prio-crit', icon:'🔴 '}
   };
   return map[p] || map['med'];
 }
@@ -31964,10 +32212,10 @@ function gmBuildTaskRow(t, i){
   }).join('');
   var prio = t.priority || 'med';
   var prioOpts = [
-    ['low','<span class="status-dot dot-green"></span> منخفضة'],
-    ['med','<span class="status-dot dot-yellow"></span> متوسطة'],
-    ['high','<span class="status-dot dot-orange"></span> عالية'],
-    ['crit','<span class="status-dot dot-red"></span> حرجة']
+    ['low','🟢 منخفضة'],
+    ['med','🟡 متوسطة'],
+    ['high','🟠 عالية'],
+    ['crit','🔴 حرجة']
   ].map(function(p){
     return '<option value="'+p[0]+'"'+(prio===p[0]?' selected':'')+'>'+p[1]+'</option>';
   }).join('');
@@ -32527,7 +32775,7 @@ function gmRenderNotifs(){
   } else {
     // التكليفات متأخرة
     if(n.late.length){
-      html += '<div class="gm-notif-section"><div class="gm-notif-section-title"><span class="status-dot dot-red"></span> تكليفات متأخرة ('+n.late.length+')</div>';
+      html += '<div class="gm-notif-section"><div class="gm-notif-section-title">🔴 تكليفات متأخرة ('+n.late.length+')</div>';
       n.late.forEach(function(item){
         html += '<div class="gm-notif-item late" onclick="gmToggleNotifs();gmOpenMeeting(\''+item.meeting.id+'\')">'+
           '<div class="gm-notif-txt">'+gmEsc(item.task.task||'')+'</div>'+
@@ -32542,7 +32790,7 @@ function gmRenderNotifs(){
     }
     // التكليفات المستحقة خلال 48 ساعة
     if(n.due.length){
-      html += '<div class="gm-notif-section"><div class="gm-notif-section-title"><span class="status-dot dot-orange"></span> مستحقة قريباً ('+n.due.length+')</div>';
+      html += '<div class="gm-notif-section"><div class="gm-notif-section-title">🟠 مستحقة قريباً ('+n.due.length+')</div>';
       n.due.forEach(function(item){
         html += '<div class="gm-notif-item soon" onclick="gmToggleNotifs();gmOpenMeeting(\''+item.meeting.id+'\')">'+
           '<div class="gm-notif-txt">'+gmEsc(item.task.task||'')+'</div>'+
@@ -32557,7 +32805,7 @@ function gmRenderNotifs(){
     }
     // الاجتماعات القادمة
     if(n.upcoming.length){
-      html += '<div class="gm-notif-section"><div class="gm-notif-section-title"><span class="status-dot dot-blue"></span> اجتماعات قادمة خلال 48 ساعة ('+n.upcoming.length+')</div>';
+      html += '<div class="gm-notif-section"><div class="gm-notif-section-title">اجتماعات قادمة خلال 48 ساعة ('+n.upcoming.length+')</div>';
       n.upcoming.forEach(function(item){
         html += '<div class="gm-notif-item upcoming" onclick="gmToggleNotifs();gmOpenMeeting(\''+item.meeting.id+'\')">'+
           '<div class="gm-notif-txt">'+gmEsc(item.meeting.name||'')+'</div>'+
@@ -32696,7 +32944,7 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
   if(!m){ alert('الاجتماع غير موجود'); return; }
   var now = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', {year:'numeric',month:'long',day:'numeric'});
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>محضر اجتماع - '+gmEsc(m.name||'')+'</title>';
-  html += '<style>@page{size:A4;margin:15mm}';
+  html += '<style>@page{size:13.333in 7.5in;margin:0}';
   html += 'body{font-family:"Sakkal Majalla","Arial",sans-serif;direction:rtl;color:#003944;margin:0;padding:0;font-size:12pt}';
   html += '.cover{text-align:center;padding:40px 20px;border-bottom:4px double #208caa;margin-bottom:30px}';
   html += '.cover h1{color:#1673a4;font-size:22pt;margin:8px 0}';
@@ -36265,22 +36513,22 @@ function execRenderAlerts(data){
     var lastDate=0;
     meetings.forEach(function(m){var dt=new Date(m.date||0).getTime();if(dt>lastDate)lastDate=dt;});
     var days=lastDate>0?Math.round((Date.now()-lastDate)/(1000*60*60*24)):0;
-    alerts.push({type:'critical',icon:'<span class="status-dot dot-red"></span>',iconBg:'linear-gradient(135deg,#fee2e2,#fecaca)',text:'<b>'+d.n+'</b> لم تجتمع منذ <b>'+days+' يوماً</b>'});
+    alerts.push({type:'critical',icon:'🔴 ',iconBg:'linear-gradient(135deg,#fee2e2,#fecaca)',text:'<b>'+d.n+'</b> لم تجتمع منذ <b>'+days+' يوماً</b>'});
     if(data.dormantCommittees.length>1){
-      alerts.push({type:'critical',icon:'<span class="status-dot dot-red"></span>',iconBg:'linear-gradient(135deg,#fee2e2,#fecaca)',text:'يوجد <b>'+data.dormantCommittees.length+' لجان</b> معطلة (لم تجتمع منذ 60+ يوماً)'});
+      alerts.push({type:'critical',icon:'🔴 ',iconBg:'linear-gradient(135deg,#fee2e2,#fecaca)',text:'يوجد <b>'+data.dormantCommittees.length+' لجان</b> معطلة (لم تجتمع منذ 60+ يوماً)'});
     }
   }
   if(data.taskStats.late>0){
-    alerts.push({type:'warning',icon:'<span class="status-dot dot-yellow"></span>',iconBg:'linear-gradient(135deg,#fef3c7,#fde68a)',text:'<b>'+data.taskStats.late+' تكليفاً متأخراً</b> ('+data.lateRate+'% من الإجمالي)'});
+    alerts.push({type:'warning',icon:'🟡 ',iconBg:'linear-gradient(135deg,#fef3c7,#fde68a)',text:'<b>'+data.taskStats.late+' تكليفاً متأخراً</b> ('+data.lateRate+'% من الإجمالي)'});
   }
   if(data.overloaded>0){
-    alerts.push({type:'warning',icon:'<span class="status-dot dot-yellow"></span>',iconBg:'linear-gradient(135deg,#fef3c7,#fde68a)',text:'<b>'+data.overloaded+' جهات</b> تترأس 5 لجان أو أكثر — يُنصح بإعادة توزيع العبء'});
+    alerts.push({type:'warning',icon:'🟡 ',iconBg:'linear-gradient(135deg,#fef3c7,#fde68a)',text:'<b>'+data.overloaded+' جهات</b> تترأس 5 لجان أو أكثر — يُنصح بإعادة توزيع العبء'});
   }
   if(data.completion>=70){
-    alerts.push({type:'success',icon:'<span class="status-dot dot-green"></span>',iconBg:'linear-gradient(135deg,#d4edda,#a7f3d0)',text:'معدل الإنجاز <b>'+data.completion+'%</b> — أعلى من المستهدف'});
+    alerts.push({type:'success',icon:'🟢 ',iconBg:'linear-gradient(135deg,#d4edda,#a7f3d0)',text:'معدل الإنجاز <b>'+data.completion+'%</b> — أعلى من المستهدف'});
   }
   if(alerts.length===0){
-    html+='<div class="exec-alert-item success"><div class="exec-alert-icon" style="background:linear-gradient(135deg,#d4edda,#a7f3d0)"><span class="status-dot dot-green"></span></div><div class="exec-alert-text">لا توجد تنبيهات حرجة حالياً. الأداء مستقر.</div></div>';
+    html+='<div class="exec-alert-item success"><div class="exec-alert-icon" style="background:linear-gradient(135deg,#d4edda,#a7f3d0)">🟢 </div><div class="exec-alert-text">لا توجد تنبيهات حرجة حالياً. الأداء مستقر.</div></div>';
   } else {
     alerts.forEach(function(a){
       html+='<div class="exec-alert-item '+a.type+'"><div class="exec-alert-icon" style="background:'+a.iconBg+'">'+a.icon+'</div><div class="exec-alert-text">'+a.text+'</div></div>';
@@ -36614,7 +36862,7 @@ function execPrint(){
   html+='.ext-print-note b{color:#003944}';
   html+='.ftr{margin-top:14px;padding-top:10px;border-top:1px solid #eef2f7;font-size:8.5pt;color:#7a8794;display:flex;justify-content:space-between;align-items:center}';
   /* الطباعة */
-  html+='@page{size:13.333in 7.5in;margin:8mm}';
+  html+='@page{size:13.333in 7.5in;margin:0}';
   html+='@media print{body{padding:0}.pg{padding:8px 10px;max-width:100%}.no-p{display:none!important}}';
   html+='.no-p{position:fixed;top:10px;left:10px;display:flex;gap:8px;z-index:1000}';
   html+='.no-p button{background:#208caa;color:#fff;border:none;padding:9px 18px;border-radius:7px;font-family:inherit;font-size:11pt;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}';
@@ -36805,13 +37053,13 @@ function execPrint(){
     var lastDate=0;
     meetings.forEach(function(m){var dt=new Date(m.date||0).getTime();if(dt>lastDate)lastDate=dt;});
     var days=lastDate>0?Math.round((Date.now()-lastDate)/(1000*60*60*24)):0;
-    alerts.push({c:'c',ic:'<span class="status-dot dot-red"></span>',t:'<b>'+d.n+'</b> لم تجتمع منذ <b>'+days+' يوماً</b>'});
-    if(data.dormantCommittees.length>1){alerts.push({c:'c',ic:'<span class="status-dot dot-red"></span>',t:'يوجد <b>'+data.dormantCommittees.length+' لجان</b> معطلة (لم تجتمع منذ 60+ يوماً)'});}
+    alerts.push({c:'c',ic:'🔴 ',t:'<b>'+d.n+'</b> لم تجتمع منذ <b>'+days+' يوماً</b>'});
+    if(data.dormantCommittees.length>1){alerts.push({c:'c',ic:'🔴 ',t:'يوجد <b>'+data.dormantCommittees.length+' لجان</b> معطلة (لم تجتمع منذ 60+ يوماً)'});}
   }
-  if(data.taskStats.late>0){alerts.push({c:'w',ic:'<span class="status-dot dot-yellow"></span>',t:'<b>'+data.taskStats.late+' تكليفاً متأخراً</b> ('+data.lateRate+'% من الإجمالي)'});}
-  if(data.overloaded>0){alerts.push({c:'w',ic:'<span class="status-dot dot-yellow"></span>',t:'<b>'+data.overloaded+' جهات</b> تترأس 5 لجان أو أكثر — يُنصح بإعادة توزيع العبء'});}
-  if(data.completion>=70){alerts.push({c:'s',ic:'<span class="status-dot dot-green"></span>',t:'معدل الإنجاز <b>'+data.completion+'%</b> — أعلى من المستهدف'});}
-  if(alerts.length===0){html+='<div class="al-i s"><div class="ic"><span class="status-dot dot-green"></span></div><div class="tx">لا توجد تنبيهات حرجة حالياً. الأداء مستقر.</div></div>';}
+  if(data.taskStats.late>0){alerts.push({c:'w',ic:'🟡 ',t:'<b>'+data.taskStats.late+' تكليفاً متأخراً</b> ('+data.lateRate+'% من الإجمالي)'});}
+  if(data.overloaded>0){alerts.push({c:'w',ic:'🟡 ',t:'<b>'+data.overloaded+' جهات</b> تترأس 5 لجان أو أكثر — يُنصح بإعادة توزيع العبء'});}
+  if(data.completion>=70){alerts.push({c:'s',ic:'🟢 ',t:'معدل الإنجاز <b>'+data.completion+'%</b> — أعلى من المستهدف'});}
+  if(alerts.length===0){html+='<div class="al-i s"><div class="ic">🟢 </div><div class="tx">لا توجد تنبيهات حرجة حالياً. الأداء مستقر.</div></div>';}
   else {alerts.forEach(function(a){html+='<div class="al-i '+a.c+'"><div class="ic">'+a.ic+'</div><div class="tx">'+a.t+'</div></div>';});}
   html+='</div>';
 
@@ -36927,7 +37175,7 @@ html+='<div class="lg-item"><span class="lg-dot" style="background:#1673a4"></sp
 
   if(data.dormantCommittees.length>0){
     recoms.push({
-      icon:'<span class="status-dot dot-red"></span>',
+      icon:'🔴 ',
       title:'لجان متوقفة منذ أكثر من شهرين',
       body:'يوجد <b>'+data.dormantCommittees.length+'</b> لجنة لم تجتمع منذ أكثر من 60 يوماً. عدم اجتماع اللجان يعطّل القرارات.',
       action:'عقد اجتماع عاجل لكل لجنة متوقفة خلال أسبوع. لو تعذّر الاجتماع، اعتبار اللجنة منتهية رسمياً.',
@@ -36937,7 +37185,7 @@ html+='<div class="lg-item"><span class="lg-dot" style="background:#1673a4"></sp
 
   if(data.lateRate>20){
     recoms.push({
-      icon:'<span class="status-dot dot-yellow"></span>',
+      icon:'🟡 ',
       title:'نسبة التكليفات المتأخرة مرتفعة',
       body:'<b>'+data.lateRate+'%</b> من التكليفات متأخرة عن موعدها. هذا يعني أن أكثر من خمس المهام لا تنجز في الوقت المحدد.',
       action:'مراجعة المواعيد ووضعها بشكل أكثر واقعية. التواصل مع المسؤولين عن التكليفات المتأخرة لمعرفة العقبات.',
@@ -36955,7 +37203,7 @@ html+='<div class="lg-item"><span class="lg-dot" style="background:#1673a4"></sp
 
   if(data.completion>=70){
     recoms.push({
-      icon:'<span class="status-dot dot-green"></span>',
+      icon:'🟢 ',
       title:'معدل إنجاز ممتاز',
       body:'<b>'+data.completion+'%</b> من التكليفات منجزة. هذا مؤشر قوي على فاعلية اللجان وجدية الأعضاء.',
       action:'استمرار في نفس المسار، وتوثيق أفضل الممارسات للجان عالية الأداء لتعميمها.',
@@ -36963,7 +37211,7 @@ html+='<div class="lg-item"><span class="lg-dot" style="background:#1673a4"></sp
     });
   } else if(data.completion<50){
     recoms.push({
-      icon:'<span class="status-dot dot-yellow"></span>',
+      icon:'🟡 ',
       title:'معدل إنجاز التكليفات منخفض',
       body:'فقط <b>'+data.completion+'%</b> من التكليفات منجزة. هذا قد يدل على ضعف المتابعة أو عبء عمل زائد.',
       action:'مراجعة طريقة إسناد التكليفات. تحديد مسؤول واحد لكل تكليف بدلاً من توزيعه. متابعة أسبوعية بدل شهرية.',
