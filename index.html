@@ -111,13 +111,15 @@ html body .spanel.active{
 /* ══════════════════════════════════════════════════════════
    ضمان ظهور كل النوافذ المنبثقة فوق appScreen (z-index: 10002)
    ══════════════════════════════════════════════════════════ */
-.mbg, .mail-modal, .confirm-box,
+.mbg, .mail-modal,
 [class*="modal-overlay"],
 #s4MailModal, #s4MailLogModal,
 #logoutModal, #execSumModal,
 #s3CalTooltip{
   z-index:11500 !important;
 }
+/* [Z-FIX-V1] confirm-box فوق كل النوافذ (بما فيها adminModal) ليظهر تأكيد الحذف أمام نافذة المدير */
+.confirm-box{ z-index:1000060 !important; }
 /* adminModal: z-index أعلى لمنع تغطيته من error boxes */
 #adminModal{
   z-index:1000000 !important;
@@ -985,7 +987,7 @@ html,body{max-width:100vw;overflow-x:hidden}
 .s3m-at td:nth-child(2){min-width:220px}
 /* smModal mbody — allow tall content to scroll vertically inside modal */
 #smModal .mbody{padding:16px 20px;overflow-y:auto;max-height:calc(90vh - 60px)}
-.confirm-box{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:flex;align-items:center;justify-content:center}
+.confirm-box{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000050;display:flex;align-items:center;justify-content:center}
 .confirm-inner{background:#fff;border-radius:14px;padding:20px 22px;max-width:340px;width:90%;text-align:center}
 .confirm-inner p{font-size:13px;color:#003944;margin-bottom:14px;line-height:1.6}
 .ci-name{font-weight:700;color:#922b21;font-size:11.5px;display:block;margin-top:3px}
@@ -20016,7 +20018,7 @@ function wfNotifInit(){
     +'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>'
     +'<span id="wfNotifBadge" style="position:absolute;top:-5px;left:-5px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border-radius:11px;min-width:18px;height:18px;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 4px">0</span>'
     +'</button>'
-    +'<div id="wfNotifPanel" style="position:absolute;top:calc(100% + 8px);left:0;width:340px;max-width:92vw;background:#fff;border-radius:13px;box-shadow:0 12px 40px rgba(0,0,0,.25);display:none;flex-direction:column;z-index:100000;direction:rtl;overflow:hidden"></div>';
+    +'<div id="wfNotifPanel" style="position:fixed;top:56px;left:16px;width:340px;max-width:92vw;background:#fff;border-radius:13px;box-shadow:0 12px 40px rgba(0,0,0,.25);display:none;flex-direction:column;z-index:1000060;direction:rtl;overflow:hidden"></div>';
   /* أدرج الجرس قبل بطاقة المستخدم */
   var ub=document.getElementById('userBadge');
   if(ub && ub.parentNode===topbar) topbar.insertBefore(wrap, ub); else topbar.appendChild(wrap);
@@ -20065,6 +20067,21 @@ function wfNotifToggle(){
   }
   html+='</div>';
   panel.innerHTML=html;
+  /* [Z-FIX-V1] تموضع ديناميكي: اللوحة fixed (تتحرّر من overflow:hidden للأب).
+     نحسب موقعها من موضع الجرس الفعلي في الشاشة. */
+  try{
+    var bell=document.getElementById('wfNotifBell');
+    if(bell){
+      var r=bell.getBoundingClientRect();
+      panel.style.top=(r.bottom+8)+'px';
+      /* RTL: نحاذي يسار اللوحة مع يسار الجرس، مع ضمان عدم خروجها من الشاشة */
+      var pw=Math.min(340, window.innerWidth*0.92);
+      var leftPos=r.left;
+      if(leftPos+pw>window.innerWidth-8) leftPos=window.innerWidth-pw-8;
+      if(leftPos<8) leftPos=8;
+      panel.style.left=leftPos+'px';
+    }
+  }catch(_){}
   panel.style.display='flex';
 }
 function wfNotifGo(di,mi){
