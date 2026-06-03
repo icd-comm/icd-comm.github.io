@@ -3625,11 +3625,11 @@ body {
   /* ── Z-index scale ── */
   --v2-z-dropdown:100;
   --v2-z-sticky:200;
-  --v2-z-modal-backdrop:900;
-  --v2-z-modal:1000;
-  --v2-z-popover:1100;
-  --v2-z-toast:1200;
-  --v2-z-tooltip:1300;
+  --v2-z-modal-backdrop:1000900;
+  --v2-z-modal:1001000;
+  --v2-z-popover:1001100;
+  --v2-z-toast:1001200;
+  --v2-z-tooltip:1001300;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -6003,7 +6003,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
         <div id="s3CalWrap">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 12px 3px;background:#f8f5ff;border-bottom:1px solid #e8e0f5;flex-shrink:0">
             <span style="font-size:10.5px;font-weight:700;color:#382972;font-family:inherit">◷ التقويم والقادم</span>
-            <button onclick="(function(){var w=document.getElementById('s3CalInner');var btn=document.getElementById('s3CalToggleBtn');var isHidden=w.style.display==='none';w.style.display=isHidden?'':'none';btn.textContent=isHidden?'طي ▲':'توسيع ▼';})()" id="s3CalToggleBtn" style="background:rgba(147,56,255,.1);color:#382972;border:1px solid #757bbb;border-radius:6px;padding:2px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">طي ▲</button>
+            <button onclick="(function(){var c=document.querySelector('.s3-cal-wrap');var btn=document.getElementById('s3CalToggleBtn');if(!c)return;var isHidden=c.style.display==='none';c.style.display=isHidden?'':'none';btn.textContent=isHidden?'طي التقويم ▲':'إظهار التقويم ▼';try{localStorage.setItem('s3CalCollapsed',isHidden?'0':'1');}catch(e){}})()" id="s3CalToggleBtn" style="background:rgba(147,56,255,.1);color:#382972;border:1px solid #757bbb;border-radius:6px;padding:2px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">إظهار التقويم ▼</button>
           </div>
           <div id="s3CalInner"><div class="s3-cal-row">
             <!-- الاجتماعات القادمة - يمين -->
@@ -6113,14 +6113,6 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
         <button class="gm-tab" data-gmtab="kanban" onclick="gmSwitchTab('kanban')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           كانبان التكليفات
-        </button>
-        <button class="gm-tab" data-gmtab="gantt" onclick="gmSwitchTab('gantt')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16h3M7 12h5M7 8h7"/></svg>
-          مخطط جانت
-        </button>
-        <button class="gm-tab" data-gmtab="calendar" onclick="gmSwitchTab('calendar')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          تقويم الاجتماعات
         </button>
         <div style="height:1px;background:rgba(255,255,255,.1);margin:10px 0"></div>
         <div class="gm-filter-label">تصفية</div>
@@ -6307,6 +6299,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="text" id="docsSearch" placeholder="ابحث باسم اللجنة أو الاجتماع أو الوثيقة…" oninput="renderDocs()">
           </div>
+          <button onclick="docsResetSearch()" title="مسح البحث وإعادة التعيين" style="background:linear-gradient(135deg,#636e72,#7f8c8d);color:#fff;border:none;border-radius:9px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;flex-shrink:0">↺ إعادة تعيين</button>
           <button class="dlx-upload" id="dlxTopUpload" onclick="_dlxTopUpload()" title="رفع وثيقة للموقع الحالي">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             رفع وثيقة
@@ -6463,7 +6456,7 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
 <div class="cfi full"><div class="cflbl" id="cf_n_lbl">اسم اللجنة / المجلس *</div><input id="cf_n" class="cfinp" type="text" placeholder="أدخل اسم اللجنة"></div>
 <div class="cfi"><div class="cflbl">ممثل الوكالة *</div><input id="cf_r" class="cfinp" type="text" placeholder="اسم الممثل"></div>
 <div class="cfi"><div class="cflbl">ممثل بديل</div><input id="cf_ar" class="cfinp" type="text" aria-label="الممثل البديل"></div>
-<div class="cfi"><div class="cflbl">الدور</div><select id="cf_ro" class="cfsel"><option>عضو</option><option>رئيس</option><option>مشارك</option><option>مشارك - وليس عضو</option><option>غير معروف</option></select></div>
+<div class="cfi"><div class="cflbl">الدور</div><select id="cf_ro" class="cfsel"><option>عضو</option><option>رئيس</option><option>مشارك - وليس عضو</option><option>غير معروف</option></select></div>
 <div class="cfi"><div class="cflbl">الحالة</div><select id="cf_st" class="cfsel"><option>مستمرة</option><option>منتهية</option><option>لم تبدأ</option><option>متعثرة</option><option>غير معروف</option></select></div>
 <div class="cfi"><div class="cflbl">النوع</div><select id="cf_ty" class="cfsel"><option>لجنة</option><option>مجلس</option><option>فرق عمل</option><option>مجلس تنسيقي دولي</option><option>لجنة دولية مشتركة</option></select></div>
 <div class="cfi"><div class="cflbl">المدة</div><select id="cf_du" class="cfsel"><option>دائمة</option><option>مؤقته</option></select></div>
@@ -8541,7 +8534,7 @@ function _norm(s){
 /* بحث جزئي مطبّع: هل يحتوي الحقل على الاستعلام بعد التطبيع؟ */
 function _inc(field,q){ return _norm(field).indexOf(q)!==-1; }
 /* مقارنة فرز عربية صحيحة */
-function _cmpAr(a,b){ return _norm(a).localeCompare(_norm(b),'ar'); }
+
 /* ════════════════════════════════════════════════════════════════════════
    [SCOPE-V3] دالة النطاق المركزية — مرجع وحيد لعزل المستخدم على لجانه
    ────────────────────────────────────────────────────────────────────────
@@ -8664,7 +8657,15 @@ function govInScope(i){
    ════════════════════════════════════════════════════════════════════════ */
 var WF_LABELS=['مسودة','مُرسَل','قيد التدقيق','محال للاعتماد','معتمد','منشور','مؤرشف'];
 var WF_COLORS=['#94a3b8','#e67e22','#9338ff','#1673a4','#1d8a4e','#208caa','#003944'];
-function wfState(m){ return (m && typeof m.wf==='number') ? m.wf : 0; }
+function wfState(m){
+  /* [WF-CLAMP-A] حصر الحالة في النطاق المشروع (0..6) لمنع قيم فاسدة (-1, 99, 1000)
+     من إفساد العرض أو منطق المقارنات. القيمة 99 محجوزة لـ"ملغى" تبقى كما هي. */
+  if(!m || typeof m.wf!=='number' || isNaN(m.wf)) return 0;
+  if(m.wf===99) return 99; /* ملغى */
+  if(m.wf<0) return 0;
+  if(m.wf>6) return 6;
+  return m.wf;
+}
 function wfIsAdmin(){ try{ return currentUser && currentUser.role==='admin'; }catch(e){ return false; } }
 function wfIsDelegate(){ /* مفوَّض = مسؤول تخصيص ضمن نطاقه */
   try{ return currentUser && currentUser.permissions
@@ -8681,7 +8682,24 @@ function wfIsFinalApprover(){
   try{ return currentUser && currentUser.permissions && currentUser.permissions.is_final_approver===true; }catch(e){ return false; } }
 /* وحدة المجالس واللجان: المدير أو المحرر (الجهة المدقّقة الوسطى) */
 function wfIsGovUnit(){
-  try{ return currentUser && (currentUser.role==='admin' || currentUser.role==='editor'); }catch(e){ return false; } }
+  /* [GOV-UNIT-ROLE-V1] عضو وحدة المجالس واللجان = المدير دائماً، أو من مُنح صفة is_gov_unit صراحةً.
+     سابقاً كان أي محرر يُعدّ تلقائياً وحدة مجالس — الآن يتطلب تخصيصاً صريحاً من المدير.
+     ملاحظة توافقية: المحرر القديم الذي لا علم له يبقى وحدة مجالس لتفادي كسر التركيبات الحالية،
+     إلا إذا كان مخصّصاً (is_scoped) فهو ليس وحدة مجالس. */
+  try{
+    if(!currentUser) return false;
+    if(currentUser.role==='admin') return true;
+    var p=currentUser.permissions||{};
+    if(p.is_gov_unit===true) return true;
+    if(p.is_gov_unit===false) return false;
+    /* [GOV-UNIT-FIX-A3] المعتمد النهائي الخالص (is_final_approver بلا علم gov_unit صريح)
+       ليس وحدة مجالس — وإلا لاستطاع النشر/التدقيق بنفسه ويكسر فصل الأدوار. */
+    if(p.is_final_approver===true) return false;
+    /* توافق خلفي: محرر غير مخصّص ولا معتمد نهائي بلا علم → وحدة مجالس (كالسابق) */
+    var scoped = p.is_scoped===true || (Array.isArray(p.allowed_committees)&&p.allowed_committees.length>0);
+    return currentUser.role==='editor' && !scoped;
+  }catch(e){ return false; }
+}
 /* خريطة الانتقالات:
    0→1 رفع: المُنشئ (أو مَن يملك تعديل الاجتماع)
    1→2 بدء التدقيق: وحدة المجالس واللجان
@@ -8690,12 +8708,12 @@ function wfIsGovUnit(){
    4→5 أرشفة: وحدة المجالس واللجان
    أي(1..4)→0 إعادة بملاحظات: وحدة المجالس واللجان أو المعتمد النهائي */
 function wfCanSubmit(m){ var s=wfState(m); return (s===0)&&(!wfLocked(m)); }
-function wfCanReview(m){ return wfIsGovUnit() && wfState(m)===1; }
-function wfCanForward(m){ return wfIsGovUnit() && wfState(m)===2; }
-function wfCanApprove(m){ return (wfIsFinalApprover()||wfIsAdmin()) && wfState(m)===3; }
-function wfCanPublish(m){ return wfIsGovUnit() && wfState(m)===4; }
-function wfCanArchive(m){ return wfIsGovUnit() && wfState(m)===5; }
-function wfCanReturn(m){ var s=wfState(m); return (wfIsGovUnit()||wfIsFinalApprover()) && s>=1 && s<=4; }
+
+
+
+
+
+
 function wfLocked(m){ return wfState(m)>=6; } /* مؤرشف = مقفل نهائياً */
 /* ════════════════════════════════════════════════════════════════
    [GOV-MINUTES-REVIEW-V1] نافذة مراجعة المحضر — للمدير في قسم إدارة المحاضر والمذكرات.
@@ -9346,13 +9364,14 @@ function openMinutesReview(di, mi){
             if(typeof auditLog==='function') auditLog('قرار المعتمد النهائي', (D[di]&&D[di].n)||'لجنة', 'لمزيد من الدراسة — '+sNote.trim());
             close();
           } else if(act==='reject'){
-            /* [LIFECYCLE] غير مناسب — حقل سبب إلزامي، يعود للمخصّص عبر الوحدة (3→0) */
+            /* [UNIT-HUB-V1] غير مناسب — المعتمد النهائي يعيد للوحدة (3→2)؛ الوحدة تعيد للمخصّص (→0) */
             var rNote = prompt('قرار «غير مناسب» — اكتب سبب عدم المناسبة (إلزامي):','');
             if(rNote===null) return;
             if(!rNote.trim()){ if(typeof showToast==='function') showToast('يلزم كتابة سبب عدم المناسبة',true); return; }
             m.lc_final_decision = { type:'reject', label:'غير مناسب', reason:rNote.trim(), by:(currentUser&&(currentUser.name||currentUser.email))||'', at:new Date().toISOString() };
-            wfTransition(di, mi, 0, 'قرار المعتمد النهائي: غير مناسب — '+rNote.trim());
-            if(typeof auditLog==='function') auditLog('قرار المعتمد النهائي', (D[di]&&D[di].n)||'لجنة', 'غير مناسب — '+rNote.trim());
+            var _rejTo = (typeof wfIsFinalApprover==='function'&&wfIsFinalApprover()&&!wfIsGovUnit()) ? 2 : 0;
+            wfTransition(di, mi, _rejTo, 'قرار المعتمد النهائي: غير مناسب — '+rNote.trim());
+            if(typeof auditLog==='function') auditLog('قرار المعتمد النهائي', (D[di]&&D[di].n)||'لجنة', 'غير مناسب — '+rNote.trim()+(_rejTo===2?' (عاد لوحدة المجالس لاستكمال الإجراء)':''));
             close();
           } else if(act==='raise'){
             /* [LIFECYCLE] الرفع لصاحب الصلاحية لأخذ الموافقات + أرشفة تلقائية في مكتبة الوثائق */
@@ -9360,13 +9379,19 @@ function openMinutesReview(di, mi){
             _lcRaiseToAuthority(di, mi);
             return;
           } else if(act==='return'){
-            var note = prompt('اكتب ملاحظاتك للمنشئ (ستصل في قسم إدارة المحاضر والمذكرات عنده):','');
+            /* [UNIT-HUB-V1] المعتمد النهائي يعيد للوحدة (3→2)؛ الوحدة تعيد للمخصّص (→0) */
+            var _isFinalOnly = (typeof wfIsFinalApprover==='function'&&wfIsFinalApprover()&&!wfIsGovUnit());
+            var _retTo = _isFinalOnly ? 2 : 0;
+            var _retMsg = _isFinalOnly
+              ? 'اكتب ملاحظاتك (ستعود لوحدة المجالس واللجان لاستكمال الإجراء):'
+              : 'اكتب ملاحظاتك للمنشئ (ستصل في قسم إدارة المحاضر والمذكرات عنده):';
+            var note = prompt(_retMsg,'');
             if(note===null) return;
             if(!note.trim()){
               if(typeof showToast==='function') showToast('يلزم كتابة ملاحظة لإعادة المحضر',true);
               return;
             }
-            wfTransition(di, mi, 0, note.trim());
+            wfTransition(di, mi, _retTo, note.trim());
             close();
           } else if(act==='edit'){
             close();
@@ -9851,6 +9876,14 @@ function _dlxDeleteFolder(di, folderId){
 }
 function _dlxEnterFolder(di, folderId){ window._dlxNav.path=[di]; window._dlxNav.folderId=folderId; renderDocs(); }
 
+/* [DOCS-RESET-V1] إعادة تعيين مكتبة الوثائق: مسح حقل البحث وحالة التوسيع */
+function docsResetSearch(){
+  var inp=document.getElementById('docsSearch');
+  if(inp) inp.value='';
+  if(window._docsState){ window._docsState.search=''; }
+  if(typeof renderDocs==='function') renderDocs();
+  if(typeof showToast==='function') showToast('تم إعادة تعيين مكتبة الوثائق');
+}
 function renderDocs(){
   try{
     var body = document.getElementById('docsBody');
@@ -10910,8 +10943,9 @@ async function _wfv2_recordTransition(m, from, to, note, actor){
       m.wf_frozenBy = snapshot.by;
       m.wf_frozenHash = hash;
     }
-    /* عند الإعادة (to===0)، نلغي التجميد ليتمكّن المنشئ من التعديل */
-    if(to===0 && m.wf_frozen){
+    /* [UNIT-HUB-V1] رفع التجميد عند الإعادة (to=0 للمنشئ، أو to=2 من المعتمد للوحدة) —
+       المحضر عاد للمراجعة ولم يعُد معتمداً، فتُمكَّن الوحدة من استكمال الإجراء. */
+    if((to===0 || to===2) && m.wf_frozen){
       m.wf_unfrozenAt = snapshot.at;
       m.wf_unfrozenBy = snapshot.by;
       m.wf_unfrozenReason = note||'إعادة بملاحظات';
@@ -11140,7 +11174,7 @@ function _es_printForManager(di, mi){
     var meetingLabel = (m.meetNum ? 'اجتماع رقم '+m.meetNum : 'اجتماع '+(mi+1));
     var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>الملخّص التنفيذي — '+e(d.n)+'</title>'
       +'<style>'
-      +'@page{size:13.333in 7.5in;margin:0}'  /* [PP-UNIFY-2026-05-31] مقاس موحّد */
+      +'@page{size:13.333in 7.5in;margin:12mm}'  /* [PP-UNIFY-2026-05-31] مقاس موحّد */
       +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;direction:rtl;color:#1f2937;line-height:1.85;margin:0;padding:0}'
       +'.cover{padding:24px 28px;border-bottom:3px solid #1d8a4e;margin-bottom:20px}'
       +'.cover h1{margin:0 0 6px;font-size:22pt;color:#003944}'
@@ -11410,8 +11444,9 @@ function wfTransition(di, mi, to, note){
     var ms=GM(di); var m=ms[mi]; if(!m) return false;
     var from=wfState(m);
 
-    /* [WFv2-LEGAL] فحص التجميد: المحضر المعتمَد لا يجوز تعديله إلا بالإعادة (to=0) */
-    if(typeof wfv2IsFrozen==='function' && wfv2IsFrozen(m) && to!==0 && to!==4 && to!==5 && to!==6){
+    /* [WFv2-LEGAL] فحص التجميد: المحضر المعتمَد لا يجوز تعديله إلا بالإعادة.
+       [UNIT-HUB-V1] يُسمح بـ to=2 (المعتمد يعيد للوحدة) و to=0 (الوحدة تعيد للمنشئ). */
+    if(typeof wfv2IsFrozen==='function' && wfv2IsFrozen(m) && to!==0 && to!==2 && to!==4 && to!==5 && to!==6){
       if(typeof showToast==='function')
         showToast('المحضر معتمَد ومجمَّد قانونياً — أعِده بملاحظات (إن أردت) قبل أيّ تغيير',true);
       return false;
@@ -11425,16 +11460,24 @@ function wfTransition(di, mi, to, note){
           ||(from===3&&to===4)   /* المعتمد النهائي يعتمد/يوجّه */
           ||(from===4&&to===5)   /* وحدة المجالس تنشر/ترفع لصاحب الصلاحية */
           ||(from===5&&to===6);  /* أرشفة تلقائية */
-    var back=(to===0)&&(from>=1&&from<=4); /* إعادة بملاحظات */
+    /* [UNIT-HUB-V1] الإعادة بملاحظات:
+       - المعتمد النهائي (من 3): يعيد إلى الوحدة (3→2) لا للمخصّص مباشرة — الوحدة هي المحور.
+       - الوحدة (من 1/2/4): تعيد للمخصّص المنشئ (→0) لاستيفاء الملاحظات.
+       هكذا قرار المعتمد دائماً يعود للوحدة لتستكمل الإجراء. */
+    var backToUnit=(from===3&&to===2);                  /* المعتمد يعيد للوحدة */
+    var backToCreator=(to===0)&&(from===1||from===2||from===4); /* الوحدة تعيد للمخصّص */
+    var back=backToUnit||backToCreator;
     if(!fwd&&!back){ if(typeof showToast==='function')showToast('انتقال غير مسموح من الحالة الحالية',true); return false; }
     /* حَكم الأدوار حسب السلسلة الثلاثية */
     if(to===1 && !(wfCanSubmit(m)||wfIsGovUnit()||wfIsDelegate())){ showToast('رفع المحضر صلاحية ممثل/أمين اللجنة',true); return false; }
-    if(to===2 && !wfIsGovUnit()){ showToast('بدء التدقيق صلاحية وحدة المجالس واللجان',true); return false; }
+    if(to===2 && from===1 && !wfIsGovUnit()){ showToast('بدء التدقيق صلاحية وحدة المجالس واللجان',true); return false; }
+    if(to===2 && from===3 && !(wfIsFinalApprover()||wfIsAdmin())){ showToast('إعادة المحضر للوحدة صلاحية المعتمد النهائي',true); return false; }
     if(to===3 && !wfIsGovUnit()){ showToast('الإحالة للاعتماد صلاحية وحدة المجالس واللجان',true); return false; }
     if(to===4 && !(wfIsFinalApprover()||wfIsAdmin())){ showToast('الاعتماد النهائي صلاحية المعتمد النهائي (الإدارة العليا)',true); return false; }
     if(to===5 && !wfIsGovUnit()){ showToast('النشر صلاحية وحدة المجالس واللجان',true); return false; }
     if(to===6 && !wfIsGovUnit()){ showToast('الأرشفة صلاحية وحدة المجالس واللجان',true); return false; }
-    if(back && !(wfIsGovUnit()||wfIsFinalApprover())){ showToast('الإعادة بملاحظات صلاحية وحدة المجالس أو المعتمد النهائي',true); return false; }
+    /* [UNIT-HUB-V1] الإعادة للمخصّص (→0) صلاحية الوحدة؛ الإعادة للوحدة (3→2) صلاحية المعتمد */
+    if(backToCreator && !wfIsGovUnit()){ showToast('إعادة المحضر للمنشئ صلاحية وحدة المجالس واللجان',true); return false; }
 
     /* [WFv2-LEGAL] إعادة بملاحظات للحالة 0 تتطلّب ملاحظة إجبارية (حوكمياً) */
     if(back && (!note||!String(note).trim())){
@@ -12007,7 +12050,7 @@ var SYS = (function(){
 })();
 
 /* [v5] __PRINT_CSS_BASE — CSS طباعة موحّد لكل دوال التصدير */
-var __PRINT_CSS_BASE = '@media print{@page{margin:8mm;size:13.333in 7.5in;orphans:3;widows:3}'
+var __PRINT_CSS_BASE = '@media print{@page{size:13.333in 7.5in;margin:12mm;orphans:3;widows:3}'
   +'.np,.toolbar,.no-print{display:none!important}'
   +'body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
   +'.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}'
@@ -12054,7 +12097,7 @@ var __PP_FRAME_GRAD = 'linear-gradient(135deg,#208caa 0%,#208caa 40%,#48a883 78%
    ════════════════════════════════════════════════════════════════════════ */
 /* ════════════════════════════════════════════════════════════════════════
    [PP-FRAME-PROVEN-2026-05-17] النمط المُثبت تقنياً (Aaron Saray / tutorialpedia)
-   المشكلة المؤكدة: @page{margin:5mm} يجعل position:fixed يُقاس من صندوق
+   المشكلة المؤكدة: @page{margin:12mm} يجعل position:fixed يُقاس من صندوق
    @page المُزاح، بينما الخلفيات الممتدة (بطاقات/رؤوس/رسوم) تتجاوز
    padding الجسم بصرياً فتطبع فوق الإطار. الحل المُثبت حرفياً:
    (1) @page{margin:0} → مرجع position:fixed = حافة الورق الحقيقية.
@@ -12064,17 +12107,17 @@ var __PP_FRAME_GRAD = 'linear-gradient(135deg,#208caa 0%,#208caa 40%,#48a883 78%
    (4) box-decoration-break:clone + max-width:100% → الخلفيات تُقصّ
        عند حدود الحشوة فلا يتجاوز أي عنصر الإطار إطلاقاً.
    ════════════════════════════════════════════════════════════════════════ */
-var __PP_FRAME_INSET = '4mm';    /* بُعد الإطار عن حافة الورق — قُرّب للحافة (كان 6mm) لتوسيع مساحة التصميم */
-var __PP_FRAME_THICK = '2.4mm';  /* سماكة حلقة الإطار */
-var __PP_FRAME_GAP   = '4mm';    /* فجوة أمان بين الإطار والمحتوى */
-var __PP_FRAME_RADIUS = '6mm';   /* زوايا شبه دائرية أنيقة */
+var __PP_FRAME_INSET = '3mm';    /* [PP-REFINE] الإطار قريب جداً من الحافة */
+var __PP_FRAME_THICK = '0.8mm';  /* [PP-REFINE] حلقة رفيعة أنيقة (كانت 2.4mm) */
+var __PP_FRAME_GAP   = '3mm';    /* فجوة أمان بين الإطار والمحتوى */
+var __PP_FRAME_RADIUS = '2.5mm'; /* [PP-REFINE] تقوّس خفيف جداً في الزوايا (كان 6mm) */
 /* ════════════════════════════════════════════════════════════════════════
    [PP-WIDEN-2026-05-31] توسيع منطقة المحتوى: الإطار قُرّب للحافة (4mm)
    والحشوة قُلّصت من 16/18mm إلى 11/13mm. النتيجة: مساحة محتوى أكبر،
    هوامش بيضاء داخلية أقل، والمحتوى لم يعد محصوراً في منتصف ضيّق.
    تبقى فجوة أمان كافية (المحتوى عند 11mm > الإطار عند 4mm) فلا يلمسه. */
-var __PP_PAD_V = '11mm';   /* حشوة رأسية — قُلّصت لتوسيع المحتوى */
-var __PP_PAD_H = '13mm';   /* حشوة أفقية — قُلّصت لتوسيع المحتوى */
+var __PP_PAD_V = '8mm';   /* [PP-REFINE] حشوة رأسية أصغر — محتوى يتنفّس أكثر */
+var __PP_PAD_H = '9mm';   /* [PP-REFINE] حشوة أفقية أصغر — محتوى أوسع */
 var __PP_PAD   = __PP_PAD_V+' '+__PP_PAD_H;  /* للتوافق العكسي */
 var __PP_FRAME_CSS =
    '@media print{'
@@ -12114,28 +12157,56 @@ var __PP_FRAME_CSS =
   /* (4) الغلاف: يملأ منطقة الطباعة كاملةً (الورق ناقص الحشوة
      الرأسية من الجهتين) فيكون بنفس حجم صفحات المحتوى بالضبط.
      نطرح __PP_PAD_V فقط (الرأسية) لأن الارتفاع رأسي. */
+  /* (4) [PP-COVER-FULLBLEED-V2] الغلاف يملأ الورقة بصرياً (full-bleed) دون أن يتجاوزها:
+     ارتفاعه = منطقة المحتوى (الورقة ناقص الحشوة العمودية) + margin سالب يمدّه للحواف.
+     هذا يمنع الصفحة الفارغة الناتجة عن تجاوز الارتفاع، ويبقيه ممتداً حافة لحافة. */
   +'.cover-page-reset-wrap{position:relative;z-index:1;'
-  +  'width:100% !important;max-width:100% !important;min-width:0 !important;'
+  +  'width:13.333in !important;max-width:13.333in !important;min-width:13.333in !important;'
   +  'height:calc(7.5in - '+__PP_PAD_V+' - '+__PP_PAD_V+') !important;'
   +  'min-height:calc(7.5in - '+__PP_PAD_V+' - '+__PP_PAD_V+') !important;'
   +  'max-height:calc(7.5in - '+__PP_PAD_V+' - '+__PP_PAD_V+') !important;'
-  +  'margin:0 !important;padding:0 !important;box-shadow:none !important;'
-  +  'overflow:hidden !important;border-radius:'+__PP_FRAME_RADIUS+' !important}'
+  +  'margin:-'+__PP_PAD_V+' -'+__PP_PAD_H+' !important;padding:0 !important;box-shadow:none !important;'
+  +  'overflow:hidden !important;border-radius:0 !important}'
   /* [PP-BREAK-GUARD-2026-05-31] حماية موحّدة لكل المولّدات:
      (3) لا قصّ للجداول/الرسوم  (4) العنوان لا ينفصل عن محتواه */
   /* رؤوس الجداول تتكرّر عند الانكسار، والصفوف لا تُقصّ في منتصفها */
   +'thead{display:table-header-group !important}'
   +'tfoot{display:table-footer-group !important}'
   +'tr{page-break-inside:avoid !important;break-inside:avoid !important}'
+  /* [PP-NO-EMPTY-V2] الصف الضخم جداً (نص تكليف طويل يفوق صفحة) يُسمح بانقسامه
+     استثناءً، لمنع دفعه كاملاً وترك صفحة فارغة. الخلية تتنفّس عبر الصفحات. */
+  +'tr.pp-tall-row{page-break-inside:auto !important;break-inside:auto !important}'
+  +'td{page-break-inside:auto}'
   /* الرسوم والصور لا تُقصّ ولا تتجاوز العرض */
   +'canvas,img,svg{page-break-inside:avoid !important;break-inside:avoid !important;max-width:100% !important}'
+  /* [PP-CHART-NOSPLIT-V2] حماية قصوى: كل حاوية رسم بياني تبقى كتلة واحدة لا تنقسم أبداً.
+     حاوية الرسم + الرسم نفسه + عنوانه = وحدة واحدة. إن لم تتّسع في الصفحة الحالية
+     تنتقل كاملةً للتالية (لا تنقسم). نقيّد ارتفاع الرسم ليضمن احتواءه في صفحة واحدة. */
+  +'.chart-box,.rpt-chart-box,.chart-card,.cc,.chart-grid-2>*,.chart-grid-3>*,'
+  +'[class*="chart"],[id^="cRole"],[id^="c"][id*="hart"],canvas{'
+  +  'page-break-inside:avoid !important;break-inside:avoid !important;'
+  +  'page-break-before:auto !important}'
+  /* أي عنصر يحوي canvas: كتلة واحدة + ارتفاع محدود ليتّسع في صفحة طباعة واحدة */
+  +'div:has(>canvas),div:has(canvas){page-break-inside:avoid !important;break-inside:avoid !important}'
+  +'canvas{max-height:5.5in !important;height:auto !important}'
+  /* [PP-CHART-IMG-NOSPLIT-V3] الرسوم تُحوّل لصور PNG قبل الطباعة (toDataURL).
+     نقيّد ارتفاع صور الرسوم فقط (داخل حاويات الرسوم) ليضمن احتواءها في صفحة
+     واحدة فلا تنقسم — دون المساس بالشعارات أو خلفيات الأغلفة. */
+  +'.chart-box img,.rpt-chart-box img,.cc img,.chart-card img,[class*="chart"] img,'
+  +'.chart-grid-2 img,.chart-grid-3 img{max-height:5in !important;width:auto !important;max-width:100% !important;height:auto !important;object-fit:contain !important;display:block;margin:0 auto}'
+  /* حاوية الرسم + عنوانه = كتلة واحدة لا تنقسم */
+  +'.chart-box,.rpt-chart-box,.cc,.chart-card{page-break-inside:avoid !important;break-inside:avoid !important}'
   /* العناوين تبقى ملتصقة بأول جزء من محتواها (لا عنوان وحيد آخر صفحة) */
   +'h1,h2,h3,h4,h5,.sec-hdr,.sec-title,.chart-title,.esp-section-title,.rpt-h3,'
   +'.committee-header,.report-section-title{page-break-after:avoid !important;break-after:avoid !important}'
   /* البطاقات/الأقسام/صناديق الرسوم تبقى ككتلة واحدة غير مقصوصة */
   +'.sec,.rpt-section,.rpt-card,.rpt-chart-box,.chart-box,.chart-grid-2,.chart-grid-3,'
   +'.kpi-card,.kpi-grid,.type-card,.type-grid,.exec-sum-page,.esp-section,.esp-kpi,'
-  +'.no-break,.card,[class*="card"]{page-break-inside:avoid !important;break-inside:avoid !important}'
+  +'.no-break{page-break-inside:avoid !important;break-inside:avoid !important}'
+  /* [PP-NO-EMPTY-V1] الكتل الطويلة (لجان بجداول كبيرة) يُسمح بانقسامها الذكي
+     (الرأس يبقى مع أول صفوفه، الصفوف لا تُقصّ) بدل دفعها كاملة وترك صفحة فارغة. */
+  +'.committee-block,.committee-section,[class*="committee"]{page-break-inside:auto !important;break-inside:auto !important}'
+  +'.committee-header,.committee-head{page-break-after:avoid !important;break-after:avoid !important}'
   /* أيتام/أرامل: لا يقل عن 3 أسطر أعلى/أسفل أي انكسار */
   +'p,li,td{orphans:3 !important;widows:3 !important}'
   +'}'
@@ -14459,7 +14530,8 @@ function printSelectedReport(){
       +'</table></div>';
   }).join('');
   var html='<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>'+(activeSystem==='intl'?'تقرير المجالس المحددة':'تقرير اللجان المحددة')+'</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif,Arial;font-size:16px;direction:rtl;padding:20px;color:#003944}table{width:100%;border-collapse:collapse}td{border:1px solid #757bbb}@media print{@page{margin:8mm;size:13.333in 7.5in;orphans:3;widows:3}.np,.toolbar,.no-print{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}table{width:100%!important;border-collapse:collapse!important;page-break-inside:auto}thead{display:table-header-group!important}tr{page-break-inside:avoid}td,th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}canvas,img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}h1,h2,h3,h4{page-break-after:avoid!important;break-after:avoid!important}.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}</style>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif,Arial;font-size:16px;direction:rtl;padding:20px;color:#003944}table{width:100%;border-collapse:collapse}td{border:1px solid #757bbb}@media print{@page{size:13.333in 7.5in;margin:12mm;orphans:3;widows:3}.np,.toolbar,.no-print{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}table{width:100%!important;border-collapse:collapse!important;page-break-inside:auto}thead{display:table-header-group!important}tr{page-break-inside:avoid}td,th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}canvas,img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}h1,h2,h3,h4{page-break-after:avoid!important;break-after:avoid!important}.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}</style>'
+    +'.chart-box,.rpt-chart-box,.cc,.chart-card,[class*="chart"]{page-break-inside:avoid !important;break-inside:avoid !important}'+'.chart-box img,.cc img,[class*="chart"] img,canvas{max-height:5in !important;width:auto !important;max-width:100% !important;height:auto !important;page-break-inside:avoid !important;display:block;margin:0 auto}'+'.chart-title{page-break-after:avoid !important}' 
     +'</head><body>'
     +'<div style="background:linear-gradient(135deg,#003944,#208caa);padding:14px 20px;border-radius:10px;margin-bottom:18px;display:flex;align-items:center;gap:14px">'
     +'<img src="'+LOGO2_SRC+'" style="height:52px;object-fit:contain;filter:brightness(0) invert(1)" alt="شعار وزارة التعليم" loading="lazy"><div style="flex:1">'
@@ -14835,8 +14907,12 @@ function buildCoverPage(opts){
      فيملأ الغلاف الورقة كاملةً 13.333in × 7.5in بصرف النظر عن pageMargin،
      وهذا مطابق لكل التقارير لأن الورقة الفيزيائية واحدة. pageMargin يبقى
      للتوافق العكسي فقط ولا يؤثر على هندسة الغلاف بعد الآن. ════════════ */
-  var coverW = '13.333in';
-  var coverH = '7.5in';
+  /* [COVER-SIZE-ADAPT-V1] أبعاد الغلاف تتبع مقاس التقرير:
+     التقارير الجدولية (A4 عمودي) → غلاف بأبعاد A4 ليملأ الصفحة بلا قصّ.
+     التقارير البصرية (تقديمي 16:9) → يبقى 13.333×7.5. */
+  var _isA4 = (opts && opts.pageSize==='A4');
+  var coverW = _isA4 ? '210mm' : '13.333in';
+  var coverH = _isA4 ? '297mm' : '7.5in';
   var coverStyle=[
     'width:'+coverW,'max-width:'+coverW,'min-width:'+coverW,
     'height:'+coverH,'min-height:'+coverH,'max-height:'+coverH,
@@ -15176,6 +15252,8 @@ function resetDashFilters(){
   document.querySelectorAll('.dflt').forEach(function(b){b.classList.remove('active');});
   var first=document.querySelector('.dflt[data-df="committees"]');
   if(first)first.classList.add('active');
+  /* [SEARCH-RESET-V1] مسح حقل البحث أيضاً عند إعادة التعيين */
+  var _srch=document.getElementById('srch'); if(_srch){_srch.value=''; if(typeof applyF==='function')applyF();}
   renDash();
 }
 function populateRepDropdown(){/* Reps are now in buildS2Filters() via MS system */}
@@ -15200,7 +15278,7 @@ function cntFD(arr,key){
 /* Helper: get color for status */
 var stColors={'مستمرة':'#27ae60','منتهية':'#636e72','لم تبدأ':'#f39c12','متعثرة':'#e74c3c','غير معروف':'#95a5a6'};
 var scColors={'داخلية':'#27ae60','خارجية دولية':'#48a883','خارج نطاق الوزارة':'#7358a5','خارجية':'#208caa','غير معروف':'#bdc3c7'};
-var roColors={'عضو':'#48a883','رئيس':'#7358a5','مشارك - وليس عضو':'#1d6a3b','مشارك':'#208caa','غير معروف':'#95a5a6'};
+var roColors={'عضو':'#48a883','رئيس':'#7358a5','مشارك - وليس عضو':'#1d6a3b','غير معروف':'#95a5a6'};
 var tyColors={'لجنة':'#1d8a4e','مجلس تنسيقي دولي':'#1f4c3a','فرق عمل':'#7358a5','مجلس':'#208caa','لجنة دولية مشتركة':'#c0392b','غير معروف':'#95a5a6'};
 var duColors={'دائمة':'#208caa','مؤقته':'#e67e22','غير معروف':'#95a5a6'};
 var origColors={'أساسية':'#1d6a3b','منبثقة':'#f39c12','غير معروف':'#95a5a6'};
@@ -15622,7 +15700,7 @@ function dashPrint(printMode){
   var outt=outt_intl+outt_ext;
   var hd=FDP.filter(function(d){return d.ro&&d.ro.indexOf('رئيس')>=0;}).length;
   var mem=FDP.filter(function(d){return d.ro==='عضو';}).length;
-  var part=FDP.filter(function(d){return d.ro==='مشارك';}).length;
+  
   var ctyL=FDP.filter(function(d){return d.ty==='لجنة';}).length;
   var ctyF=FDP.filter(function(d){return d.ty==='فرق عمل';}).length;
   var ctyM=FDP.filter(function(d){return d.ty==='مجلس';}).length;
@@ -15708,7 +15786,7 @@ function dashPrint(printMode){
   var D2=JSON.stringify({
     ok:ok,dn2:dn2,bl:bl,ns:ns,unk:unk,
     inn:inn,outt_intl:outt_intl_merged,outt_ext:outt_ext,sc_unk:sc_unk,
-    hd:hd,mem:mem,part:part,partNM:partNonMember,
+    hd:hd,mem:mem,partNM:partNonMember,
     ctyL:ctyL,ctyF:ctyF,ctyM:ctyM,ctyMD:ctyMD,ctyDI:ctyDI,
     durP:durP,durT:durT,dur_unk:dur_unk,
     origA:origA,origB:origB,orig_unk:orig_unk,
@@ -16094,7 +16172,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
       +'<div class="chart-box"><div class="chart-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> النوع والتصنيف</div><div class="chart-sub">لجنة / مجلس / تنسيقي / دولية / فرق عمل</div><canvas id="cType" width="290" height="220"></canvas><div id="leg_cType" style="margin-top:8px"></div></div>'
       +'<div class="chart-box"><div class="chart-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> المدة الزمنية</div><div class="chart-sub">دائمة مقابل مؤقتة</div><canvas id="cDur" width="290" height="200"></canvas><div id="leg_cDur" style="margin-top:8px"></div></div>'
       +'<div class="chart-box"><div class="chart-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg> أصل اللجنة</div><div class="chart-sub">أساسية مقابل منبثقة</div><canvas id="cOrig" width="290" height="200"></canvas><div id="leg_cOrig" style="margin-top:8px"></div></div>'
-      +'<div class="chart-box"><div class="chart-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> توزيع الأدوار</div><div class="chart-sub">رئيس / عضو / مشارك</div><canvas id="cRole" width="290" height="200"></canvas><div id="leg_cRole" style="margin-top:8px"></div></div>'
+      +'<div class="chart-box"><div class="chart-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> توزيع الأدوار</div><div class="chart-sub">رئيس / عضو / مشارك - وليس عضو</div><canvas id="cRole" width="290" height="200"></canvas><div id="leg_cRole" style="margin-top:8px"></div></div>'
       +'</div>'
       +'<div class="insight" style="margin-top:14px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#003944" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg> <b>تحليل:</b> يرصد هذا القسم البنية الهيكلية لمحفظة اللجان — ارتفاع نسبة المستمرة يدل على انخراط مؤسسي نشط، فيما يعكس التوزيع الدولي عمق شراكات الوكالة. هيمنة الرئاسة في فئة مستمرة تُشير إلى ثقل قراري.</div>'
       +'</div></div>';
@@ -16718,9 +16796,9 @@ if(_D.pMode==='committees'||_D.pMode==='all'){
     _legOr.innerHTML=_dOr+legTable(orL,orV,_orCols,_orTot)+'<div style="background:#fff8e1;border:1px solid #f0c040;border-radius:7px;padding:6px 10px;margin-top:7px;font-size:10.5px;color:#7a5000;direction:rtl">▤ <b>تحليل:</b> أساسية: <b>'+_D.origA+'</b> | منبثقة: <b>'+_D.origB+'</b></div>';
   }
   /* الأدوار: يشمل مشارك - وليس عضو */
-  /* الأدوار: دمج مشارك ومشارك-وليس عضو في فئة واحدة */
-  var roMasharak=_D.part+_D.partNM;
-  var roL=['رئيس','عضو','مشارك'],roV=[_D.hd,_D.mem,roMasharak];
+  /* فئة المشاركين غير الأعضاء (القيمة الفعلية الوحيدة — لا توجد قيمة "مشارك" منفردة) */
+  var roMasharak=_D.partNM;
+  var roL=['رئيس','عضو','مشارك - وليس عضو'],roV=[_D.hd,_D.mem,roMasharak];
   var roFiltered=roL.map(function(l,i){return{l:l,v:roV[i]};}).filter(function(x){return x.v>0;});
   var _roCls=['#7358a5','#1673a4','#118C5A'];
   var _roLb=roFiltered.map(function(x){return x.l;}),_roVl=roFiltered.map(function(x){return x.v;});
@@ -16729,7 +16807,7 @@ if(_D.pMode==='committees'||_D.pMode==='all'){
   var _legRo=document.getElementById('leg_cRole');
   if(_legRo){
     var _dRo='<div style="background:#f0f4ff;border:1px solid #757bbb;border-radius:7px;padding:7px 11px;margin-bottom:7px;font-size:10.5px;color:#1673a4;direction:rtl;line-height:1.7">توزيع أدوار الوكالة: رئاسة، عضوية، ومشاركة في اللجان.</div>';
-    _legRo.innerHTML=_dRo+legTable(_roLb,_roVl,_roCls,_roTot)+'<div style="background:#fff8e1;border:1px solid #f0c040;border-radius:7px;padding:6px 10px;margin-top:7px;font-size:10.5px;color:#7a5000;direction:rtl">▤ <b>تحليل:</b> رئيس: <b>'+_D.hd+'</b> | عضو: <b>'+_D.mem+'</b> | مشارك: <b>'+((_D.part||0)+(_D.partNM||0))+'</b></div>';
+    _legRo.innerHTML=_dRo+legTable(_roLb,_roVl,_roCls,_roTot)+'<div style="background:#fff8e1;border:1px solid #f0c040;border-radius:7px;padding:6px 10px;margin-top:7px;font-size:10.5px;color:#7a5000;direction:rtl">▤ <b>تحليل:</b> رئيس: <b>'+_D.hd+'</b> | عضو: <b>'+_D.mem+'</b> | مشارك - وليس عضو: <b>'+(_D.partNM||0)+'</b></div>';
   }
   hbar('cReps',_D.rK,_D.rV,BC);
   var _legRp=document.getElementById('leg_cReps');
@@ -17142,6 +17220,12 @@ function renS3Main(){
       /* المدير وغيره: محاضر المخصّصين لا تظهر في التحضير — مكانها قسم إدارة المحاضر والمذكرات */
       return false;
     }
+    /* [S3-CARD-FILTER-V1] عند تفعيل فلتر الحالة، أُظهر فقط الاجتماعات التي بها تكليف
+       بهذه الحالة — لا كل اجتماعات اللجنة (يطابق توقّع المستخدم بعد الفلترة). */
+    if(typeof taskFilter!=='undefined' && taskFilter!=='all'){
+      var _hasMatch=(_mm.tasks||[]).some(function(t){return t.status===taskFilter;});
+      if(!_hasMatch) return false;
+    }
     return true;
   }).sort(function(a,b){
     var da=parseArabicDate(a.date),db=parseArabicDate(b.date);
@@ -17546,7 +17630,7 @@ function fH(v){
     +field('cfi full',(activeSystem==='intl'?'اسم المجلس/اللجنة *':'اسم اللجنة *'),inp('fn',v.n))
     +field('cfi','ممثل الوكالة *',inp('fr',v.r))
     +field('cfi','ممثل بديل',inp('far',v.ar))
-    +field('cfi','الدور',sel('fro',['عضو','رئيس','مشارك','مشارك - وليس عضو','غير معروف'],v.ro))
+    +field('cfi','الدور',sel('fro',['عضو','رئيس','مشارك - وليس عضو','غير معروف'],v.ro))
     +field('cfi','الحالة',sel('fst',['مستمرة','منتهية','لم تبدأ','متعثرة','غير معروف'],v.st))
     +field('cfi','النوع',sel('fty',activeSystem==='intl'?['مجلس تنسيقي دولي','لجنة دولية مشتركة']:['لجنة','فرق عمل','مجلس'],v.ty))
     +field('cfi','المدة',sel('fdu',['دائمة','مؤقته'],v.du))
@@ -17633,7 +17717,7 @@ function blobDL(title,body,meta){
     +'h1,h2,h3{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif}'
     +'.toolbar{position:sticky;top:0;z-index:99;display:flex;gap:10px;padding:10px 16px;background:linear-gradient(135deg,#1673a4,#003944);align-items:center;flex-wrap:wrap}'
     +'@media print{'
-    +'@page{size:13.333in 7.5in;margin:8mm;orphans:3;widows:3}'
+    +'@page{size:13.333in 7.5in;margin:12mm;orphans:3;widows:3}'
     +'.toolbar,.np,.no-print{display:none!important}'
     +'body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
     +'.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}'
@@ -17802,7 +17886,7 @@ function printAll(di){
   /* بناء الصفحة الكاملة */
   var html='<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'
     +'<title>اجتماعات '+e(d.n)+'</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;direction:rtl;padding:22px;color:#003944;font-size:16px}canvas{image-rendering:crisp-edges}.rpt-section{margin-bottom:28px}.rpt-h3{font-size:13px;font-weight:700;color:#1f4c3a;border-bottom:2px solid #382972;padding-bottom:6px;margin-bottom:14px}.rpt-cards{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.rpt-card{background:#f8f9fa;border-right:4px solid #6c757d;border-radius:8px;padding:10px 14px;flex:1;min-width:80px;text-align:center}.rpt-card-v{font-size:22px;font-weight:700;color:#208caa}.rpt-card-l{font-size:10px;color:#888}.rpt-charts{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}.rpt-chart-box{background:#fff;border:1px solid #757bbb;border-radius:12px;padding:14px;flex:1;min-width:240px}.rpt-chart-title{font-size:11px;font-weight:700;color:#1f4c3a;margin-bottom:6px;text-align:center}.rpt-desc{background:#f0f4ff;border:1px solid #757bbb;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:10.5px;color:#1673a4;line-height:1.75}.rpt-insight{background:#fff8e1;border:1px solid #f0c040;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:10.5px;color:#7a5000}.rpt-legend{display:flex;flex-wrap:wrap;gap:5px 12px;margin:8px 0;padding:7px 10px;background:#fafbff;border-radius:7px}.rpt-leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:#333}.rpt-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}.rpt-leg-tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:10.5px}.rpt-leg-tbl td{padding:3px 5px;border-bottom:1px solid #f0f0f0}.rpt-leg-bar{height:6px;border-radius:3px;display:inline-block}@media print{@page{margin:8mm;size:13.333in 7.5in;orphans:3;widows:3}.np,.toolbar,.no-print{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}table{width:100%!important;border-collapse:collapse!important;page-break-inside:auto}thead{display:table-header-group!important}tr{page-break-inside:avoid}td,th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}canvas,img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}h1,h2,h3,h4{page-break-after:avoid!important;break-after:avoid!important}.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}</style>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif;direction:rtl;padding:22px;color:#003944;font-size:16px}canvas{image-rendering:crisp-edges}.rpt-section{margin-bottom:28px}.rpt-h3{font-size:13px;font-weight:700;color:#1f4c3a;border-bottom:2px solid #382972;padding-bottom:6px;margin-bottom:14px}.rpt-cards{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.rpt-card{background:#f8f9fa;border-right:4px solid #6c757d;border-radius:8px;padding:10px 14px;flex:1;min-width:80px;text-align:center}.rpt-card-v{font-size:22px;font-weight:700;color:#208caa}.rpt-card-l{font-size:10px;color:#888}.rpt-charts{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}.rpt-chart-box{background:#fff;border:1px solid #757bbb;border-radius:12px;padding:14px;flex:1;min-width:240px}.rpt-chart-title{font-size:11px;font-weight:700;color:#1f4c3a;margin-bottom:6px;text-align:center}.rpt-desc{background:#f0f4ff;border:1px solid #757bbb;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:10.5px;color:#1673a4;line-height:1.75}.rpt-insight{background:#fff8e1;border:1px solid #f0c040;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:10.5px;color:#7a5000}.rpt-legend{display:flex;flex-wrap:wrap;gap:5px 12px;margin:8px 0;padding:7px 10px;background:#fafbff;border-radius:7px}.rpt-leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:#333}.rpt-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}.rpt-leg-tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:10.5px}.rpt-leg-tbl td{padding:3px 5px;border-bottom:1px solid #f0f0f0}.rpt-leg-bar{height:6px;border-radius:3px;display:inline-block}@media print{@page{size:13.333in 7.5in;margin:12mm;orphans:3;widows:3}.np,.toolbar,.no-print{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}table{width:100%!important;border-collapse:collapse!important;page-break-inside:auto}thead{display:table-header-group!important}tr{page-break-inside:avoid}td,th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}canvas,img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}h1,h2,h3,h4{page-break-after:avoid!important;break-after:avoid!important}.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}</style>'
     +'</head><body>'
     +'<div class="np" style="position:sticky;top:0;z-index:99;background:linear-gradient(135deg,#1673a4,#003944);padding:10px 16px;display:flex;gap:10px;align-items:center">'
     +'<button onclick="window.print()" style="background:linear-gradient(135deg,#27ae60,#1d8a4e);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-family:inherit;cursor:pointer;font-weight:700">طباعة / PDF</button>'
@@ -18653,39 +18737,6 @@ async function _initCore(){
         D.length=0;p.forEach(function(x){D.push(x);});
         SB_LAST_UPDATED_C=rc[0].updated_at||null;
         _lastKnownServerCount = D.length; /* سجّل العدد الصحيح من Supabase */
-        /* ── seed guard: إذا Supabase أقل بكثير من المدمج → استبدل وأعد الرفع ──
-           ملاحظة: إذا Supabase أكبر من المدمج → طبيعي (المستخدم أضاف سجلات)
-           [SEED-SAFETY-V2] أُلغي البذر التلقائي عند نقص البيانات — كان يدهس
-           حذف المستخدم المشروع. الآن: لا بذر إطلاقاً ما دام Supabase يحوي أي بيانات.
-           البذر مسموح فقط على قاعدة فارغة تماماً (أول إقلاع)، ويُعالَج في فرع
-           "Supabase فارغ" المنفصل أدناه — لا هنا. */
-        var _embCount = activeSystem==='intl' ? EMBEDDED_COUNT_INTL : EMBEDDED_COUNT_MAIN;
-        if(false){  /* [SEED-SAFETY-V2] مُعطَّل: لا إعادة بذر فوق بيانات موجودة */
-          console.warn('[SEED] reseeding disabled by SEED-SAFETY-V2');
-          var _freshD = (function(){
-            try{
-              var _rawSys = activeSystem==='intl' ? (window._bIntlRaw||'') : (window._bMainRaw||'');
-              return JSON.parse(decodeURIComponent(escape(atob(_rawSys))));
-            }catch(e){ return []; }
-          })();
-          if(_freshD.length > D.length){
-            D.length=0; _freshD.forEach(function(x){D.push(x);});
-            /* ارفع البيانات الصحيحة إلى Supabase في الخلفية */
-            setTimeout(function(){
-              if(SB_ROW_C){
-                sbFetch(SB_TABLES[activeSystem].committees+'?id=eq.'+SB_ROW_C,'PATCH',
-                  {data:_freshD,updated_at:new Date().toISOString()})
-                  .then(function(){console.log('[SEED] Supabase reseeded: '+_freshD.length+' records');})
-                  .catch(function(e){console.error('[SEED] reseed failed:',e);});
-              } else {
-                sbFetch(SB_TABLES[activeSystem].committees,'POST',
-                  {data:_freshD,updated_at:new Date().toISOString()})
-                  .then(function(r){if(r&&r.length>0)SB_ROW_C=r[0].id; console.log('[SEED] Supabase seeded: '+_freshD.length+' records');})
-                  .catch(function(e){console.error('[SEED] seed failed:',e);});
-              }
-            }, 2000);
-          }
-        }
         /* فك قفل الحفظ — التحميل نجح */
         window._saveLocked = false;
         window._saveLockReason = null;
@@ -19191,7 +19242,7 @@ function showToast(msg,isErr){
   var icon=isErr
     ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
     :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>';
-  t.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;'
+  t.style.cssText='position:fixed;bottom:20px;right:20px;z-index:1001500;'
     +'background:'+(isErr?'linear-gradient(135deg,#c0392b,#e74c3c)':'linear-gradient(135deg,#1d6a3b,#27ae60)')
     +';color:#fff;border-radius:12px;padding:11px 18px;'
     +'font-family:inherit;font-size:12px;font-weight:700;'
@@ -19868,7 +19919,7 @@ function applyRoleUI(){
   if(!canDo('edit_committee')&&!canDo('edit_meeting'))hideRules.push('[data-ma="e"]');
   if(!canDo('del_committee')&&!canDo('del_meeting'))hideRules.push('[data-ma="d"]');
   if(!canDo('add_meeting'))hideRules.push('.abpu,.s3-btn-add');
-  if(!canDo('print'))hideRules.push('[onclick*="printAll"],[onclick*="printRow"],[onclick*="printSingle"],[onclick*="printFullReport"],[onclick*="printExecSummary"],[onclick*="dashPrint"],[onclick*="printTable"],[onclick*="printPrepSummary"],[onclick*="printInitiativeStatusReport"],[onclick*="printInitiativesPeriodicReport"],[onclick*="printQuarterlyReport"],[onclick*="printInitiativeCard"],[onclick*="printInitiativesReport"],[onclick*="gmPrintReport"],[onclick*="gmPrintMeetingPDF"],[onclick*="execExportPDF"],[onclick*="ecExportPDF"],[onclick*="s4DashExportPDF"],.exec-print-btn,.exec-pdf-btn');
+  if(!canDo('print'))hideRules.push('[onclick*="printAll"],[onclick*="printRow"],[onclick*="printSingle"],[onclick*="printFullReport"],[onclick*="printExecSummary"],[onclick*="dashPrint"],[onclick*="printTable"],[onclick*="printPrepSummary"],[onclick*="printInitiativeStatusReport"],[onclick*="printInitiativesPeriodicReport"],[onclick*="printQuarterlyReport"],[onclick*="printInitiativeCard"],[onclick*="gmPrintReport"],[onclick*="gmPrintMeetingPDF"],[onclick*="execExportPDF"],[onclick*="ecExportPDF"],[onclick*="s4DashExportPDF"],.exec-print-btn,.exec-pdf-btn');
   if(!canDo('export'))hideRules.push('[onclick*="exportS1Excel"],[onclick*="exportS3Excel"],[onclick*="exportMeetingExcel"],[onclick*="ecExportPPTX"],[onclick*="exportInitiativesExcel"],[onclick*="gmExportExcel"],[onclick*="importDownloadTemplate"],[onclick*="importNext"],[onclick*="openImportModal"]');
   var noEdit=!canDo('edit_committee')&&!canDo('edit_meeting');
   var s=document.createElement('style');s.id='roleStyle';
@@ -20025,7 +20076,8 @@ function wfNotifInit(){
   document.getElementById('wfNotifBell').onclick=function(ev){ ev.stopPropagation(); wfNotifToggle(); };
   document.addEventListener('click',function(e){
     var p=document.getElementById('wfNotifPanel'), w=document.getElementById('wfNotifWrap');
-    if(p&&w&&!w.contains(e.target)) p.style.display='none';
+    /* [Z-FIX-V2] اللوحة الآن في body، فنتحقق منها ومن الجرس معاً قبل الإغلاق */
+    if(p&&w&&!w.contains(e.target)&&!p.contains(e.target)) p.style.display='none';
   });
   wfNotifRefresh();
   /* تحديث دوري كل 60 ثانية */
@@ -20067,14 +20119,19 @@ function wfNotifToggle(){
   }
   html+='</div>';
   panel.innerHTML=html;
-  /* [Z-FIX-V1] تموضع ديناميكي: اللوحة fixed (تتحرّر من overflow:hidden للأب).
-     نحسب موقعها من موضع الجرس الفعلي في الشاشة. */
+  /* [Z-FIX-V2] الإصلاح الجذري: ننقل اللوحة إلى <body> مباشرة عند الفتح.
+     السبب: الجرس داخل topbar داخل appScreen (سياق طبقات منفصل)، فأي z-index
+     داخله يبقى محصوراً ولا يتجاوز محتوى الصفحة (sbody). النقل لـ body يحرّرها
+     فيُحترم z-index عالمياً وتظهر فوق كل شيء. */
+  try{
+    if(panel.parentNode !== document.body){ document.body.appendChild(panel); }
+  }catch(_){}
+  /* تموضع ديناميكي من موضع الجرس الفعلي في الشاشة */
   try{
     var bell=document.getElementById('wfNotifBell');
     if(bell){
       var r=bell.getBoundingClientRect();
       panel.style.top=(r.bottom+8)+'px';
-      /* RTL: نحاذي يسار اللوحة مع يسار الجرس، مع ضمان عدم خروجها من الشاشة */
       var pw=Math.min(340, window.innerWidth*0.92);
       var leftPos=r.left;
       if(leftPos+pw>window.innerWidth-8) leftPos=window.innerWidth-pw-8;
@@ -20544,6 +20601,16 @@ function renderS3Cal(){
   var grid=document.getElementById('s3CalGrid');
   var titleEl=document.getElementById('s3CalTitle');
   if(!grid||!titleEl)return;
+  /* [S3-CAL-COLLAPSE-V1] التقويم مطويّ افتراضياً (يأخذ مساحة كبيرة) مع احترام تفضيل المستخدم.
+     الاجتماعات القادمة تبقى ظاهرة دائماً (خارج عنصر التقويم). */
+  try{
+    var _c=document.querySelector('.s3-cal-wrap');
+    var _btn=document.getElementById('s3CalToggleBtn');
+    var _pref=localStorage.getItem('s3CalCollapsed');
+    var _collapsed = (_pref===null) ? true : (_pref==='1'); /* الافتراضي: مطويّ */
+    if(_c){ _c.style.display=_collapsed?'none':''; }
+    if(_btn){ _btn.textContent=_collapsed?'إظهار التقويم ▼':'طي التقويم ▲'; }
+  }catch(e){}
 
   titleEl.textContent=S3_MONTHS_AR[s3CalMonth]+' '+s3CalYear;
 
@@ -21735,7 +21802,7 @@ function ecBuildRoleData(FD){
   FD.forEach(function(d){var v=d.ro||'غير معروف';counts[v]=(counts[v]||0)+1;});
   var sorted=Object.keys(counts).map(function(k){return{label:k,value:counts[k]};})
     .sort(function(a,b){return b.value-a.value;});
-  var colorMap={'رئيس':'#9338ff','عضو':'#208caa','مشارك':'#16a34a','مشارك - وليس عضو':'#f59e0b'};
+  var colorMap={'رئيس':'#9338ff','عضو':'#208caa','مشارك - وليس عضو':'#f59e0b'};
   return {
     labels:sorted.map(function(x){return x.label;}),
     values:sorted.map(function(x){return x.value;}),
@@ -21927,7 +21994,7 @@ function ecBindFilterButtons(){
         {v:'دائمة',l:'دائمة'},{v:'مؤقته',l:'مؤقتة'}
       ]},
       {id:'df_ro',label:'الدور',options:[
-        {v:'رئيس',l:'رئيس'},{v:'عضو',l:'عضو'},{v:'مشارك',l:'مشارك'},{v:'مشارك - وليس عضو',l:'مشارك (غير عضو)'}
+        {v:'رئيس',l:'رئيس'},{v:'عضو',l:'عضو'},{v:'مشارك - وليس عضو',l:'مشارك (غير عضو)'}
       ]},
       {id:'df_rp',label:'الممثل',searchable:true,
         options:reps.map(function(r){return{v:r,l:r};})}
@@ -22044,7 +22111,7 @@ function ecExportPDF(){
     +'.print-controls button:hover{opacity:.9}'
     /* إعدادات الطباعة */
     +'@media print{'
-    +'@page{size:13.333in 7.5in;margin:8mm}'
+    +'@page{size:13.333in 7.5in;margin:12mm}'
     +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
     +'.print-controls{display:none!important}'
     +'.report-header{page-break-after:avoid}'
@@ -22093,7 +22160,7 @@ function ecExportPDF(){
 
   w.document.write(
     '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>التقرير التنفيذي</title>'
-    +'<style>'+styleCSS+'@page{size:13.333in 7.5in;margin:8mm}</style>'
+    +'<style>'+styleCSS+'@page{size:13.333in 7.5in;margin:12mm}</style>'
     +__PP_FRAME_STYLE_TAG
     +'</head><body>'
     +controlsHTML
@@ -23449,7 +23516,7 @@ function s4DashV2SectionTitle(title,sub,desc,badge){
 
 function s4DashV2Card(title,sub,annotation,body){
   return ''
-    +'<div style="background:#fff;border:1px solid '+S4_COLORS.border+';border-radius:10px;padding:14px;'
+    +'<div class="chart-card s4-chart-card" style="background:#fff;border:1px solid '+S4_COLORS.border+';border-radius:10px;padding:14px;'
     +'box-shadow:0 1px 2px rgba(0,57,68,.03)">'
       +'<div style="margin-bottom:10px">'
         +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:1px">'
@@ -24586,7 +24653,12 @@ function s4DashExportPDF(){
     +'.print-controls button:hover{opacity:.9}'
     /* إعدادات الطباعة - استخدام running headers/footers */
     +'@media print{'
-    +'@page{size:13.333in 7.5in;margin:8mm}'
+    +'.chart-card,.chart-card-wrap{page-break-inside:avoid !important;break-inside:avoid !important}'
+    +'.chart-card *{page-break-inside:avoid !important}'
+    +'.chart-grid,.chart-row,.dash-grid{display:block !important}'
+    +'.chart-card canvas,.chart-card img{max-height:4in !important;height:auto !important;width:auto !important;max-width:100% !important;display:block;margin:0 auto}'
+    +'.chart-title,.s5-chart-title{page-break-after:avoid !important;break-after:avoid !important}'
+    +'@page{size:13.333in 7.5in;margin:12mm}'
     +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
     +'.print-controls{display:none!important}'
     +'.report-header{page-break-after:avoid}'
@@ -24633,7 +24705,7 @@ function s4DashExportPDF(){
 
   w.document.write(
     '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>لوحة المؤشرات التنفيذية</title>'
-    +'<style>'+styleCSS+'@page{size:13.333in 7.5in;margin:8mm}</style>'
+    +'<style>'+styleCSS+'@page{size:13.333in 7.5in;margin:12mm}</style>'
     +__PP_FRAME_STYLE_TAG
     +'</head><body>'
     +controlsHTML
@@ -25270,11 +25342,11 @@ function s4ExportTasksReport(){
        ونظام الإطار __PP_FRAME يدير هوامش المحتوى الداخلية. لذا @page=margin:0
        (مطابق لبقية مولّدات الغلاف الناجحة) لمنع قصّ عنوان/تذييل الغلاف. */
     +'@media print{'
-    +'@page{size:13.333in 7.5in;margin:0}'
+    +''  /* [PP-FIX] أُزيل @page المحلي المتعارض — النظام العام __PP_FRAME_CSS يضبط الصفحة */
     +'.no-print,.toolbar{display:none!important}'
     
     +'body{background:#fff!important;font-size:12pt}'
-    +'.report-wrapper{box-shadow:none;max-width:none}'
+    +'.report-wrapper{box-shadow:none;max-width:13.333in}'
     +'.official-header,.committee-header,.stat-card.primary{-webkit-print-color-adjust:exact!important;'
     +'print-color-adjust:exact!important;color-adjust:exact!important}'
     +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
@@ -25307,7 +25379,7 @@ function s4ExportTasksReport(){
     +'</div>'
     /* الغلاف */
     +'<div class="report-wrapper">'
-    +buildCoverPage({title:'تقرير التكليفات الشامل',subtitle:'متابعة وإدارة تكليفات المجالس واللجان',logoSrc:logoSrc,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:getUnitName(),pageMargin:'8mm',meta:[{label:'عدد اللجان',val:Object.keys(byComm).length},{label:'إجمالي التكليفات',val:stats.total},{label:'تاريخ التقرير',val:reportDate}]})
+    +buildCoverPage({title:'تقرير التكليفات الشامل',subtitle:'متابعة وإدارة تكليفات المجالس واللجان',logoSrc:logoSrc,bgImg:(typeof COVER_BG_IMG!=='undefined'?COVER_BG_IMG:''),prepUnit:getUnitName(),pageMargin:'14mm',meta:[{label:'عدد اللجان',val:Object.keys(byComm).length},{label:'إجمالي التكليفات',val:stats.total},{label:'تاريخ التقرير',val:reportDate}]})
 
     +'<main class="report-body">'
     +rows
@@ -25399,7 +25471,10 @@ async function s4MergeAllReports(){
     +'.ctrl span{color:rgba(255,255,255,.7);font-size:12px;margin-right:auto}'
     /* ── طباعة — [COVER-CLIP-FIX] margin:0 ليملأ الغلاف الورقة بلا قصّ ── */
     +'@media print{'
-    +'@page{size:13.333in 7.5in;margin:0}'
+    +'.chart-box,.rpt-chart-box,.cc,.chart-card,[class*="chart"]{page-break-inside:avoid !important;break-inside:avoid !important}'
+    +'.chart-box img,.rpt-chart-box img,.cc img,[class*="chart"] img,canvas{max-height:5in !important;width:auto !important;max-width:100% !important;height:auto !important;page-break-inside:avoid !important;break-inside:avoid !important;display:block;margin:0 auto}'
+    +'.chart-title,.rpt-chart-title{page-break-after:avoid !important;break-after:avoid !important}'
+    +'@page{size:13.333in 7.5in;margin:12mm}'
     +'.ctrl,.no-print{display:none!important}'
     +'body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
     +'table{page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}'
@@ -26178,7 +26253,7 @@ function s4ExecuteCommitteePrint(){
 
   var fullHtml = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>'+_esc(titleText)+'</title>'
     + '<style>'
-    + '@page{size:13.333in 7.5in;margin:0}'  /* [PP-UNIFY-2026-05-31] */
+    + '@page{size:13.333in 7.5in;margin:12mm}'  /* [PP-UNIFY-2026-05-31] */
     + 'body{font-family:"Sakkal Majalla","Arial",serif;direction:rtl;margin:0;padding:20px;color:#1f2937;background:#fff}'
     + '.header{background:linear-gradient(135deg,#003944,#1673a4);color:#fff;padding:18px 20px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;gap:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
     + '.header .h-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;text-align:center;color:#fff;line-height:1.35}'
@@ -28585,43 +28660,7 @@ function printInitiativeCard(ri){if(isViewerBlocked('الطباعة'))return;
 }
 
 /* ── تقرير شامل ── */
-function printInitiativesReport(){if(isViewerBlocked('الطباعة'))return;
-  var typeF   = (document.getElementById('initTypeFilter')  ||{value:''}).value;
-  var statusF = (document.getElementById('initStatusFilter')||{value:''}).value;
-  var commF   = (document.getElementById('initCommFilter')  ||{value:''}).value || INIT_ACTIVE_COUNCIL;
-  var list = INITIATIVES.filter(function(it){
-    if(typeF   && it.type!==typeF)    return false;
-    if(statusF && it.status!==statusF) return false;
-    if(commF   && it.councilId!==commF) return false;
-    return true;
-  });
-  var stColors = {'مقترحة':'#7358a5','قيد الدراسة':'#208caa','معتمدة':'#208caa','قيد التنفيذ':'#9338ff','منجزة':'#1d8a4e','متوقفة':'#e74c3c'};
-  var body='<div style="margin-bottom:14px;font-size:12px;color:#777">إجمالي: <b>'+list.length+'</b> مبادرة / مشروع | تاريخ: '+new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn')+(typeF?' | النوع: '+typeF:'')+(statusF?' | الحالة: '+statusF:'')+'</div>'
-    +'<table style="width:100%;border-collapse:collapse;font-size:11.5px">'
-    +'<thead><tr>'
-    +['#','العنوان','النوع','الحالة','الأولوية','الجهة النظيرة','المجلس','الاجتماع','التكليف','تاريخ البدء','تاريخ الانتهاء','الهدف','الخطوة التالية'].map(function(h){return'<th style="background:linear-gradient(135deg,#7030a0,#7358a5);color:#fff;padding:8px 10px;text-align:right;font-size:11px;white-space:nowrap">'+h+'</th>';}).join('')
-    +'</tr></thead><tbody>'
-    +list.map(function(it,i){
-      var stC = stColors[it.status]||'#999';
-      return '<tr style="background:'+(i%2===0?'#fff':'#f8f4ff')+'">'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;text-align:center;color:#888;font-size:11px">'+(i+1)+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;font-weight:600;color:#1f4c3a;max-width:220px;word-wrap:break-word;overflow-wrap:break-word">'+e(it.title)+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee">'+it.type+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee"><span style="background:'+stC+'22;color:'+stC+';border-radius:10px;padding:1px 8px;font-size:10.5px;font-weight:700">'+it.status+'</span></td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;text-align:center">'+(it.priority||'—')+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee">'+(it.partner?e(it.partner)+(it.partnerCountry?' ('+e(it.partnerCountry)+')':''):'—')+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;font-size:10.5px">'+(it.councilId?e(it.councilId):'—')+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;font-size:10.5px">'+(it.meetingRef?e(it.meetingRef):'—')+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;font-size:10.5px">'+(it.taskRef?e(it.taskRef):'—')+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;white-space:nowrap">'+(it.dateStart||'—')+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;white-space:nowrap">'+(it.dateEnd||'—')+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;font-size:10px;max-width:120px">'+(it.objective?e(it.objective):'—')+'</td>'
-        +'<td style="padding:7px 8px;border-bottom:1px solid #eee;font-size:10.5px;color:#1d6a3b">'+(it.nextStep?e(it.nextStep):'—')+'</td>'
-        +'</tr>';
-    }).join('')
-    +'</tbody></table>';
-  blobDL('تقرير المبادرات والمشاريع الدولية', body, {hdr:'تقرير المبادرات والمشاريع الدولية'});
-}
+
 
 /* ── تصدير Excel ── */
 function exportInitiativesExcel(){if(isViewerBlocked('تصدير Excel'))return;
@@ -28963,6 +29002,22 @@ document.addEventListener('input', function(ev){
   try{
     if(localStorage.getItem('intl_session')){activeSystem='intl';}
     else if(localStorage.getItem('lajan_session')){activeSystem='main';}
+    /* [SEED-RELOAD-V1] إصلاح خطأ ترتيب التحميل: البذرة المضمّنة (D) تُفكّ وقت
+       activeSystem='main' الافتراضي — قبل قراءة الجلسة. لو كانت الجلسة دولية،
+       D يحوي بيانات الرئيسي خطأً (تسرّب في وضع الطوارئ/انقطاع Supabase).
+       نعيد تحميل البذرة الصحيحة للنظام الفعلي قبل أي عرض. */
+    if(activeSystem==='intl' && typeof D!=='undefined' && D.length){
+      var _looksMain = D.some(function(d){return d.sc==='خارج نطاق الوزارة';});
+      if(_looksMain){
+        try{
+          var _raw=window._bIntlRaw||'';
+          if(_raw){
+            var _intlD=JSON.parse(decodeURIComponent(escape(atob(_raw))));
+            if(Array.isArray(_intlD)){ D.length=0; _intlD.forEach(function(x){D.push(x);}); if(typeof M!=='undefined')M={}; }
+          }
+        }catch(_e){}
+      }
+    }
   }catch(e){}
   /* [LOADER-AFTER-AUTH-V1] أظهر مؤشّر التحميل فقط إذا كانت هناك جلسة محفوظة
      (سنستعيدها ونجلب بياناتها). بلا جلسة → تظهر شاشة الدخول مباشرةً بلا مؤشّر. */
@@ -29580,7 +29635,7 @@ function printExecSummary(){
     +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif,Arial;direction:rtl;background:#f0f4f8;font-size:16px}'
     +'.page{max-width:1240px;margin:0 auto;background:#fff;padding:30px 40px}'
     +'.toolbar{background:linear-gradient(135deg,#1673a4,#003944);padding:10px 20px;display:flex;gap:10px;align-items:center;position:sticky;top:0;z-index:99}'
-    +'@media print{@page{margin:8mm;size:13.333in 7.5in;orphans:3;widows:3}.np,.toolbar,.no-print{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}table{width:100%!important;border-collapse:collapse!important;page-break-inside:auto}thead{display:table-header-group!important}tr{page-break-inside:avoid}td,th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}canvas,img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}h1,h2,h3,h4{page-break-after:avoid!important;break-after:avoid!important}.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}</style></head><body>'
+    +'@media print{@page{size:13.333in 7.5in;margin:12mm;orphans:3;widows:3}.np,.toolbar,.no-print{display:none!important}body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.page,.page-wrap{box-shadow:none!important;padding:0!important;max-width:100%!important;margin:0!important}table{width:100%!important;border-collapse:collapse!important;page-break-inside:auto}thead{display:table-header-group!important}tr{page-break-inside:avoid}td,th{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}canvas,img{max-width:100%!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}h1,h2,h3,h4{page-break-after:avoid!important;break-after:avoid!important}.no-break,.sec,.rpt-section,.rpt-card,.rpt-chart-box,.rpt-cards,.exec-sum-page{page-break-inside:avoid!important;break-inside:avoid!important}.sec-hdr,.rpt-h3{break-after:avoid!important;page-break-after:avoid!important}}</style></head><body>'
     +'<div class="toolbar">'
     +'<button onclick="window.print()" style="background:linear-gradient(135deg,#27ae60,#1d8a4e);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:14pt;font-family:inherit;cursor:pointer;font-weight:700"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> طباعة / PDF</button>'
     +'<button onclick="window.close()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:8px 14px;font-size:13pt;font-family:inherit;cursor:pointer;margin-right:auto">× إغلاق</button>'
@@ -29809,7 +29864,7 @@ function buildS1Filters(){
     {id:'fDu',label:'المدة',options:[{v:'دائمة',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg> دائمة'},{v:'مؤقته',l:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="12" cy="12" r="9" fill="#f39c12" stroke="none"/></svg> مؤقتة'}]},
     {id:'fRo',label:'الدور',options:[
       {v:'رئيس',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> رئيس'},{v:'عضو',l:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> عضو'},
-      {v:'مشارك',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg> مشارك'},{v:'مشارك - وليس عضو',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg> مشارك (غير عضو)'}
+      {v:'مشارك - وليس عضو',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg> مشارك (غير عضو)'}
     ]},
     {id:'fRp',label:'الممثل',searchable:true,
       options:reps.map(function(r){return{v:r,l:r};})},
@@ -29855,7 +29910,7 @@ function buildS2Filters(){
     {id:'df_du',label:'المدة',options:[{v:'دائمة',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg> دائمة'},{v:'مؤقته',l:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><circle cx="12" cy="12" r="9" fill="#f39c12" stroke="none"/></svg> مؤقتة'}]},
     {id:'df_ro',label:'الدور',options:[
       {v:'رئيس',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/></svg> رئيس'},{v:'عضو',l:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> عضو'},
-      {v:'مشارك',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg> مشارك'},{v:'مشارك - وليس عضو',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg> مشارك (غير عضو)'}
+      {v:'مشارك - وليس عضو',l:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#208caa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i3"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"/></svg> مشارك (غير عضو)'}
     ]},
     {id:'df_rp',label:'الممثل',searchable:true,
       options:reps.map(function(r){return{v:r,l:r};})}
@@ -30044,7 +30099,7 @@ var IMPORT_AC = {
     'external':'خارج نطاق الوزارة','خارجي':'خارج نطاق الوزارة'
   },
   role: {
-    'member':'عضو','chair':'رئيس','رئيسي':'رئيس','participant':'مشارك'},
+    'member':'عضو','chair':'رئيس','رئيسي':'رئيس','participant':'مشارك - وليس عضو'},
   origin: {'basic':'أساسية','اساسية':'أساسية','derived':'منبثقة','منبثق':'منبثقة'}
 };
 
@@ -31189,6 +31244,16 @@ function openPermModal(email){
       var faSp=document.createElement('span');
       faSp.textContent='المعتمد النهائي — اعتماد وتوجيه المحاضر (الإدارة العليا)';
       faLbl.appendChild(faCb);faLbl.appendChild(faSp);scBody.appendChild(faLbl);
+      /* [GOV-UNIT-ROLE-V1] خانة «عضو وحدة المجالس واللجان» — فريق التدقيق والمراجعة */
+      var guLbl=document.createElement('label');
+      guLbl.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px;color:#7030a0;font-weight:700;cursor:pointer;padding:7px 0;border-bottom:1px dashed #e0d4f7;margin-bottom:4px';
+      var guCb=document.createElement('input');
+      guCb.type='checkbox';guCb.id='perm_is_gov_unit';
+      guCb.checked=p.is_gov_unit===true;
+      guCb.style.cssText='width:15px;height:15px;accent-color:#7030a0;cursor:pointer';
+      var guSp=document.createElement('span');
+      guSp.textContent='عضو وحدة المجالس واللجان — تدقيق المحاضر وإحالتها للمعتمد النهائي';
+      guLbl.appendChild(guCb);guLbl.appendChild(guSp);scBody.appendChild(guLbl);
     }
     /* [SCOPE-V2] المفوَّض يرى فقط لجانه عند التخصيص (لا يخصّص خارج نطاقه) */
     var _scopeList=window._permScopeDelegate;
@@ -31298,6 +31363,15 @@ async function savePermissions(email){
     var _prevF=AUTH_USERS.find(function(x){return x.email.toLowerCase()===email.toLowerCase();});
     if(_prevF&&_prevF.permissions&&typeof _prevF.permissions.is_final_approver!=='undefined')
       perms.is_final_approver=_prevF.permissions.is_final_approver;
+  }
+  /* [GOV-UNIT-ROLE-V1] حفظ صفة «عضو وحدة المجالس واللجان» — المدير فقط */
+  var _guEl=document.getElementById('perm_is_gov_unit');
+  if(_guEl && currentUser && currentUser.role==='admin'){
+    perms.is_gov_unit=_guEl.checked;
+  }else{
+    var _prevG=AUTH_USERS.find(function(x){return x.email.toLowerCase()===email.toLowerCase();});
+    if(_prevG&&_prevG.permissions&&typeof _prevG.permissions.is_gov_unit!=='undefined')
+      perms.is_gov_unit=_prevG.permissions.is_gov_unit;
   }
   try{
     await sbFetch(SB_TABLES[activeSystem].users+'?email=eq.'+encodeURIComponent(email),'PATCH',{permissions:perms});
@@ -32714,10 +32788,12 @@ function gmRender(){
   var body = document.getElementById('gmBody');
   if(!body) return;
   var tab = window.GM_ACTIVE_TAB || 'list';
+  /* [GM-REMOVE-VIEWS-V1] حُذف مخطط جانت وتقويم الاجتماعات من هذا القسم —
+     أي حالة محفوظة لهما تُعاد للقائمة لتفادي شاشة فارغة. */
+  if(tab==='gantt' || tab==='calendar'){ tab='list'; window.GM_ACTIVE_TAB='list'; }
   if(tab === 'list') gmRenderList(body);
   else if(tab === 'kanban') gmRenderKanban(body);
-  else if(tab === 'gantt') gmRenderGantt(body);
-  else if(tab === 'calendar') gmRenderCalendar(body);
+  else gmRenderList(body);
 }
 
 // ── الإحصائيات ──
@@ -33071,72 +33147,7 @@ function gmEditTask(mid, tid){
 }
 
 // ── عرض Gantt ──
-function gmRenderGantt(container){
-  /* إضافة legend في أعلى الغانت */
-  var _ganttLegend=document.createElement('div');
-  _ganttLegend.style.cssText='display:flex;flex-wrap:wrap;gap:8px;padding:8px 14px;background:#f5f8fb;border-bottom:1px solid #e2eaf2;font-size:10.5px;align-items:center;font-family:inherit';
-  _ganttLegend.innerHTML='<span style="font-weight:700;color:#208caa;margin-left:8px">دليل الألوان:</span>'
-    +'<span style="background:linear-gradient(135deg,#27ae60,#1d6a3b);color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">✓ منجز</span>'
-    +'<span style="background:linear-gradient(135deg,#208caa,#1673a4);color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">➤ على المسار</span>'
-    +'<span style="background:linear-gradient(135deg,#e74c3c,#922b21);color:#fff;padding:2px 10px;border-radius:5px;font-size:10px">⚠️ متأخر</span>'
-    +'<span style="margin-right:12px;color:#666">|</span>'
-    +'<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:3px;height:14px;background:#e74c3c;border-radius:2px"></span><span style="font-size:10px;color:#555">الخط الأحمر = اليوم</span></span>';
-  container.innerHTML='';
-  container.appendChild(_ganttLegend);
-  var _ganttBody=document.createElement('div');
-  container.appendChild(_ganttBody);
-  container=_ganttBody;
-  var tasks = gmFilteredTasks();
-  if(tasks.length===0){
-    container.innerHTML = '<div class="gm-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/></svg><div class="gm-empty-title">لا توجد تكليفات</div></div>';
-    return;
-  }
-  // حدد نطاق التواريخ
-  var minDate = null, maxDate = null;
-  tasks.forEach(function(t){
-    var mDate = gmParseDate(t.meetingDate);
-    var dDate = gmParseDate(t.task.dueDate);
-    if(mDate){ if(!minDate||mDate<minDate) minDate=mDate; }
-    if(dDate){ if(!maxDate||dDate>maxDate) maxDate=dDate; if(!minDate||dDate<minDate) minDate=dDate; }
-  });
-  if(!minDate) minDate = new Date();
-  if(!maxDate) maxDate = new Date(minDate.getTime() + 30*86400000);
-  // حد أدنى 14 يوم
-  var diffDays = Math.max(14, Math.ceil((maxDate-minDate)/86400000)+3);
-  var html = '<div class="gm-gantt">';
-  // رأس الأيام
-  html += '<div class="gm-gantt-hdr"><div class="gm-gantt-task-col">التكليف</div><div class="gm-gantt-timeline">';
-  for(var i=0;i<Math.min(diffDays,30);i++){
-    var d = new Date(minDate.getTime()+i*86400000);
-    html += '<div class="gm-gantt-day">'+d.getDate()+'/'+(d.getMonth()+1)+'</div>';
-  }
-  html += '</div></div>';
-  // صفوف التكليفات
-  tasks.forEach(function(t){
-    var startDate = gmParseDate(t.meetingDate) || minDate;
-    var endDate = gmParseDate(t.task.dueDate) || new Date(startDate.getTime()+3*86400000);
-    var startOffset = Math.max(0, (startDate-minDate)/86400000);
-    var duration = Math.max(1, (endDate-startDate)/86400000);
-    var leftPct = (startOffset/diffDays)*100;
-    var widthPct = Math.min(100-leftPct, (duration/diffDays)*100);
-    /* [v5.3 UX] صف Gantt تفاعلي: النقر على الصف أو الشريط → يفتح الاجتماع */
-    var _ganttTooltip = gmEsc(t.task.task) + ' | المسؤول: ' + gmEsc(t.task.responsible||'—') +
-        ' | البداية: ' + (t.meetingDate||'—') + ' | الاستحقاق: ' + (t.task.dueDate||'—') +
-        ' | الحالة: ' + (t.task.status||'على المسار');
-    var _ganttMid = (window.GM_DATA && window.GM_DATA.meetings || []).find(function(_m){return _m.tasks && _m.tasks.indexOf(t.task)>=0;});
-    var _ganttMidId = (_ganttMid && _ganttMid.id) || t.meetingId || '';
-    html += '<div class="gm-gantt-row" data-mid="'+_ganttMidId+'" onclick="if(typeof gmOpenMeeting===\'function\' && this.dataset.mid) gmOpenMeeting(this.dataset.mid);" style="cursor:pointer" title="'+_ganttTooltip+'">'+
-      '<div class="gm-gantt-task-col">'+gmEsc((t.task.task||'').substring(0,60))+'</div>'+
-      '<div class="gm-gantt-bar-wrap">'+
-        '<div class="gm-gantt-bar" data-status="'+(t.task.status||'على المسار')+'" style="right:'+leftPct+'%;width:'+widthPct+'%" title="'+_ganttTooltip+'">'+
-          gmEsc(t.task.responsible||'')+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  });
-  html += '</div>';
-  container.innerHTML = html;
-}
+
 
 // ── التقويم ──
 function gmCalNav(dir){
@@ -33145,55 +33156,7 @@ function gmCalNav(dir){
   gmRender();
 }
 
-function gmRenderCalendar(container){
-  var cur = window.GM_CAL_CURSOR || new Date();
-  var year = cur.getFullYear(), month = cur.getMonth();
-  var firstDay = new Date(year, month, 1).getDay();
-  var daysInMonth = new Date(year, month+1, 0).getDate();
-  var today = new Date(); today.setHours(0,0,0,0);
-  var monthName = cur.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{month:'long',year:'numeric'});
-  // اجتماعات الشهر
-  var mtgsByDay = {};
-  (window.GM_DATA.meetings||[]).forEach(function(m){
-    var d = gmParseDate(m.date);
-    if(!d) return;
-    if(d.getFullYear()===year && d.getMonth()===month){
-      var day = d.getDate();
-      (mtgsByDay[day] = mtgsByDay[day] || []).push(m);
-    }
-  });
-  var html = '<div class="gm-cal-wrap">'+
-    '<div class="gm-cal-hdr">'+
-      '<div class="gm-cal-title">'+monthName+'</div>'+
-      '<div class="gm-cal-nav">'+
-        '<button onclick="gmCalNav(-1)">‹ السابق</button>'+
-        '<button onclick="gmCalNav(0)">اليوم</button>'+
-        '<button onclick="gmCalNav(1)">التالي ›</button>'+
-      '</div>'+
-    '</div>'+
-    '<div class="gm-cal-grid">';
-  ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'].forEach(function(d){
-    html += '<div class="gm-cal-daylbl">'+d+'</div>';
-  });
-  // خلايا فارغة قبل اليوم الأول
-  for(var e=0; e<firstDay; e++) html += '<div class="gm-cal-cell empty"></div>';
-  // الأيام
-  for(var d=1; d<=daysInMonth; d++){
-    var dt = new Date(year, month, d);
-    var isToday = dt.getTime() === today.getTime();
-    var mtgs = mtgsByDay[d] || [];
-    var cls = 'gm-cal-cell'+(isToday?' today':'')+(mtgs.length?' has-mtg':'');
-    html += '<div class="'+cls+'"'+(mtgs.length?' onclick="gmCalDayClick(\''+year+'-'+(month+1)+'-'+d+'\')"':'')+'>';
-    html += '<div class="gm-cal-daynum">'+d+'</div>';
-    mtgs.slice(0,2).forEach(function(m){
-      html += '<div class="gm-cal-mtg" title="'+gmEsc(m.name||'')+'">'+gmEsc((m.name||'').substring(0,25))+'</div>';
-    });
-    if(mtgs.length>2) html += '<div class="gm-cal-more">+ '+(mtgs.length-2)+' المزيد</div>';
-    html += '</div>';
-  }
-  html += '</div></div>';
-  container.innerHTML = html;
-}
+
 
 function gmCalDayClick(dateStr){
   // عرض قائمة اجتماعات ذلك اليوم
@@ -34353,7 +34316,7 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
   if(!m){ alert('الاجتماع غير موجود'); return; }
   var now = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', {year:'numeric',month:'long',day:'numeric'});
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>محضر اجتماع - '+gmEsc(m.name||'')+'</title>';
-  html += '<style>@page{size:13.333in 7.5in;margin:0}';
+  html += '<style>@page{size:13.333in 7.5in;margin:12mm}';
   html += 'body{font-family:"Sakkal Majalla","Arial",sans-serif;direction:rtl;color:#003944;margin:0;padding:0;font-size:12pt}';
   html += '.cover{text-align:center;padding:40px 20px;border-bottom:4px double #208caa;margin-bottom:30px}';
   html += '.cover h1{color:#1673a4;font-size:22pt;margin:8px 0}';
@@ -35304,8 +35267,36 @@ window.dtextRescan=function(){
       el.textContent=val;
       return;
     }
-    /* العنصر يحوي svg/etc + text → احذف كل text nodes ثم ضع واحداً في النهاية */
-    textNodes.forEach(function(tn){ if(tn.parentNode===el) el.removeChild(tn); });
+    /* [NO-DUP-TEXT-V2 2026] إصلاح جذري للتكرار:
+       العنصر يحوي عناصر فرعية (svg + span مثلاً، كأزرار السايدبار).
+       أولاً: إن كان النص داخل عنصر مضمّن نصّي (span/b/em/strong/small) — نطبّقه عليه
+       (لا نضيف text node خارجياً يكرّر النص الظاهر في الـspan).
+       ثانياً: إن وُجد text node مباشر غير فارغ — نحدّثه بدل الإضافة.
+       ثالثاً (أخير): لا text node ولا span نصّي — نضيف واحداً (الحالة النادرة). */
+    var inlineTextEl=null;
+    for(var m=0;m<el.childNodes.length;m++){
+      var cn=el.childNodes[m];
+      if(cn.nodeType===1){
+        var tag=cn.tagName.toLowerCase();
+        if(['span','b','strong','em','small','i'].indexOf(tag)>=0 && (cn.textContent||'').trim().length>0){
+          inlineTextEl=cn; break;
+        }
+      }
+    }
+    if(inlineTextEl){
+      /* طبّق على العنصر المضمّن نفسه (يحافظ على بنيته) واحذف أي text nodes مباشرة مكرّرة */
+      textNodes.forEach(function(tn){ if(tn.parentNode===el && (tn.textContent||'').trim()) el.removeChild(tn); });
+      inlineTextEl.textContent=val;
+      return;
+    }
+    /* لا عنصر نصّي مضمّن: حدّث أول text node غير فارغ، أو احذف الفوارغ وأضف واحداً */
+    var nonEmpty=textNodes.filter(function(tn){return (tn.textContent||'').trim();});
+    if(nonEmpty.length){
+      nonEmpty[0].textContent=' '+val;
+      /* احذف بقية text nodes النصية لتفادي التكرار */
+      for(var n=1;n<nonEmpty.length;n++){ if(nonEmpty[n].parentNode===el) el.removeChild(nonEmpty[n]); }
+      return;
+    }
     el.appendChild(el.ownerDocument.createTextNode(' '+val));
   }
   document.querySelectorAll(sel).forEach(function(el){
