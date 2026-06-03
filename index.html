@@ -8573,6 +8573,11 @@ function isRealViewer(){
     /* المخصّص: ليس viewer حقيقياً — يخضع لـ canDo بفرع scoped */
     if(p.is_scoped===true)return false;
     if(Array.isArray(p.allowed_committees)&&p.allowed_committees.length>0)return false;
+    /* [FINAL-APPROVER-SAVE-FIX] المعتمد النهائي وإن كان دوره «مشاهد»، له صلاحية
+       فعلية (اعتماد/إعادة المحاضر) تتطلّب حفظ الانتقال على الخادم — فليس مشاهداً
+       حقيقياً يُمنع من الحفظ. وكذلك عضو وحدة المجالس إن مُنح الصفة صراحةً. */
+    if(p.is_final_approver===true)return false;
+    if(p.is_gov_unit===true)return false;
     return true;
   }catch(e){return false;}
 }
@@ -9267,7 +9272,77 @@ function openMinutesReview(di, mi){
     })();
 
     var bodyHtml = '<div style="padding:18px 22px;overflow-y:auto;flex:1">'
-      + pdfRow + lcBlock + attachBlock + minutesBlock + tasksBlock + logBlock
+      + (function(){
+        /* [REQUEST-SUMMARY-V1] بطاقة ملخص الطلب الواضحة — من أنشأ، بيانات الاجتماع،
+           أين الطلب الآن، والسلسلة المنسّقة. تظهر للمدقق والمعتمد بوضوح. */
+        try{
+          var ws=wfState(m);
+          var stageNames={0:'مسودة لدى المُنشئ',1:'بانتظار تدقيق وحدة المجالس',2:'قيد التدقيق لدى الوحدة',3:'بانتظار اعتماد المعتمد النهائي',4:'معتمد — بانتظار النشر',5:'منشور',6:'مؤرشف'};
+          var stageColors={0:'#697585',1:'#b45309',2:'#208caa',3:'#7e22ce',4:'#15673c',5:'#0f5e54',6:'#003944'};
+          var creator = m._scopedBy || (m.wf_log&&m.wf_log[0]&&m.wf_log[0].by) || m.wf_by || '—';
+          var commName=(D[di]&&D[di].n)||'—';
+          var stColor=stageColors[ws]||'#697585';
+          var stName=stageNames[ws]||'—';
+          /* السلسلة: المُنشئ → المدقق → المعتمد */
+          function chainStep(label,name,active,done){
+            var c=done?'#15673c':(active?stColor:'#cbd5e1');
+            var bg=done?'#e7f3ec':(active?'#f8f4ff':'#f1f5f9');
+            return '<div style="flex:1;text-align:center;min-width:90px">'
+              +'<div style="width:30px;height:30px;border-radius:50%;background:'+bg+';border:2px solid '+c+';display:flex;align-items:center;justify-content:center;margin:0 auto 5px;color:'+c+';font-weight:800;font-size:13px">'+(done?'✓':(active?'●':'○'))+'</div>'
+              +'<div style="font-size:10.5px;font-weight:700;color:'+(active||done?'#16202e':'#94a3b8')+'">'+label+'</div>'
+              +'<div style="font-size:9.5px;color:#94a3b8;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e(String(name||'—').slice(0,18))+'</div></div>';
+          }
+          /* أسماء أطراف السلسلة من السجل */
+          var auditorName='—', approverName='—';
+          if(Array.isArray(m.wf_log)){
+            m.wf_log.forEach(function(L){
+              if(L.to===2||L.to===3){ if(L.from===1||L.from===2) auditorName=L.by||auditorName; }
+              if(L.to===4){ approverName=L.by||approverName; }
+            });
+          }
+          var sep='<div style="flex:0 0 18px;height:2px;background:#e2e8f0;margin-top:14px"></div>';
+          return '<div style="background:linear-gradient(135deg,#fbfdff,#f5f8ff);border:1px solid #e3e9f5;border-radius:14px;padding:16px 18px;margin-bottom:16px">'
+            /* صف بيانات الاجتماع */
+            +'<div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px">'
+              +'<div style="flex:2;min-width:200px"><div style="font-size:10px;color:#8aa1ab;font-weight:700">اللجنة</div><div style="font-size:13.5px;font-weight:700;color:#16202e">'+e(commName)+'</div></div>'
+              +'<div><div style="font-size:10px;color:#8aa1ab;font-weight:700">رقم الاجتماع</div><div style="font-size:13.5px;font-weight:700;color:#16202e">'+e(String(m.meetNum||(mi+1)))+'</div></div>'
+              +'<div><div style="font-size:10px;color:#8aa1ab;font-weight:700">التاريخ</div><div style="font-size:13.5px;font-weight:700;color:#16202e">'+e(m.date||'—')+'</div></div>'
+              +'<div><div style="font-size:10px;color:#8aa1ab;font-weight:700">أنشأه</div><div style="font-size:13.5px;font-weight:700;color:#7e22ce">'+e(creator)+'</div></div>'
+            +'</div>'
+            /* الموقع الحالي */
+            +'<div style="display:inline-flex;align-items:center;gap:7px;background:'+stColor+'14;border:1px solid '+stColor+'44;border-radius:9px;padding:6px 13px;margin-bottom:15px">'
+              +'<span style="width:8px;height:8px;border-radius:50%;background:'+stColor+'"></span>'
+              +'<span style="font-size:11.5px;color:#8aa1ab;font-weight:600">الموقع الحالي:</span>'
+              +'<span style="font-size:12.5px;font-weight:800;color:'+stColor+'">'+stName+'</span></div>'
+            /* السلسلة */
+            +'<div style="display:flex;align-items:flex-start;gap:4px;background:#fff;border-radius:10px;padding:12px 10px">'
+              +chainStep('المُنشئ',creator,ws===0,ws>=1)
+              +sep
+              +chainStep('وحدة المجالس',auditorName,ws===1||ws===2,ws>=3)
+              +sep
+              +chainStep('المعتمد النهائي',approverName,ws===3,ws>=4)
+              +sep
+              +chainStep('النشر',(ws>=5?'تم':'—'),ws===4,ws>=5)
+            +'</div>'
+          +'</div>';
+        }catch(_){ return ''; }
+      })()
+      + pdfRow + lcBlock
+      + (function(){
+        /* [AUDITOR-NOTE-V1] عرض ملاحظة المدقق (وحدة المجالس) — تظهر للمعتمد النهائي بوضوح */
+        try{
+          if(m.lc_auditor_note && m.lc_auditor_note.text){
+            var an=m.lc_auditor_note;
+            return '<div style="background:#fff;border:1px solid #e0d4f7;border-right:4px solid #7e22ce;border-radius:12px;margin-bottom:16px;overflow:hidden">'
+              +'<div style="font-size:12px;font-weight:700;color:#7e22ce;padding:11px 15px;border-bottom:1px solid #f0eafb;background:#faf7ff">&#9998; ملاحظات المدقق (وحدة المجالس واللجان)</div>'
+              +'<div style="padding:13px 15px;font-size:13px;color:#16202e;line-height:1.7">'+e(an.text)+'</div>'
+              +'<div style="padding:7px 15px;font-size:10.5px;color:#94a3b8;border-top:1px solid #f5f5f5">'+e(an.by||'')+(an.at?' · '+(new Date(an.at)).toLocaleDateString('ar'):'')+'</div>'
+            +'</div>';
+          }
+        }catch(_){}
+        return '';
+      })()
+      + attachBlock + minutesBlock + tasksBlock + logBlock
     +'</div>';
 
     /* ── الأزرار: مرنة بحسب الحالة ودور المستخدم ── */
@@ -9346,7 +9421,17 @@ function openMinutesReview(di, mi){
             wfTransition(di, mi, 2);
             close();
           } else if(act==='forward'){
-            wfTransition(di, mi, 3);
+            /* [AUDITOR-NOTE-V1] ملاحظات المدقق (وحدة المجالس) قبل الإحالة للمعتمد —
+               اختيارية، تُسجّل في السجل وتظهر للمعتمد النهائي ضمن المرئيات. */
+            var _audNote = prompt('ملاحظات المدقق للمعتمد النهائي (اختياري — تظهر له مع المحضر):','');
+            if(_audNote===null) return; /* ألغى */
+            _audNote=(_audNote||'').trim();
+            if(_audNote){
+              try{
+                m.lc_auditor_note = { text:_audNote, by:(currentUser&&(currentUser.name||currentUser.email))||'', at:new Date().toISOString() };
+              }catch(_){}
+            }
+            wfTransition(di, mi, 3, _audNote ? ('ملاحظة المدقق: '+_audNote) : 'إحالة للاعتماد');
             close();
           } else if(act==='publish'){
             wfTransition(di, mi, 5);
@@ -11505,6 +11590,9 @@ function wfTransition(di, mi, to, note){
     if(typeof showToast==='function')showToast('المحضر الآن: '+WF_LABELS[to]+(note?(' — '+note):''));
     if(typeof renS3Main==='function')renS3Main();
     if(typeof govRender==='function'&&document.getElementById('govBody'))govRender();
+    /* [NOTIF-LIVE-V1] تحديث جرس الإشعارات فوراً بعد الانتقال (لا ننتظر دورة الـ60 ثانية)
+       — العدّاد يعكس الطلب الجديد لحظياً ويومض لجذب الانتباه. */
+    if(typeof wfNotifRefresh==='function'){ try{ wfNotifRefresh(); }catch(_){} }
     return true;
   }catch(e){ if(typeof showToast==='function')showToast('تعذّر تنفيذ الإجراء',true); return false; }
 }
@@ -16956,13 +17044,13 @@ function renS3Sidebar(){
   });
   var list=document.getElementById('s3SideList');
   list.innerHTML=items.map(function(x){
-    var d=x.d,di=x.di,mc=GM(di).length;
-    var tc=0;GM(di).forEach(function(m){tc+=m.tasks.length;});
+    var d=x.d,di=x.di,mc=_s3VisibleMeetings(di).length;
+    var tc=0;_s3VisibleMeetings(di).forEach(function(m){tc+=m.tasks.length;});
     var isActive=selectedS3===di;
-    var _nm=null;GM(di).forEach(function(m){var mts=meetingTimeStatus(m.date);if(mts&&(mts.type==='today'||mts.type==='tomorrow'||mts.type==='soon')){if(!_nm||mts.days<_nm.days)_nm=mts;}});
+    var _nm=null;_s3VisibleMeetings(di).forEach(function(m){var mts=meetingTimeStatus(m.date);if(mts&&(mts.type==='today'||mts.type==='tomorrow'||mts.type==='soon')){if(!_nm||mts.days<_nm.days)_nm=mts;}});
     var _lastDate = '';
     if(mc){
-      var _meetings = GM(di).slice();
+      var _meetings = _s3VisibleMeetings(di).slice();
       _meetings.sort(function(a,b){
         var da=parseArabicDate(a.date), db=parseArabicDate(b.date);
         if(!da&&!db)return 0; if(!da)return 1; if(!db)return -1;
@@ -20040,7 +20128,8 @@ function wfComputeNotifs(){
       }
     }
     /* [AUTO-REMIND-V1] تذكيرات التكليفات: مستحقة قريباً (≤3 أيام) أو متأخرة — ضمن النطاق */
-    try{
+    var _opsRole = isGov || isAdmin || isScoped; /* [NOTIF-VIEWER-FIX] التذكيرات للأدوار التشغيلية فقط */
+    if(_opsRole){ try{
       var allT=(typeof s4GetAllTasks==='function')?s4GetAllTasks():[];
       var today=new Date(); today.setHours(0,0,0,0);
       var lateCount=0, soonCount=0;
@@ -20053,7 +20142,7 @@ function wfComputeNotifs(){
         if(diff<0){ if(lateCount<6){out.action.push({di:t.di,mi:t.mi,committee:t.committee,meetNum:t.meetNum,kind:'taskLate',txt:'تكليف متأخر: '+(t.task||'').slice(0,40)});} lateCount++; }
         else if(diff<=3){ if(soonCount<6){out.action.push({di:t.di,mi:t.mi,committee:t.committee,meetNum:t.meetNum,kind:'taskSoon',txt:'تكليف يستحق خلال '+diff+' أيام: '+(t.task||'').slice(0,35)});} soonCount++; }
       });
-    }catch(_){}
+    }catch(_){} }
     out.info=out.info.slice(0,5);
     out.total=out.action.length; /* الجرس يعدّ ما يحتاج إجراءً فقط */
   }catch(e){}
@@ -20085,10 +20174,29 @@ function wfNotifInit(){
 }
 function wfNotifRefresh(){
   var badge=document.getElementById('wfNotifBadge');
+  var bell=document.getElementById('wfNotifBell');
   if(!badge) return;
+  /* [NOTIF-PULSE-V1] حقن keyframes الوميض مرة واحدة */
+  if(!document.getElementById('wfNotifPulseStyle')){
+    var st=document.createElement('style'); st.id='wfNotifPulseStyle';
+    st.textContent='@keyframes wfBellRing{0%,100%{transform:rotate(0)}10%,30%{transform:rotate(-12deg)}20%,40%{transform:rotate(12deg)}50%{transform:rotate(0)}}'
+      +'@keyframes wfBadgePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(231,76,60,.7)}50%{transform:scale(1.18);box-shadow:0 0 0 6px rgba(231,76,60,0)}}'
+      +'@keyframes wfBellGlow{0%,100%{box-shadow:0 0 0 0 rgba(231,76,60,.5)}50%{box-shadow:0 0 0 5px rgba(231,76,60,0)}}'
+      +'.wf-bell-active{animation:wfBellRing 1.4s ease-in-out infinite, wfBellGlow 1.8s ease-out infinite !important}'
+      +'.wf-badge-active{animation:wfBadgePulse 1.4s ease-in-out infinite !important}';
+    document.head.appendChild(st);
+  }
   var n=wfComputeNotifs();
-  if(n.total>0){ badge.textContent=n.total>99?'99+':n.total; badge.style.display='flex'; }
-  else { badge.style.display='none'; }
+  if(n.total>0){
+    badge.textContent=n.total>99?'99+':n.total;
+    badge.style.display='flex';
+    badge.classList.add('wf-badge-active');
+    if(bell) bell.classList.add('wf-bell-active');
+  }else{
+    badge.style.display='none';
+    badge.classList.remove('wf-badge-active');
+    if(bell) bell.classList.remove('wf-bell-active');
+  }
 }
 function wfNotifToggle(){
   var panel=document.getElementById('wfNotifPanel');
@@ -20565,14 +20673,36 @@ var S3_MONTHS_AR = ['يناير','فبراير','مارس','أبريل','ماي�
                     'يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 var S3_DAYS_AR   = ['أح','إث','ث','أر','خ','ج','س']; /* Sunday first */
 
+/* [SCOPED-MEETING-PRIVACY-V1] اجتماعات لجنة مرئية للمستخدم الحالي:
+   تستبعد اجتماعات المخصّص (_scopedAdd) إلا لمنشئها — تُستخدم في العدّ والإشارات. */
+function _s3VisibleMeetings(di){
+  var ms=(typeof GM==='function')?(GM(di)||[]):[];
+  var me=(typeof currentUser!=='undefined'&&currentUser)?(currentUser.name||currentUser.email||''):'';
+  var meEmail=(typeof currentUser!=='undefined'&&currentUser)?(currentUser.email||''):'';
+  return ms.filter(function(m){
+    if(m && m._scopedAdd===true){
+      return (m._scopedBy===me)||(m._scopedBy===meEmail);
+    }
+    return true;
+  });
+}
 function s3GetAllMeetings(){
   /* يجمع كل الاجتماعات من جميع اللجان */
   var list=[];
+  /* [SCOPED-MEETING-PRIVACY-V1] هل المستخدم الحالي مخصّص؟ (لمعرفة ما يخصّه) */
+  var _meName=(typeof currentUser!=='undefined'&&currentUser)?(currentUser.name||currentUser.email||''):'';
+  var _meEmail=(typeof currentUser!=='undefined'&&currentUser)?(currentUser.email||''):'';
   D.forEach(function(d,di){
     if(!govInScope(di))return; /* [SCOPE-V3] عزل: اجتماعات لجان خارج النطاق لا تُعرض */
     var ms=GM(di);
     ms.forEach(function(m,mi){
       if(!m.date)return;
+      /* [SCOPED-MEETING-PRIVACY-V1] اجتماعات المخصّص خاصة به وحده — لا تظهر لأحد
+         (مديراً كان أو غيره) إلا لمنشئها. هي عمل تحضيري شخصي حتى يُرفع المحضر رسمياً. */
+      if(m._scopedAdd===true){
+        var _byMe=(m._scopedBy===_meName)||(m._scopedBy===_meEmail);
+        if(!_byMe) return;
+      }
       list.push({
         date:m.date,          /* YYYY-MM-DD */
         committee:d.n,
@@ -32975,19 +33105,20 @@ function gmRenderList(container){
           tasksHtml+
         '</div>'
       : '')+
+      /* [GM-CARD-PERM-V1] أزرار التحكم مشروطة بالصلاحية — المشاهد لا يرى تعديل/بريد/حذف/طباعة */
       '<div class="gm-list-actions">'+
-        '<button class="gm-act-btn" onclick="gmOpenMeeting(\''+m.id+'\')" title="تعديل">'+
+        ((typeof canDo==='function'&&canDo('edit_meeting'))?'<button class="gm-act-btn" onclick="gmOpenMeeting(\''+m.id+'\')" title="تعديل">'+
           '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'+
-        '</button>'+
-        '<button class="gm-act-btn" onclick="gmPrintMeetingPDF(\''+m.id+'\')" title="PDF الاجتماع" style="color:#922b21">'+
+        '</button>':'')+
+        ((typeof canDo==='function'&&canDo('print'))?'<button class="gm-act-btn" onclick="gmPrintMeetingPDF(\''+m.id+'\')" title="PDF الاجتماع" style="color:#922b21">'+
           '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'+
-        '</button>'+
-        '<button class="gm-act-btn" onclick="gmNotifyAttendees(\''+m.id+'\')" title="إخطار الحضور بالبريد" style="color:#7030a0">'+
+        '</button>':'')+
+        ((typeof canDo==='function'&&canDo('edit_meeting'))?'<button class="gm-act-btn" onclick="gmNotifyAttendees(\''+m.id+'\')" title="إخطار الحضور بالبريد" style="color:#7030a0">'+
           '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>'+
-        '</button>'+
-        '<button class="gm-act-btn danger" onclick="gmDeleteMeeting(\''+m.id+'\')" title="حذف">'+
+        '</button>':'')+
+        ((typeof canDo==='function'&&canDo('del_meeting'))?'<button class="gm-act-btn danger" onclick="gmDeleteMeeting(\''+m.id+'\')" title="حذف">'+
           '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>'+
-        '</button>'+
+        '</button>':'')+
       '</div>'+
     '</div>';
   });
@@ -33179,6 +33310,8 @@ function gmCalDayClick(dateStr){
 
 // ── نافذة الاجتماع (إضافة/تعديل) ──
 function gmOpenMeeting(id){
+  /* [GM-GUARD-V1] حارس دفاعي: التعديل يتطلب صلاحية edit_meeting */
+  if(typeof canDo==='function'&&!canDo('edit_meeting')){if(typeof showToast==='function')showToast('ليس لديك صلاحية تعديل الاجتماعات',true);return;}
   window.GM_EDIT_ID = id || null;
   var meeting = id ? (window.GM_DATA.meetings||[]).find(function(m){return m.id===id;}) : null;
   if(id && !meeting){ alert('لم يتم العثور على الاجتماع'); return; }
@@ -34282,6 +34415,8 @@ function gmBrowserNotify(){
 // إخطار حضور اجتماع واحد بالبريد
 // ══════════════════════════════════════════════════════════════
 function gmNotifyAttendees(mid){
+  /* [GM-GUARD-V1] حارس دفاعي: الإخطار إجراء تحكّم يتطلب edit_meeting */
+  if(typeof canDo==='function'&&!canDo('edit_meeting')){if(typeof showToast==='function')showToast('ليس لديك صلاحية إخطار الحضور',true);return;}
   var m = (window.GM_DATA.meetings||[]).find(function(x){return x.id===mid;});
   if(!m){ alert('الاجتماع غير موجود'); return; }
   var emails = (m.attendees||[]).map(function(a){return (a.email||'').trim();}).filter(Boolean);
