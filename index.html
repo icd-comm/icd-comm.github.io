@@ -14368,7 +14368,7 @@ window._redrawCurrentSection = function(){
   }
 };
 
-function goTo(sec){if(sec==='s5'&&activeSystem!=='intl'){sec='s1';} _syncGlobalSearch(sec);
+function goTo(sec){if(sec==='s5'&&activeSystem!=='intl'){sec='s1';} if((sec==='sgov'||sec==='sgm')&&activeSystem==='intl'){sec='s3';} _syncGlobalSearch(sec);
   /* فحص صلاحية الوصول للقسم */
   if(sec==='s2'&&!canDo('view_dashboard')){
     showToast('ليس لديك صلاحية الوصول للوحة الإحصاءات',true);return;
@@ -20041,6 +20041,32 @@ function applyRoleUI(){
       /* إن كان المستخدم داخل قسم عام الآن، أعِده لقسم التحضير */
       if(typeof activeSec!=='undefined' && (activeSec==='sgm'||activeSec==='s4')
          && typeof goTo==='function') goTo('s3');
+    }
+  }catch(e){}
+  /* [INTL-HIDE-SECTIONS-V1] في النظام الدولي فقط: إخفاء قسم المحاضر والمذكرات (sgov)
+     وقسم الاجتماعات والتكليفات العامة (sgm) — غير مستخدمَين في المسار الدولي.
+     يبقيان كاملَين في النظام الرئيسي. */
+  try{
+    var _oldIntlSc=document.getElementById('intlHideStyle');
+    if(_oldIntlSc)_oldIntlSc.remove();
+    if(typeof activeSystem!=='undefined' && activeSystem==='intl'){
+      ['lsb-sgov','lsb-sgm'].forEach(function(id){
+        var elx=document.getElementById(id);
+        if(elx)elx.style.display='none';
+      });
+      var _isc=document.createElement('style');
+      _isc.id='intlHideStyle';
+      _isc.textContent='#lsb-sgov,#lsb-sgm{display:none!important}';
+      document.head.appendChild(_isc);
+      /* إن كان المستخدم داخل أحد القسمين المخفيين، أعِده لقسم التحضير */
+      if(typeof activeSec!=='undefined' && (activeSec==='sgov'||activeSec==='sgm')
+         && typeof goTo==='function') goTo('s3');
+    }else{
+      /* النظام الرئيسي: تأكّد من ظهورهما (في حال التبديل من الدولي) */
+      ['lsb-sgov','lsb-sgm'].forEach(function(id){
+        var elx=document.getElementById(id);
+        if(elx && elx.style.display==='none' && !(currentUser&&currentUser.permissions&&Array.isArray(currentUser.permissions.allowed_committees)&&currentUser.permissions.allowed_committees.length>0)) elx.style.display='';
+      });
     }
   }catch(e){}
 }
