@@ -12314,8 +12314,12 @@ var __PP_FRAME_CSS =
   +'*:not(.cover-page-reset-wrap):not(.cover-page-reset-wrap *){max-width:100% !important;box-sizing:border-box !important}'
   +'body{overflow-x:hidden !important}'
   /* (ب) الجداول: تخطيط ثابت يلتزم العرض، حدود نظيفة، لا تمدّد */
-  +'table{table-layout:fixed !important;width:100% !important;border-collapse:collapse !important;word-wrap:break-word !important;overflow-wrap:break-word !important}'
-  +'th,td{word-wrap:break-word !important;overflow-wrap:break-word !important;word-break:break-word !important;white-space:normal !important;vertical-align:top !important}'
+  /* [SMART-TABLE-COLS-V1] الأعمدة تتّسع/تضيق ذكياً حسب محتواها (table-layout:auto)
+     بدل التوزيع المتساوي (fixed). word-break يمنع التجاوز. */
+  +'table{table-layout:auto !important;width:100% !important;border-collapse:collapse !important}'
+  +'th,td{overflow-wrap:break-word !important;word-break:break-word !important;vertical-align:top !important}'
+  /* العمود الأول (#/الترقيم): ينكمش لمحتواه (رقم صغير) بدل أخذ عرض مساوٍ للنص */
+  +'table th:first-child,table td:first-child{width:1% !important;white-space:nowrap !important;text-align:center !important;padding-left:6px !important;padding-right:6px !important}'
   /* رأس الجدول يتكرّر في كل صفحة (احترافي للجداول الطويلة) */
   +'thead{display:table-header-group !important}'
   +'tr{page-break-inside:avoid !important;break-inside:avoid !important}'
@@ -16445,7 +16449,7 @@ html+='<div class="exec-sum-page">'    +'<div class="esp-head">'      +'<div cla
       html+='</div>';
 
       /* الجدول: 4 أعمدة فقط — اسم اللجنة | التكليف | المسؤول | الحالة */
-      html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:9.5pt;table-layout:fixed">';
+      html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:9.5pt;table-layout:auto">';
       html+='<colgroup>';
       html+='<col style="width:30%">';  /* اسم اللجنة */
       html+='<col style="width:40%">';  /* التكليف */
