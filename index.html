@@ -12208,7 +12208,25 @@ var __PP_PAD_V = '8mm';   /* [PP-REFINE] حشوة رأسية أصغر — محت
 var __PP_PAD_H = '9mm';   /* [PP-REFINE] حشوة أفقية أصغر — محتوى أوسع */
 var __PP_PAD   = __PP_PAD_V+' '+__PP_PAD_H;  /* للتوافق العكسي */
 var __PP_FRAME_CSS =
-   '@media print{'
+   /* [PREVIEW-SCREEN-FIT-V1] على الشاشة (المعاينة): حاويات التقرير تملأ عرض النافذة
+      بدل 13.333in الثابتة (التي تتجاوز عرض نافذة المعاينة فتُصغّر المحتوى وتُصعّب
+      القراءة). الجداول والخطوط بحجم مريح. مقاس الطباعة الفعلي يبقى في @media print. */
+   '@media screen{'
+  +'.report-wrapper,.report-content{max-width:100%!important;width:100%!important}'
+  +'.report-content{padding:14mm 12mm!important}'
+  +'table,.tasks-table,.rpt-table{width:100%!important;font-size:13pt!important}'
+  +'table th,table td,.tasks-table th,.tasks-table td{padding:9px 11px!important}'
+  +'.chart-card,.cc,.chart-box{min-height:auto!important}'
+  /* [PREVIEW-NO-CROP-V2] منع الغلاف وأي عنصر من تجاوز الشاشة في المعاينة:
+     الغلاف full-bleed بعرض ثابت 13.333in — على الشاشة نجعله يملأ النافذة بلا قصّ،
+     ونمنع أي تمرير أفقي. كل شيء يتّسع داخل النافذة (جوانب/أعلى/أسفل). */
+  +'html,body{overflow-x:hidden!important;max-width:100%!important}'
+  +'.cover-page-reset-wrap,.cover-page,[class*="cover"]{width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important}'
+  +'.cover-page-reset-wrap>*{max-width:100%!important}'
+  +'*{max-width:100%!important}'
+  +'img,svg,canvas{max-width:100%!important;height:auto!important}'
+  +'}'
+  +'@media print{'
   /* (1) @page{margin:0} — مرجع position:fixed = حافة الورق الحقيقية
      (النمط المُثبت تقنياً). حجم موحّد لكل الصفحات غلافاً ومحتوى. */
   +'@page{margin:0 !important;size:13.333in 7.5in}'
@@ -12277,6 +12295,31 @@ var __PP_FRAME_CSS =
   /* أي عنصر يحوي canvas: كتلة واحدة + ارتفاع محدود ليتّسع في صفحة طباعة واحدة */
   +'div:has(>canvas),div:has(canvas){page-break-inside:avoid !important;break-inside:avoid !important}'
   +'canvas{max-height:5.5in !important;height:auto !important}'
+  /* ════════ [PRINT-PRO-MECHANISM-V1] آلية احترافية قاطعة للطباعة ════════
+     تضمن (لا تحسّن فقط): (أ) المحتوى لا يخرج عرضياً عن منطقة الإطار،
+     (ب) الجداول ثابتة التخطيط فلا تتمدّد أعمدتها، (ج) النصوص الطويلة تلتفّ،
+     (د) الرسوم بعنوانها كتلة واحدة لا تنقسم أبداً. */
+  /* (أ) حصر عرضي قاطع: لا عنصر يتجاوز عرض منطقة المحتوى (عدا الغلاف full-bleed) */
+  +'*:not(.cover-page-reset-wrap):not(.cover-page-reset-wrap *){max-width:100% !important;box-sizing:border-box !important}'
+  +'body{overflow-x:hidden !important}'
+  /* (ب) الجداول: تخطيط ثابت يلتزم العرض، حدود نظيفة، لا تمدّد */
+  +'table{table-layout:fixed !important;width:100% !important;border-collapse:collapse !important;word-wrap:break-word !important;overflow-wrap:break-word !important}'
+  +'th,td{word-wrap:break-word !important;overflow-wrap:break-word !important;word-break:break-word !important;white-space:normal !important;vertical-align:top !important}'
+  /* رأس الجدول يتكرّر في كل صفحة (احترافي للجداول الطويلة) */
+  +'thead{display:table-header-group !important}'
+  +'tr{page-break-inside:avoid !important;break-inside:avoid !important}'
+  /* (ج) النصوص الطويلة (روابط/أكواد) لا تكسر التخطيط */
+  +'p,div,span,td,th,li{overflow-wrap:break-word !important;word-break:break-word !important}'
+  /* (د) الرسوم البيانية: الرسم بعنوانه ووسائله = كتلة واحدة لا تنقسم، بارتفاع محصور */
+  +'.chart-card,.chart-box,.rpt-chart-box,.cc,.chart-grid-2>*,.chart-grid-3>*,figure,.chart-wrap,'
+  +'[class*="chart-card"],[class*="chart-box"]{page-break-inside:avoid !important;break-inside:avoid !important;max-height:none !important}'
+  +'.chart-title,.rpt-chart-title,.chart-card>h3,.chart-card>h4,figcaption{page-break-after:avoid !important;break-after:avoid !important}'
+  +'.chart-card canvas,.chart-card img,.chart-box canvas,.chart-box img,figure img,figure canvas{max-height:4.5in !important;width:auto !important;max-width:100% !important;height:auto !important;display:block !important;margin:0 auto !important;object-fit:contain !important}'
+  /* الإحصاءات/المؤشرات: بطاقات لا تنقسم */
+  +'.kpi-card,.kpi-box,.stat-card,.metric-card,.type-card,[class*="kpi"],[class*="stat-card"]{page-break-inside:avoid !important;break-inside:avoid !important}'
+  /* الأقسام/البطاقات الوصفية: كتلة واحدة ما أمكن */
+  +'.sec,.rpt-section,.rpt-card,.insight-card,.exec-sum-page,figure{page-break-inside:avoid !important;break-inside:avoid !important}'
+  /* ════════ نهاية الآلية الاحترافية ════════ */
   /* [PP-CHART-IMG-NOSPLIT-V3] الرسوم تُحوّل لصور PNG قبل الطباعة (toDataURL).
      نقيّد ارتفاع صور الرسوم فقط (داخل حاويات الرسوم) ليضمن احتواءها في صفحة
      واحدة فلا تنقسم — دون المساس بالشعارات أو خلفيات الأغلفة. */
@@ -12305,12 +12348,14 @@ var __PP_FRAME_CSS =
   +'@media screen{'
   +  '.pp-print-frame{display:none}'
   +  '.cover-page-reset-wrap{'
-  +    'width:13.333in !important;max-width:13.333in !important;min-width:0 !important;'
-  +    'height:7.5in !important;min-height:7.5in !important;max-height:7.5in !important;'
+  /* [PREVIEW-NO-CROP-V4] العرض متجاوب: يأخذ الأصغر بين 13.333in وعرض النافذة،
+     فلا يتجاوز ولا يُقصّ من الجوانب. النسبة محفوظة عبر aspect-ratio. */
+  +    'width:min(13.333in,100%) !important;max-width:100% !important;min-width:0 !important;'
+  +    'aspect-ratio:13.333/7.5 !important;height:auto !important;min-height:0 !important;max-height:none !important;'
   +    'margin:0 auto 20px auto !important;box-sizing:border-box !important;'
   +    'overflow:hidden !important;box-shadow:0 4px 20px rgba(0,0,0,.08) !important;'
   +    'border-radius:6px !important}'
-  +  '.cover-page-reset-wrap>*{max-height:100% !important}'
+  +  '.cover-page-reset-wrap>*{max-height:100% !important;max-width:100% !important}'
   +'}';
 var __PP_FRAME_STYLE_TAG = '<style id="__pp_universal_frame">'+__PP_FRAME_CSS+'</style>';
 var __PP_FRAME_EL = '<div class="pp-print-frame" aria-hidden="true"></div>';
@@ -12654,7 +12699,7 @@ function switchSystem(sys){
   /* [ISOLATION-V2] مسح INITIATIVES دائماً عند تبديل النظام لتجنّب أي خلط مؤقت قبل إعادة التحميل */
   INITIATIVES=[];
   INIT_EDITED=false;
-  INIT_ACTIVE_COUNCIL=null;
+  INIT_ACTIVE_COUNCIL='';
   /* تعيين النظام الجديد */
   activeSystem=sys;
   /* تحديث واجهة اللوجين */
@@ -14642,14 +14687,31 @@ function refRep(){/* Reps are now populated in buildS1Filters() via MS system */
 function resetS1Filters(){
   var el=document.getElementById('srch');if(el)el.value='';
   /* [V17-RESET] أضفت fOr (الأصل/التصنيف) المفقود */
+  /* [MS-RESET-LABEL-FIX] نستعيد الاسم الأصلي لكل فلتر من تعريفه (MS_FILTER_DEFS)
+     بدل تمرير '' الذي كان يترك زر الفلتر فارغاً بلا اسم. */
   ['fSt','fSc','fTy','fDu','fRo','fRp','fOr'].forEach(function(id){
     MSF[id]=[];
     var checks=document.querySelectorAll('#mslist_'+id+' input[type=checkbox]');
     checks.forEach(function(c){c.checked=false;});
-    updateMSBtn(id,'');
+    var _def=(typeof _msDefaultLabel==='function')?_msDefaultLabel(id):'';
+    updateMSBtn(id,_def);
   });
   var rb=document.getElementById('btnResetS1');if(rb)rb.style.display='none';
   applyF();
+}
+/* [MS-RESET-LABEL-FIX] يُرجع الاسم الافتراضي للفلتر (من تعريفه أو من DOM) */
+function _msDefaultLabel(fid){
+  try{
+    /* أولاً: من تعريف الفلاتر إن وُجد */
+    if(typeof MS_FILTER_DEFS!=='undefined'&&Array.isArray(MS_FILTER_DEFS)){
+      var d=MS_FILTER_DEFS.find(function(x){return x.id===fid;});
+      if(d&&d.label) return d.label;
+    }
+    /* بديل: خريطة الأسماء القياسية */
+    var map={fSt:'كل الحالات',fSc:'كل النطاقات',fTy:'كل الأنواع',fDu:'كل المدد',fRo:'كل الأدوار',fRp:'كل الممثلين',fOr:'كل التصنيفات',
+      df_st:'كل الحالات',df_sc:'كل النطاقات',df_ty:'كل الأنواع',df_du:'كل المدد',df_ro:'كل الأدوار',df_rp:'كل الممثلين'};
+    return map[fid]||'الكل';
+  }catch(e){ return 'الكل'; }
 }
 function applyF(){
   var q=_norm((document.getElementById('srch')||{value:''}).value);
@@ -15002,7 +15064,9 @@ function buildCoverPage(opts){
   var coverW = _isA4 ? '210mm' : '13.333in';
   var coverH = _isA4 ? '297mm' : '7.5in';
   var coverStyle=[
-    'width:'+coverW,'max-width:'+coverW,'min-width:'+coverW,
+    /* [PREVIEW-NO-CROP-V3] العرض متجاوب: على الشاشة يأخذ الأصغر بين عرض الغلاف
+       وعرض النافذة (100vw) فلا يتجاوز ولا يُقصّ؛ في الطباعة @media print يفرض العرض الكامل. */
+    'width:min('+coverW+',100vw)','max-width:'+coverW,'min-width:0',
     'height:'+coverH,'min-height:'+coverH,'max-height:'+coverH,
     'overflow:hidden','page-break-after:always','break-after:page',
     'page-break-inside:avoid','break-inside:avoid',
@@ -15334,7 +15398,7 @@ function resetDashFilters(){
     MSF[id]=[];
     var checks=document.querySelectorAll('#mslist_'+id+' input[type=checkbox]');
     checks.forEach(function(c){c.checked=false;});
-    updateMSBtn(id,'');
+    updateMSBtn(id,(typeof _msDefaultLabel==='function')?_msDefaultLabel(id):'');
   });
   dashF='committees';
   document.querySelectorAll('.dflt').forEach(function(b){b.classList.remove('active');});
@@ -25413,6 +25477,13 @@ function s4ExportTasksReport(){
     +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2","Traditional Arabic",serif;direction:rtl;'
     +'color:#1a1a1a;background:#f5f5f5;font-size:15pt;line-height:1.6}'
     +'.report-wrapper{max-width:13.333in;margin:0 auto;background:#fff;padding:0;box-shadow:0 0 20px rgba(0,0,0,.08)}'
+    /* [PREVIEW-SCREEN-FIT-V1] على الشاشة (المعاينة): الـwrapper يملأ عرض النافذة
+       بدل 13.333in الثابتة التي تتجاوز النافذة وتُصغّر المحتوى — فتُقرأ الجداول
+       والسطور بوضوح. مقاس الطباعة يبقى كما هو في @media print بالأسفل. */
+    +'@media screen{.report-wrapper{max-width:100%!important;width:100%!important}'
+    +'body{font-size:16pt!important}'
+    +'.tasks-table{width:100%!important;font-size:13pt!important}'
+    +'.tasks-table th,.tasks-table td{padding:9px 11px!important}}'
     /* الترويسة الرسمية */
     +'.official-header{background:linear-gradient(135deg,'+MOE_GREEN+' 0%,'+MOE_GREEN_DARK+' 100%);'
     +'color:#fff;padding:24px 32px;border-bottom:4px solid '+MOE_GOLD+';}'
@@ -28077,7 +28148,11 @@ function renderInitiatives(){
   var typeF   = (document.getElementById('initTypeFilter')  ||{value:''}).value;
   var statusF = (document.getElementById('initStatusFilter')||{value:''}).value;
   var commF   = (document.getElementById('initCommFilter')  ||{value:''}).value || INIT_ACTIVE_COUNCIL;
-  var q       = ((document.getElementById('initSearch')     ||{value:''}).value||'').toLowerCase().trim();
+  /* [INIT-SEARCH-FIX] نطبّع الاستعلام بـ _norm (لا toLowerCase فقط) ليتطابق مع
+     _inc الذي يطبّع الحقل بـ _norm — وإلا يفشل البحث عند اختلاف الهمزات/التاء. */
+  var q       = (typeof _norm==='function')
+    ? _norm(((document.getElementById('initSearch')||{value:''}).value||''))
+    : (((document.getElementById('initSearch')||{value:''}).value||'').toLowerCase().trim());
 
   var list = INITIATIVES.filter(function(it){
     if(typeF   && it.type!==typeF)     return false;
