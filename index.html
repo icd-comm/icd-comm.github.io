@@ -12228,14 +12228,14 @@ var __PP_FRAME_CSS =
   +'table,.tasks-table,.rpt-table{width:100%!important;font-size:13pt!important}'
   +'table th,table td,.tasks-table th,.tasks-table td{padding:9px 11px!important}'
   +'.chart-card,.cc,.chart-box{min-height:auto!important}'
-  /* [PREVIEW-NO-CROP-V2] منع الغلاف وأي عنصر من تجاوز الشاشة في المعاينة:
-     الغلاف full-bleed بعرض ثابت 13.333in — على الشاشة نجعله يملأ النافذة بلا قصّ،
-     ونمنع أي تمرير أفقي. كل شيء يتّسع داخل النافذة (جوانب/أعلى/أسفل). */
-  +'html,body{overflow-x:hidden!important;max-width:100%!important}'
-  +'.cover-page-reset-wrap,.cover-page,[class*="cover"]{width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important}'
-  +'.cover-page-reset-wrap>*{max-width:100%!important}'
-  +'*{max-width:100%!important}'
-  +'img,svg,canvas{max-width:100%!important;height:auto!important}'
+  /* [COVER-FIT-FINAL] السبب الجذري للتداخل: قاعدة سابقة فرضت width:100% على الغلاف
+     فضغطت عناصره الداخلية (الشعار/العنوان بـ position:absolute) فتداخلت. الحل:
+     الغلاف يحتفظ بأبعاده الكاملة (13.333×7.5in) فيبقى تخطيطه سليماً تماماً كالطباعة
+     (التي ثبت بصرياً أنها مثالية). نمنع تجاوز بقية المحتوى فقط، لا الغلاف. */
+  +'html,body{max-width:100%!important}'
+  +'.report-content>*:not(.cover-page-reset-wrap),.report-wrapper>*:not(.cover-page-reset-wrap){max-width:100%!important}'
+  +'.cover-page-reset-wrap{width:13.333in!important;max-width:13.333in!important;min-width:13.333in!important;height:7.5in!important;min-height:7.5in!important;max-height:7.5in!important;margin:0 auto 16px auto!important;box-sizing:border-box!important;overflow:hidden!important;box-shadow:0 4px 24px rgba(0,0,0,.12)!important;border-radius:4px!important;transform:none!important;position:relative!important}'
+  +'img:not(.cover-page-reset-wrap img),svg:not(.cover-page-reset-wrap svg),canvas{max-width:100%!important;height:auto!important}'
   +'}'
   +'@media print{'
   /* (1) @page{margin:0} — مرجع position:fixed = حافة الورق الحقيقية
@@ -12356,18 +12356,7 @@ var __PP_FRAME_CSS =
      وتُضبط صفحة الغلاف بنفس أبعاد صفحات المحتوى بالضبط (13.333in × 7.5in)
      فلا تظهر أكبر من بقية الصفحات. القيد داخل @media screen فقط كي لا يؤثّر
      على الطباعة الفعلية التي لها ضبطها المنفصل أعلاه. */
-  +'@media screen{'
-  +  '.pp-print-frame{display:none}'
-  +  '.cover-page-reset-wrap{'
-  /* [PREVIEW-NO-CROP-V4] العرض متجاوب: يأخذ الأصغر بين 13.333in وعرض النافذة،
-     فلا يتجاوز ولا يُقصّ من الجوانب. النسبة محفوظة عبر aspect-ratio. */
-  +    'width:min(13.333in,100%) !important;max-width:100% !important;min-width:0 !important;'
-  +    'aspect-ratio:13.333/7.5 !important;height:auto !important;min-height:0 !important;max-height:none !important;'
-  +    'margin:0 auto 20px auto !important;box-sizing:border-box !important;'
-  +    'overflow:hidden !important;box-shadow:0 4px 20px rgba(0,0,0,.08) !important;'
-  +    'border-radius:6px !important}'
-  +  '.cover-page-reset-wrap>*{max-height:100% !important;max-width:100% !important}'
-  +'}';
+
 var __PP_FRAME_STYLE_TAG = '<style id="__pp_universal_frame">'+__PP_FRAME_CSS+'</style>';
 var __PP_FRAME_EL = '<div class="pp-print-frame" aria-hidden="true"></div>';
 /* يحقن الإطار في سلسلة HTML قبل تحويلها Blob/كتابتها — مصدر واحد.
@@ -15075,9 +15064,10 @@ function buildCoverPage(opts){
   var coverW = _isA4 ? '210mm' : '13.333in';
   var coverH = _isA4 ? '297mm' : '7.5in';
   var coverStyle=[
-    /* [PREVIEW-NO-CROP-V3] العرض متجاوب: على الشاشة يأخذ الأصغر بين عرض الغلاف
-       وعرض النافذة (100vw) فلا يتجاوز ولا يُقصّ؛ في الطباعة @media print يفرض العرض الكامل. */
-    'width:min('+coverW+',100vw)','max-width:'+coverW,'min-width:0',
+    /* [COVER-FIT-FINAL] العرض الثابت الكامل — @media screen/print في __PP_FRAME_CSS
+       يتحكّم بالعرض النهائي. هنا نضع الأبعاد الأساسية الصحيحة بلا min() متجاوب
+       يشوّه التخطيط الداخلي. */
+    'width:'+coverW,'max-width:'+coverW,'min-width:'+coverW,
     'height:'+coverH,'min-height:'+coverH,'max-height:'+coverH,
     'overflow:hidden','page-break-after:always','break-after:page',
     'page-break-inside:avoid','break-inside:avoid',
@@ -35341,6 +35331,15 @@ async function _loadFromSupabase(){
       function _applyToTextNodeLoad(el,val){
         if(val==='__DELETED__'){el.style.display='none';return;}
         el.style.display='';
+        /* [IDEMPOTENT-GUARD-V1] الجذر: لا نطبّق النص إن كان معروضاً فعلاً — يمنع
+           التكرار نهائياً مهما تكرّر الاستدعاء أو تغيّر المفتاح. نقارن النص الظاهر
+           (المُطبَّع) بالقيمة المستهدفة. */
+        try{
+          var _shown=(el.textContent||'').replace(/\s+/g,' ').trim();
+          var _target=String(val).replace(/\s+/g,' ').trim();
+          if(_shown===_target){ el.setAttribute('data-dtext-applied',_target); return; }
+          /* إن طُبّق سابقاً بنفس القيمة لكن النص الظاهر يحوي تكراراً، نُعيد البناء النظيف */
+        }catch(_g){}
         /* [NO-DUP-TEXT-LOAD-FIX] نفس منطق _applyToTextNode المُصلَّح: نتعامل مع
            العناصر التي نصها داخل span/b فرعي (كأزرار: أيقونة + span نص) فلا نضيف
            text node مكرّراً يُنتج ظهور النص مرتين عند التحميل. */
@@ -35547,6 +35546,13 @@ window.dtextRescan=function(){
   function _applyToTextNode(el,val){
     if(val==='__DELETED__'){el.style.display='none';return;}
     el.style.display='';
+    /* [IDEMPOTENT-GUARD-V1] الجذر: لا نطبّق إن كان النص معروضاً فعلاً — يمنع التكرار
+       نهائياً مهما تكرّر الاستدعاء أو تغيّر مفتاح dtext (pathHash المتغيّر). */
+    try{
+      var _shown=(el.textContent||'').replace(/\s+/g,' ').trim();
+      var _target=String(val).replace(/\s+/g,' ').trim();
+      if(_shown===_target){ el.setAttribute('data-dtext-applied',_target); return; }
+    }catch(_g){}
     /* اجمع كل text nodes (نصية أو whitespace) */
     var textNodes=[];
     for(var i=0;i<el.childNodes.length;i++){
