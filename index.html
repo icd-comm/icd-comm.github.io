@@ -3319,6 +3319,17 @@ body {
       }
     }
     _pdlHidden = true;
+    /* [LOADER-REDRAW-FIX] ضمان نهائي: عند إخفاء شاشة التحميل، نُعيد رسم القسم
+       الحالي بالبيانات المكتملة — فلا تظهر صفحة فارغة تتطلّب تنقّلاً ليتدفّق المحتوى. */
+    try{
+      var _cur='s1';
+      try{ var _ls=localStorage.getItem((typeof activeSystem!=='undefined'&&activeSystem==='intl'?'intl':'lajan')+'_lastSec'); if(_ls&&document.getElementById('panel-'+_ls))_cur=_ls; }catch(_e){}
+      if(typeof goTo==='function'){ goTo(_cur); }
+      else { if(typeof applyF==='function')applyF(); }
+      /* تحديث الأقسام الحيّة الأخرى إن كانت دوالها متاحة */
+      try{ if(typeof renderS3Cal==='function'&&document.getElementById('s3CalGrid'))renderS3Cal(); }catch(_){}
+      try{ if(typeof wfNotifRefresh==='function')wfNotifRefresh(); }catch(_){}
+    }catch(_){}
     try{
       var el = document.getElementById('proDataLoader');
       if(!el) return;
@@ -20302,7 +20313,7 @@ function wfNotifToggle(){
     var col=isAction?'#9b2226':'#1673a4';
     var bg=isAction?'#fbeae9':'#e7f1fb';
     var tag=isAction?'يحتاج إجراء':'إحاطة';
-    return '<div onclick="wfNotifGo('+it.di+','+it.mi+')" style="padding:10px 12px;border:1px solid #eee;border-radius:10px;margin-bottom:7px;cursor:pointer;border-right:3px solid '+col+'">'
+    return '<div onclick="wfNotifGo('+it.di+','+it.mi+',\''+(it.kind||'')+'\')" style="padding:10px 12px;border:1px solid #eee;border-radius:10px;margin-bottom:7px;cursor:pointer;border-right:3px solid '+col+'">'
       +'<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
         +'<span style="font-size:9.5px;font-weight:700;border-radius:10px;padding:1px 8px;background:'+bg+';color:'+col+'">'+tag+'</span>'
         +'<span style="font-size:13px;font-weight:600;color:#16202e">'+H(it.txt)+'</span></div>'
@@ -20339,11 +20350,34 @@ function wfNotifToggle(){
   }catch(_){}
   panel.style.display='flex';
 }
-function wfNotifGo(di,mi){
+function wfNotifGo(di,mi,kind){
   var p=document.getElementById('wfNotifPanel'); if(p)p.style.display='none';
-  /* المخصّص يُفتح له قسم التحضير؛ الباقي يُفتح صندوق المحاضر */
+  /* [NOTIF-ROUTE-V1] التوجيه حسب نوع الإشعار:
+     - تكليف (taskLate/taskSoon) → قسم متابعة التكليفات (s4)
+     - محضر للتدقيق/النشر/الاعتماد/راكد (review/publish/approve/stale) → قسم المحاضر (sgov)
+     - مسودة أُعيدت للمخصّص (returned) → قسم التحضير (s3)
+     - إحاطة (done) → قسم المحاضر للاطّلاع */
   try{
+    kind = kind||'';
     var isScoped=currentUser&&currentUser.permissions&&currentUser.permissions.is_scoped===true&&currentUser.role!=='admin';
+    if(kind==='taskLate'||kind==='taskSoon'){
+      /* تكليف → قسم متابعة التكليفات */
+      goTo('s4');
+      return;
+    }
+    if(kind==='returned'){
+      /* مسودة أُعيدت للمخصّص → قسم التحضير */
+      goTo('s3');
+      setTimeout(function(){ if(typeof selectS3==='function')selectS3(di); },250);
+      return;
+    }
+    if(kind==='review'||kind==='publish'||kind==='approve'||kind==='stale'||kind==='done'){
+      /* محضر في سير الاعتماد → قسم المحاضر، ثم فتح بطاقة المراجعة إن أمكن */
+      goTo('sgov');
+      setTimeout(function(){ try{ if(typeof openMinutesReview==='function')openMinutesReview(di,mi); }catch(_){} },300);
+      return;
+    }
+    /* افتراضي: المخصّص لقسم التحضير، غيره لقسم المحاضر */
     if(isScoped){ goTo('s3'); setTimeout(function(){ if(typeof selectS3==='function')selectS3(di); },250); }
     else { goTo('sgov'); }
   }catch(_){ }
@@ -32128,7 +32162,7 @@ function renderMineView(){
           +'<span style="font-size:9.5px;font-weight:700;border-radius:10px;padding:1px 9px;background:'+(isLate?'#fbeae9':'#e7f1fb')+';color:'+(isLate?'#9b2226':'#1673a4')+'">'+(isLate?'متأخر':'على المسار')+'</span>'
           +'<span style="font-size:11px;color:'+MUT+'">'+e((t.committee||'').slice(0,28))+'</span>'
         +'</div>'
-        +'<div style="font-size:12.5px;color:'+INK+';line-height:1.5">'+e((t.task||'').slice(0,75))+'</div>'
+        +'<div style="font-size:12.5px;color:'+INK+';line-height:1.6;word-wrap:break-word;overflow-wrap:break-word">'+e(t.task||'')+'</div>'
         +(t.dateTo?'<div style="font-size:11px;color:'+GOLD+';margin-top:2px">◷ '+e(t.dateTo)+'</div>':'')
         +'</div>';
     });
@@ -35307,16 +35341,40 @@ async function _loadFromSupabase(){
       function _applyToTextNodeLoad(el,val){
         if(val==='__DELETED__'){el.style.display='none';return;}
         el.style.display='';
+        /* [NO-DUP-TEXT-LOAD-FIX] نفس منطق _applyToTextNode المُصلَّح: نتعامل مع
+           العناصر التي نصها داخل span/b فرعي (كأزرار: أيقونة + span نص) فلا نضيف
+           text node مكرّراً يُنتج ظهور النص مرتين عند التحميل. */
         var hasEl=false;
         for(var i=0;i<el.childNodes.length;i++){
           if(el.childNodes[i].nodeType===1){ hasEl=true; break; }
         }
         if(!hasEl){ el.textContent=val; return; }
+        /* ابحث عن عنصر نصّي مضمّن (span/b/em/strong/small/i) يحوي نصاً */
+        var inlineTextEl=null;
+        for(var m=0;m<el.childNodes.length;m++){
+          var cn=el.childNodes[m];
+          if(cn.nodeType===1){
+            var tag=cn.tagName.toLowerCase();
+            if(['span','b','strong','em','small','i'].indexOf(tag)>=0 && (cn.textContent||'').trim().length>0){ inlineTextEl=cn; break; }
+          }
+        }
         var tns=[];
         for(var j=0;j<el.childNodes.length;j++){
           if(el.childNodes[j].nodeType===3) tns.push(el.childNodes[j]);
         }
-        tns.forEach(function(tn){ if(tn.parentNode===el) el.removeChild(tn); });
+        if(inlineTextEl){
+          /* طبّق على العنصر المضمّن واحذف أي text node مباشر مكرّر */
+          tns.forEach(function(tn){ if(tn.parentNode===el && (tn.textContent||'').trim()) el.removeChild(tn); });
+          inlineTextEl.textContent=val;
+          return;
+        }
+        /* لا عنصر نصّي مضمّن: حدّث أول text node غير فارغ أو أضف واحداً */
+        var nonEmpty=tns.filter(function(tn){return (tn.textContent||'').trim();});
+        if(nonEmpty.length){
+          nonEmpty[0].textContent=' '+val;
+          for(var n=1;n<nonEmpty.length;n++){ if(nonEmpty[n].parentNode===el) el.removeChild(nonEmpty[n]); }
+          return;
+        }
         el.appendChild(el.ownerDocument.createTextNode(' '+val));
       }
       Object.keys(DT).forEach(function(k){
