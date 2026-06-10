@@ -14605,6 +14605,8 @@ function goTo(sec){if(sec==='s5'&&activeSystem!=='intl'){sec='s1';} if((sec==='s
     }, 500);
   })();
   upTop();
+  /* [THEME-REAPPLY] إعادة تطبيق الثيم بعد التنقل ليبقى آخر <style> ويُطبّق على المحتوى الجديد */
+  try{ if(typeof themeReapply==='function')themeReapply(); }catch(_){}
 }
 
 document.querySelectorAll('.hcard').forEach(function(c){c.addEventListener('click',function(){goTo(c.getAttribute('data-sec'));});});
@@ -39408,5 +39410,120 @@ button:disabled, [aria-disabled="true"] {
   }
 })();
 </script>
+<!-- [THEME-CONTROL-V1] لوحة التحكّم البصري — للمدير فقط -->
+<style>
+#themeToggleBtn{position:fixed;bottom:16px;left:64px;z-index:1000040;display:none;align-items:center;gap:6px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:inherit;font-size:12px;color:#475569}
+#themeToggleBtn:hover{border-color:#94a3b8;color:#1e293b}
+#themeToggleBtn svg{width:16px;height:16px}
+#themePanel{position:fixed;bottom:60px;left:16px;z-index:1000050;width:330px;max-height:78vh;overflow-y:auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18);display:none;font-family:inherit;direction:rtl}
+#themePanel.open{display:block}
+.thm-hdr{background:linear-gradient(135deg,#208caa,#003944);color:#fff;padding:14px 16px;border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between}
+.thm-hdr h3{margin:0;font-size:14px;font-weight:700}
+.thm-hdr button{background:rgba(255,255,255,.2);border:none;color:#fff;width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:16px}
+.thm-body{padding:16px}
+.thm-sec{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #f1f5f9}
+.thm-sec:last-child{border-bottom:none;margin-bottom:0}
+.thm-label{font-size:12px;font-weight:700;color:#334155;margin-bottom:9px;display:block}
+.thm-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.thm-row label{font-size:11.5px;color:#64748b;flex:1}
+.thm-row input[type=color]{width:42px;height:30px;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;padding:2px;background:#fff}
+.thm-row input[type=range]{flex:1.5;cursor:pointer}
+.thm-row select{flex:1.5;border:1px solid #e2e8f0;border-radius:7px;padding:6px 8px;font-size:12px;font-family:inherit;cursor:pointer}
+.thm-val{font-size:11px;color:#208caa;font-weight:700;min-width:42px;text-align:left}
+.thm-actions{display:flex;gap:8px;margin-top:6px}
+.thm-actions button{flex:1;border:none;border-radius:9px;padding:10px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.thm-save{background:#15673c;color:#fff}
+.thm-reset{background:#f1f5f9;color:#475569}
+.thm-note{font-size:10.5px;color:#94a3b8;margin-top:10px;line-height:1.5;text-align:center}
+@media print{#themeToggleBtn,#themePanel{display:none !important}}
+</style>
+<button id="themeToggleBtn" onclick="themeTogglePanel()" title="التحكّم البصري بالنظام"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.65-.75 1.65-1.69 0-.43-.18-.83-.44-1.12-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.55-2.5 5.55-5.55C22 6 17.5 2 12 2z"/></svg><span>التحكّم البصري</span></button>
+<div id="themePanel"><div class="thm-hdr"><h3>&#127912; التحكّم البصري بالنظام</h3><button onclick="themeTogglePanel()">&times;</button></div><div class="thm-body">
+<div class="thm-sec"><span class="thm-label">&#128396; الخطوط</span>
+<div class="thm-row"><label>نوع الخط</label><select id="thmFont" onchange="themeApply()"><option value="'Sakkal Majalla','Sakkal Majalla 2',Arial,serif">سكل مجلة (افتراضي)</option><option value="'Tajawal',sans-serif">تجوال</option><option value="'Cairo',sans-serif">القاهرة</option><option value="'Almarai',sans-serif">المراعي</option><option value="'Segoe UI',Tahoma,Arial,sans-serif">سيجو UI</option></select></div>
+<div class="thm-row"><label>حجم الخط</label><input type="range" id="thmFontSize" min="85" max="125" value="100" oninput="themeApply()"><span class="thm-val" id="thmFontSizeVal">100%</span></div></div>
+<div class="thm-sec"><span class="thm-label">&#127912; الألوان</span>
+<div class="thm-row"><label>اللون الأساسي (الهوية)</label><input type="color" id="thmPrimary" value="#006B3F" oninput="themeApply()"></div>
+<div class="thm-row"><label>لون الأزرار</label><input type="color" id="thmBtnBg" value="#208caa" oninput="themeApply()"></div>
+<div class="thm-row"><label>لون نص الأزرار</label><input type="color" id="thmBtnText" value="#ffffff" oninput="themeApply()"></div>
+<div class="thm-row"><label>لون النصوص العامة</label><input type="color" id="thmText" value="#16202e" oninput="themeApply()"></div>
+<div class="thm-row"><label>لون خلفية الصفحة</label><input type="color" id="thmBg" value="#f4f6fb" oninput="themeApply()"></div></div>
+<div id="thmContrastWarn" style="display:none;background:#fef3c7;color:#92400e;font-size:11px;padding:8px 10px;border-radius:8px;margin-bottom:10px;text-align:center;font-weight:600"></div><div class="thm-actions"><button class="thm-save" onclick="themeSave()">&#128190; حفظ للنظام</button><button class="thm-reset" onclick="themeReset()">&#8634; استعادة الافتراضي</button></div>
+<div class="thm-note">التغييرات تُطبّق فوراً للمعاينة. «حفظ للنظام» يثبّتها لكل المستخدمين. «استعادة» يرجع الهوية الرسمية.</div></div></div>
+<script>
+var THEME_DEFAULTS={font:"'Sakkal Majalla','Sakkal Majalla 2',Arial,serif",fontSize:100,primary:'#006B3F',btnBg:'#208caa',btnText:'#ffffff',text:'#16202e',bg:'#f4f6fb'};
+function themeIsAdmin(){try{return typeof currentUser!=='undefined'&&currentUser&&currentUser.role==='admin';}catch(e){return false;}}
+function themeShowBtnIfAdmin(){var btn=document.getElementById('themeToggleBtn');if(btn)btn.style.display=themeIsAdmin()?'flex':'none';}
+function themeTogglePanel(){var p=document.getElementById('themePanel');if(p)p.classList.toggle('open');}
+function themeReadControls(){return {font:document.getElementById('thmFont').value,fontSize:parseInt(document.getElementById('thmFontSize').value)||100,primary:document.getElementById('thmPrimary').value,btnBg:document.getElementById('thmBtnBg').value,btnText:document.getElementById('thmBtnText').value,text:document.getElementById('thmText').value,bg:document.getElementById('thmBg').value};}
+function _themeLum(hex){try{var c=hex.replace('#','');if(c.length===3)c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];var r=parseInt(c.substr(0,2),16)/255,g=parseInt(c.substr(2,2),16)/255,bl=parseInt(c.substr(4,2),16)/255;function f(x){return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4);}return 0.2126*f(r)+0.7152*f(g)+0.0722*f(bl);}catch(e){return 0.5;}}
+function _themeContrast(c1,c2){var l1=_themeLum(c1),l2=_themeLum(c2);var hi=Math.max(l1,l2),lo=Math.min(l1,l2);return (hi+0.05)/(lo+0.05);}
+function themeApply(){var t=themeReadControls();var v=document.getElementById('thmFontSizeVal');if(v)v.textContent=t.fontSize+'%';
+  /* [THEME-CONTRAST-GUARD] حماية القراءة: نحذّر إن كان تباين النص/الخلفية منخفضاً جداً (<3) */
+  try{
+    var cTextBg=_themeContrast(t.text,t.bg);
+    var cBtnTextBg=_themeContrast(t.btnText,t.btnBg);
+    var warnEl=document.getElementById('thmContrastWarn');
+    var warn='';
+    if(cTextBg<3) warn='⚠ تباين النص مع الخلفية ضعيف ('+cTextBg.toFixed(1)+') — قد يصعب القراءة';
+    else if(cBtnTextBg<3) warn='⚠ تباين نص الأزرار ضعيف ('+cBtnTextBg.toFixed(1)+')';
+    if(warnEl){warnEl.textContent=warn;warnEl.style.display=warn?'block':'none';}
+  }catch(e){}
+  themeInjectCSS(t);}
+function themeInjectCSS(t){
+  /* [THEME-LAST-STYLE-FIX] الثيم يجب أن يكون آخر <style> دائماً ليفوز على أي CSS
+     يُحقن لاحقاً عند التنقل/إعادة الرسم. نزيله ونعيد إلحاقه في نهاية head كل مرة. */
+  var st=document.getElementById('themeInjectedStyle');
+  if(st&&st.parentNode)st.parentNode.removeChild(st);
+  st=document.createElement('style');st.id='themeInjectedStyle';document.head.appendChild(st);
+/* [THEME-FULL-COVERAGE-V3] تغطية شاملة لكل النظام: صفحة الدخول + السايدبار + الشريط
+   العلوي + العناوين + النصوص الثابتة والمتغيرة + الأزرار + الحقول + البطاقات + النوافذ
+   + الجداول. نطبّق على body كاملاً مع استثناء لوحة الثيم نفسها فقط. محجوب عن الطباعة. */
+var SCOPE='#appScreen,#loginScreen,#homeScreen';
+var EX=':not(.thm-save):not(.thm-reset):not(#themeToggleBtn):not(#themePanel):not(#themePanel *):not(#thmContrastWarn)';
+st.textContent='@media screen{'
+ /* الخط: متغيّر --font عالمي + قاعدة شاملة على كل النظام */
+ +':root{--font:'+t.font+' !important}'
+ +'body'+EX+',body *'+EX+'{font-family:'+t.font+' !important}'
+ +'html{font-size:'+t.fontSize+'% !important}'
+ /* خلفية الصفحة + الدخول */
+ +'#appScreen,#loginScreen,#homeScreen{background:'+t.bg+' !important}'
+ /* النص العام على كل العناصر النصية (التطبيق + الدخول + السايدبار) */
+ +SCOPE.split(',').map(function(sc){return sc+' div,'+sc+' span,'+sc+' p,'+sc+' td,'+sc+' th,'+sc+' li,'+sc+' label,'+sc+' h1,'+sc+' h2,'+sc+' h3,'+sc+' h4,'+sc+' h5,'+sc+' a,'+sc+' .lsb-nav-label,'+sc+' .lsb-item,'+sc+' .field-val,'+sc+' .field-label';}).join(',')
+ +EX+'{color:'+t.text+' !important}'
+ /* السايدبار: نص العناصر */
+ +'.lsb-item,.lsb-nav-label,.lsb-header,[class*="sidebar"]'+EX+'{color:'+t.text+' !important}'
+ /* كل الأزرار في النظام كله (عدا الطباعة/الإغلاق/لوحة الثيم) */
+ +'button'+EX+':not([onclick*="print"]):not([onclick*="close"]):not([onclick*="clM"]),'
+ +'.btn,.gm-act-btn,.lj-btn,.lsb-toggle,[role="button"]'+EX
+ +'{background:'+t.btnBg+' !important;color:'+t.btnText+' !important;border-color:'+t.btnBg+' !important}'
+ +'button'+EX+':not([onclick*="print"]):not([onclick*="close"]) *{color:'+t.btnText+' !important}'
+ /* الحقول */
+ +SCOPE.split(',').map(function(sc){return sc+' input,'+sc+' select,'+sc+' textarea';}).join(',')
+ +EX+'{color:'+t.text+' !important;border-color:'+t.btnBg+'55 !important}'
+ /* البطاقات/النوافذ/الجداول: حدود متناسقة */
+ +'.lj-card,.modal,.gm-card,.committee-card'+EX+'{border-color:'+t.btnBg+'33 !important}'
+ /* اللون الأساسي للهوية */
+ +'.app-header,.section-header,[style*="006B3F"],[style*="#006b3f"],[style*="004D2E"]'+EX
+ +'{background:'+t.primary+' !important}'
+ +'}';}
+function themeSetControls(t){document.getElementById('thmFont').value=t.font;document.getElementById('thmFontSize').value=t.fontSize;document.getElementById('thmFontSizeVal').textContent=t.fontSize+'%';document.getElementById('thmPrimary').value=t.primary;document.getElementById('thmBtnBg').value=t.btnBg;document.getElementById('thmBtnText').value=t.btnText;document.getElementById('thmText').value=t.text;document.getElementById('thmBg').value=t.bg;}
+function themeReset(){themeSetControls(THEME_DEFAULTS);var st=document.getElementById('themeInjectedStyle');if(st)st.remove();if(typeof showToast==='function')showToast('تمت استعادة الهوية الافتراضية');}
+async function themeSave(){if(!themeIsAdmin()){if(typeof showToast==='function')showToast('الحفظ متاح للمدير فقط',true);return;}var t=themeReadControls();try{localStorage.setItem((typeof activeSystem!=='undefined'?activeSystem:'lajan')+'_theme_v1',JSON.stringify(t));}catch(e){}if(typeof sbFetch==='function'&&typeof SB_TABLES!=='undefined'&&typeof activeSystem!=='undefined'){try{var tbl=SB_TABLES[activeSystem].field_settings;var ts=new Date().toISOString();var fk='__theme__';var payload={field_key:fk,visible:true,sort_order:0,deleted:false,custom_label:JSON.stringify(t),updated_at:ts};var rows=await sbFetch(tbl+'?field_key=eq.'+fk+'&select=id','GET');if(rows&&rows.length){await sbFetch(tbl+'?field_key=eq.'+fk,'PATCH',payload);}else{await sbFetch(tbl,'POST',payload);}if(typeof showToast==='function')showToast('\u2713 \u062d\u064f\u0641\u0638 \u0627\u0644\u062b\u064a\u0645 \u0644\u0643\u0644 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u064a\u0646');}catch(e){if(typeof showToast==='function')showToast('\u062d\u064f\u0641\u0638 \u0645\u062d\u0644\u064a\u0627\u064b',true);}}else{if(typeof showToast==='function')showToast('\u062d\u064f\u0641\u0638 \u0645\u062d\u0644\u064a\u0627\u064b');}}
+/* [THEME-REAPPLY] إعادة تطبيق الثيم الحالي (إن وُجد style مفعّل) ليبقى آخر <style> */
+function themeReapply(){
+  try{
+    if(!document.getElementById('themeInjectedStyle'))return; /* لا ثيم مفعّل */
+    if(typeof themeReadControls==='function' && document.getElementById('thmFont')){
+      themeInjectCSS(themeReadControls());
+    }
+  }catch(_){}
+}
+window.themeReapply=themeReapply;
+async function themeLoadAndApply(){var t=null;try{var ls=localStorage.getItem((typeof activeSystem!=='undefined'?activeSystem:'lajan')+'_theme_v1');if(ls)t=JSON.parse(ls);}catch(e){}if(typeof sbFetch==='function'&&typeof SB_TABLES!=='undefined'&&typeof activeSystem!=='undefined'){try{var tbl=SB_TABLES[activeSystem].field_settings;var rows=await sbFetch(tbl+'?field_key=eq.__theme__&select=custom_label','GET');if(rows&&rows.length&&rows[0].custom_label){try{t=JSON.parse(rows[0].custom_label);localStorage.setItem(activeSystem+'_theme_v1',JSON.stringify(t));}catch(_){}}}catch(e){}}if(t){try{themeSetControls(Object.assign({},THEME_DEFAULTS,t));themeInjectCSS(Object.assign({},THEME_DEFAULTS,t));}catch(e){}}themeShowBtnIfAdmin();}
+document.addEventListener('DOMContentLoaded',function(){setTimeout(themeLoadAndApply,1500);});
+window.themeShowBtnIfAdmin=themeShowBtnIfAdmin;
+</script>
+
 </body>
 </html>
