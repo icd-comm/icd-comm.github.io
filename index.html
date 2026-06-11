@@ -19848,6 +19848,8 @@ function doLogin(){
     btn.disabled=false;btn.style.opacity='1';btn.textContent='دخول ←';
     applyRoleUI();
     updateSystemUI(); /* تطبيق إعدادات النظام الصحيح */
+    /* [THEME-LOGIN-APPLY] تطبيق الثيم المحفوظ + إظهار الزر فور الدخول (لا ينتظر تحديث) */
+    try{ setTimeout(function(){ if(typeof themeLoadAndApply==='function')themeLoadAndApply(); },300); }catch(_){}
     /* إعداد الـ UI فوراً ثم تحميل البيانات */
     var hl=document.getElementById('homeUserLbl');
     if(hl){var rl={'admin':'مدير','editor':'محرر','viewer':'مشاهد'};hl.textContent=currentUser.name+' ('+rl[role]+')';}
@@ -20143,6 +20145,8 @@ function applyRoleUI(){
       });
     }
   }catch(e){}
+  /* [THEME-BTN-LIVE] إظهار/إخفاء زر الثيم فور تطبيق الصلاحيات (بعد الدخول/تبديل النظام) — لا ينتظر تحديث الصفحة */
+  try{ if(typeof themeShowBtnIfAdmin==='function')themeShowBtnIfAdmin(); }catch(_){}
 }
 
 /* Add user info badge to topbar */
