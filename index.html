@@ -29740,14 +29740,14 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
   /* تكليفات الاجتماع الحالي */
   var taskRows=m.tasks.map(function(t,idx2){
     return'<tr>'
-      +'<td style="text-align:center;width:30px;color:#888;font-size:11pt;padding:6px 4px;border:1px solid #757bbb">'+(idx2+1)+'</td>'
-      +'<td style="font-size:13pt;padding:7px 10px;border:1px solid #757bbb">'+e(cleanUpdateField(t.task||'—'))
-        +(t.notes?'<div style="font-size:10pt;color:#888;margin-top:3px;background:#f9f6ff;border-right:2px solid #757bbb;padding:2px 6px;border-radius:3px"> '+e(t.notes)+'</div>':'')
-        +(t.update?'<div style="font-size:10pt;color:#208caa;margin-top:3px;background:#e8f4fd;border-right:2px solid #48a883;padding:2px 6px;border-radius:3px"> آخر تحديث: '+e(cleanUpdateField(t.update))+'</div>':'')
+      +'<td style="text-align:center;width:30px;color:#888;font-size:11pt;padding:8px 4px;border:1px solid #d1d5db">'+(idx2+1)+'</td>'
+      +'<td style="font-size:13pt;padding:9px 12px;border:1px solid #d1d5db;line-height:1.7">'+e(cleanUpdateField(t.task||'—'))
+        +(t.notes?'<div style="margin-top:8px;padding-top:7px;border-top:1px dashed #c7cedb;font-size:11pt;color:#5b6472"><span style="font-weight:700;color:#5b6472">ملاحظة: </span>'+e(t.notes)+'</div>':'')
+        +(t.update?'<div style="margin-top:9px;background:#f3f7f5;border-right:3px solid #48a883;border-radius:5px;padding:6px 10px;font-size:11pt;color:#1f4c3a;line-height:1.6"><span style="display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#1f4c3a"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#48a883" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> آخر تحديث:</span> '+e(cleanUpdateField(t.update))+'</div>':'')
       +'</td>'
-      +'<td style="font-size:13pt;font-weight:700;width:140px;padding:7px 10px;border:1px solid #757bbb">'+e(t.responsible||'—')+'</td>'
-      +(t.dateFrom||t.dateTo?'<td style="font-size:11pt;width:110px;padding:6px 8px;border:1px solid #757bbb">'+(t.dateFrom?'من: '+t.dateFrom+'<br>':'')+(t.dateTo?'حتى: '+t.dateTo:'')+'</td>':'<td style="color:#ccc;padding:6px;border:1px solid #757bbb">—</td>')
-      +'<td style="text-align:center;width:90px;padding:6px;border:1px solid #757bbb"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:3px 8px;font-size:11pt;font-weight:700">'+t.status+'</span></td>'
+      +'<td style="font-size:13pt;font-weight:700;width:140px;padding:9px 12px;border:1px solid #d1d5db">'+e(t.responsible||'—')+'</td>'
+      +(t.dateFrom||t.dateTo?'<td style="font-size:11pt;width:110px;padding:8px;border:1px solid #d1d5db">'+(t.dateFrom?'من: '+t.dateFrom+'<br>':'')+(t.dateTo?'حتى: '+t.dateTo:'')+'</td>':'<td style="color:#ccc;padding:8px;border:1px solid #d1d5db">—</td>')
+      +'<td style="text-align:center;width:90px;padding:8px;border:1px solid #d1d5db"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:3px 8px;font-size:11pt;font-weight:700">'+t.status+'</span></td>'
       +'</tr>';
   }).join('');
 
@@ -29756,13 +29756,13 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
   var pending=(_includePending===false)?[]:getAllPendingTasks(d,di,m.tasks);
   var pendingRows=pending.map(function(t,idx3){
     return'<tr>'
-      +'<td style="text-align:center;width:30px;color:#888;font-size:11pt;padding:6px 4px;border:1px solid #ffe082">'+(idx3+1)+'</td>'
-      +'<td style="font-size:13pt;padding:7px 10px;border:1px solid #ffe082">'+e(cleanUpdateField(t.task||'—'))
-        +(t.update?'<div style="font-size:10pt;color:#208caa;margin-top:3px;background:#e8f4fd;border-right:2px solid #48a883;padding:2px 6px;border-radius:3px"> آخر تحديث: '+e(cleanUpdateField(t.update))+'</div>':'')
+      +'<td style="text-align:center;width:30px;color:#888;font-size:11pt;padding:8px 4px;border:1px solid #d1d5db">'+(idx3+1)+'</td>'
+      +'<td style="font-size:13pt;padding:9px 12px;border:1px solid #d1d5db;line-height:1.7">'+e(cleanUpdateField(t.task||'—'))
+        +(t.update?'<div style="margin-top:9px;background:#f3f7f5;border-right:3px solid #48a883;border-radius:5px;padding:6px 10px;font-size:11pt;color:#1f4c3a;line-height:1.6"><span style="display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#1f4c3a"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#48a883" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> آخر تحديث:</span> '+e(cleanUpdateField(t.update))+'</div>':'')
       +'</td>'
-      +'<td style="font-size:13pt;font-weight:700;width:140px;padding:7px 10px;border:1px solid #ffe082">'+e(t.responsible||'—')+'</td>'
-      +'<td style="font-size:11pt;width:110px;padding:6px 8px;border:1px solid #ffe082">'+(t.dateTo||t.dateFrom||'—')+'</td>'
-      +'<td style="text-align:center;width:90px;padding:6px;border:1px solid #ffe082"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:3px 8px;font-size:11pt;font-weight:700">'+t.status+'</span></td>'
+      +'<td style="font-size:13pt;font-weight:700;width:140px;padding:9px 12px;border:1px solid #d1d5db">'+e(t.responsible||'—')+'</td>'
+      +'<td style="font-size:11pt;width:110px;padding:8px;border:1px solid #d1d5db">'+(t.dateTo||t.dateFrom||'—')+'</td>'
+      +'<td style="text-align:center;width:90px;padding:8px;border:1px solid #d1d5db"><span style="background:'+(sbg[t.status]||'#eee')+';color:'+(sco[t.status]||'#555')+';border-radius:5px;padding:3px 8px;font-size:11pt;font-weight:700">'+t.status+'</span></td>'
       +'</tr>';
   }).join('');
 
@@ -29773,7 +29773,15 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
     +'body{font-family:"Sakkal Majalla","Sakkal Majalla 2",serif,Arial;direction:rtl;background:#f0f4f8;font-size:16px}'
     +'.page{max-width:1240px;margin:0 auto;background:#fff;padding:28px 40px}'
     +'.toolbar{background:linear-gradient(135deg,#1673a4,#003944);padding:10px 20px;display:flex;gap:10px;align-items:center;position:sticky;top:0;z-index:99}'
-    +'table{width:100%;border-collapse:collapse}'
+    +'table{width:100%;border-collapse:separate;border-spacing:0;border-radius:10px;overflow:hidden;border:1px solid #d1d5db}'
+    +'table th,table td{border:none;border-bottom:1px solid #d1d5db;border-left:1px solid #d1d5db}'
+    +'table th:last-child,table td:last-child{border-left:none}'
+    +'table tr:last-child td{border-bottom:none}'
+    +'table thead th:first-child{border-top-right-radius:10px}table thead th:last-child{border-top-left-radius:10px}'
+    +'table tbody tr:last-child td:first-child{border-bottom-right-radius:10px}table tbody tr:last-child td:last-child{border-bottom-left-radius:10px}'
+    +'thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}'
+    +'.agenda-table td{border:none !important}'
+    +'.agenda-table thead th{border-top-right-radius:10px;border-top-left-radius:10px}'
     +__PRINT_CSS_BASE  /* [STEP-4] CSS طباعة موحّد */
     +'</style></head><body>'
 
@@ -29795,31 +29803,50 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
     +'</div></div>'
 
     /* بيانات الاجتماع */
-    +'<table style="margin-bottom:18px">'
-    +'<tr><td style="background:#f0f7ff;font-weight:700;padding:8px 12px;width:30%;border:1px solid #757bbb;font-size:13pt">'+(activeSystem==='intl'?'اسم المجلس/اللجنة':'اسم المجلس/اللجنة')+'</td><td style="padding:8px 12px;border:1px solid #757bbb;font-size:13pt">'+e(d.n)+'</td></tr>'
-    +'<tr><td style="background:#f0f7ff;font-weight:700;padding:8px 12px;border:1px solid #757bbb;font-size:13pt">رقم الاجتماع</td><td style="padding:8px 12px;border:1px solid #757bbb;font-size:13pt">'+e(String(m.meetNum||'—'))+'</td></tr>'
-    +'<tr><td style="background:#f0f7ff;font-weight:700;padding:8px 12px;border:1px solid #757bbb;font-size:13pt">تاريخ الاجتماع</td><td style="padding:8px 12px;border:1px solid #757bbb;font-size:13pt">'+e(m.date||'—')+'</td></tr>'
-    +(m.loc?'<tr><td style="background:#f0f7ff;font-weight:700;padding:8px 12px;border:1px solid #757bbb;font-size:13pt">مكان الاجتماع</td><td style="padding:8px 12px;border:1px solid #757bbb;font-size:13pt">'+e(m.loc)+'</td></tr>':'')
-    +'<tr><td style="background:#f0f7ff;font-weight:700;padding:8px 12px;border:1px solid #757bbb;font-size:13pt">ممثل الوكالة</td><td style="padding:8px 12px;border:1px solid #757bbb;font-size:13pt">'+e(d.r||'—')+'</td></tr>'
-    +'</table>'
+    /* [INFO-CARDS-2026-06-13] بيانات الاجتماع كبطاقات عصرية بدل جدول الصفوف:
+       لافتة علوية باسم اللجنة بتدرّج الهوية، ثم شبكة بطاقات أنيقة لكل حقل. */
+    +'<div style="margin-bottom:20px">'
+    +'<div style="background:linear-gradient(135deg,#208caa,#48a883);border-radius:12px 12px 0 0;padding:14px 20px;display:flex;align-items:center;gap:11px">'
+      +'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.95"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>'
+      +'<div><div style="color:rgba(255,255,255,.82);font-size:10.5pt;font-weight:600;margin-bottom:1px">اسم المجلس/اللجنة</div>'
+      +'<div style="color:#fff;font-size:15pt;font-weight:700;line-height:1.3">'+e(d.n)+'</div></div>'
+    +'</div>'
+    +'<div style="border:1px solid #d1d5db;border-top:none;border-radius:0 0 12px 12px;padding:16px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px">'
+      +(function(){
+        var cards=[
+          {ic:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01"/>', lbl:'رقم الاجتماع', val:e(String(m.meetNum||'—'))},
+          {ic:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', lbl:'تاريخ الاجتماع', val:e(m.date||'—')}
+        ];
+        if(m.loc) cards.push({ic:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>', lbl:'مكان الاجتماع', val:e(m.loc), wide:true});
+        cards.push({ic:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', lbl:'ممثل الوكالة', val:e(d.r||'—'), wide:true});
+        return cards.map(function(c){
+          return '<div style="'+(c.wide?'grid-column:1/-1;':'')+'background:#f8fafb;border:1px solid #e8ebf0;border-radius:9px;padding:11px 14px;display:flex;align-items:center;gap:11px">'
+            +'<span style="flex-shrink:0;width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#208caa,#48a883);display:inline-flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+c.ic+'</svg></span>'
+            +'<div style="min-width:0"><div style="font-size:10pt;color:#7a8694;font-weight:600;margin-bottom:1px">'+c.lbl+'</div>'
+            +'<div style="font-size:12.5pt;color:#1f2d3d;font-weight:700;line-height:1.4">'+c.val+'</div></div>'
+          +'</div>';
+        }).join('');
+      })()
+    +'</div></div>'
 
-    /* جدول الأعمال */
+    /* جدول الأعمال — [AGENDA-TABLE-2026-06-13] جدول حقيقي بنفس المظهر،
+       مع رأس يتكرر تلقائياً عبر صفحات الطباعة (thead = table-header-group). */
     +(items.length
-      ?'<div style="margin-bottom:18px">'
-        +'<div style="font-size:14pt;font-weight:700;color:#1673a4;border-right:5px solid #48a883;padding-right:10px;margin-bottom:8px"> جدول الأعمال</div>'
-        +'<div style="background:#f0f7ff;border-radius:8px;padding:12px 16px">'
+      ?'<table class="agenda-table" style="margin-bottom:18px">'
+        +'<thead><tr><th colspan="2" style="background:linear-gradient(135deg,#1f4c3a,#382972,#208caa);color:#fff;font-size:13.5pt;font-weight:700;padding:9px 16px;text-align:right">جدول الأعمال</th></tr></thead>'
+        +'<tbody>'
         +items.map(function(a,ii){
-  var typeColors={'افتتاحية':'#5b2c87','عرض':'#208caa','تقرير':'#003944','مناقشة':'#208caa','قرار':'#7b241c','متابعة':'#784212','توصية':'#208caa','إحاطة':'#003944','ما يستجد من أعمال':'#382972','للاطلاع':'#382972'};
-  /* [CONTRAST-FIX-2026-06-01] خلفيات فاتحة لكل الشارات لضمان وضوح النص (تباين عالٍ).
-     كان «افتتاحية» و«ما يستجد من أعمال» بخلفية بنفسجية داكنة #757bbb مع نص داكن
-     فلا يُقرآن — استُبدلت بخلفيات فاتحة تطابق نمط بقية الشارات. */
-  var typeBg={'افتتاحية':'#efe6f7','عرض':'#d6eaf8','تقرير':'#d5f5e3','مناقشة':'#d6eaf8','قرار':'#fadbd8','متابعة':'#fdebd0','توصية':'#d6eaf8','إحاطة':'#d6eaf8','ما يستجد من أعمال':'#e3e0f3','للاطلاع':'#d6eaf8'};
+  /* لون نصّي رفيع للتصنيف حسب نوع البند (بلا خلفية، بلا إطار) */
+  var typeColors={'افتتاحية':'#5b2c87','عرض':'#1673a4','تقرير':'#1f4c3a','مناقشة':'#208caa','قرار':'#7b241c','متابعة':'#9a6406','توصية':'#208caa','إحاطة':'#003944','ما يستجد من أعمال':'#382972','للاطلاع':'#382972'};
   var aType=a.type&&a.type.trim()?a.type:null;
-  /* [CONTRAST-FIX-2026-06-01] قيم افتراضية آمنة (خلفية فاتحة + نص داكن) لأي نوع غير معروف */
-  var _aBg=typeBg[aType]||'#eef1f8'; var _aFg=typeColors[aType]||'#1f2d3d';
-  return'<div style="font-size:13pt;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid #757bbb;display:flex;align-items:baseline;justify-content:space-between;gap:8px"><span>'+(ii+1)+'. '+e(a.text||a)+'</span>'+(aType?'<span style="font-size:10pt;background:'+_aBg+';color:'+_aFg+';border-radius:4px;padding:1px 7px;white-space:nowrap;flex-shrink:0">'+aType+'</span>':'')+'</div>';
+  var _aFg=typeColors[aType]||'#5b6472';
+  var _last=(ii===items.length-1);
+  return'<tr style="break-inside:avoid;page-break-inside:avoid">'
+    +'<td style="font-size:13pt;padding:9px 16px;line-height:1.6;'+(_last?'':'border-bottom:1px solid #eef0f5;')+'"><span style="color:#382972;font-weight:700;margin-left:4px">'+(ii+1)+'.</span> '+e(a.text||a)+'</td>'
+    +'<td style="width:1%;white-space:nowrap;vertical-align:top;padding:9px 16px;'+(_last?'':'border-bottom:1px solid #eef0f5;')+'">'+(aType?'<span style="font-size:10pt;font-weight:700;color:'+_aFg+';border-right:2px solid '+_aFg+';padding-right:7px">'+aType+'</span>':'')+'</td>'
+    +'</tr>';
 }).join('')
-        +'</div></div>'
+        +'</tbody></table>'
       :'')
 
     /* ملاحظات الاجتماع */
@@ -29837,7 +29864,7 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
       ?'<div style="margin-bottom:18px">'
         +'<div style="font-size:14pt;font-weight:700;color:#1673a4;border-right:5px solid #382972;padding-right:10px;margin-bottom:8px"> التكليفات</div>'
         +'<table>'
-        +'<thead><tr>'+['#','التكليف','المسؤول','الفترة','الحالة'].map(function(c){return'<th style="background:linear-gradient(135deg,#1f4c3a,#382972);color:#fff;padding:7px 9px;text-align:right;font-size:12pt">'+c+'</th>';}).join('')+'</tr></thead>'
+        +'<thead><tr>'+['#','التكليف','المسؤول','الفترة','الحالة'].map(function(c){return'<th style="background:linear-gradient(135deg,#208caa,#48a883);color:#fff;padding:8px 10px;text-align:right;font-size:12pt">'+c+'</th>';}).join('')+'</tr></thead>'
         +'<tbody>'+taskRows+'</tbody></table></div>'
       :'')
 
@@ -29845,9 +29872,9 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
     /* [PREP-PENDING-TOGGLE] قسم التكليفات الجارية والمعلقة — قابل للإخفاء بـ checkbox */
     +(pending.length
       ?'<div id="pendingTasksBlock" style="margin-bottom:18px">'
-        +'<div style="font-size:14pt;font-weight:700;color:#6d4c00;border-right:5px solid #f39c12;padding-right:10px;margin-bottom:8px">'+(activeSystem==="intl"?" التكليفات الجارية والمعلقة لهذا المجلس/اللجنة":" التكليفات الجارية والمعلقة لهذه اللجنة")+'</div>'
+        +'<div style="font-size:14pt;font-weight:700;color:#1f4c3a;border-right:5px solid #382972;padding-right:10px;margin-bottom:8px">'+(activeSystem==="intl"?"التكليفات الجارية والمعلقة لهذا المجلس/اللجنة":"التكليفات الجارية والمعلقة لهذه اللجنة")+'</div>'
         +'<table>'
-        +'<thead><tr>'+['#','التكليف','المسؤول','تاريخ الاستحقاق','الحالة'].map(function(c){return'<th style="background:#f0e8ff;color:#6d4c00;padding:7px 9px;text-align:right;border:1px solid #ffe082;font-size:12pt">'+c+'</th>';}).join('')+'</tr></thead>'
+        +'<thead><tr>'+['#','التكليف','المسؤول','تاريخ الاستحقاق','الحالة'].map(function(c){return'<th style="background:linear-gradient(135deg,#208caa,#48a883);color:#fff;padding:8px 10px;text-align:right;font-size:12pt">'+c+'</th>';}).join('')+'</tr></thead>'
         +'<tbody>'+pendingRows+'</tbody></table></div>'
       :'')
 
