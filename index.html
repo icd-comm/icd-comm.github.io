@@ -29780,8 +29780,9 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
     +'table thead th:first-child{border-top-right-radius:10px}table thead th:last-child{border-top-left-radius:10px}'
     +'table tbody tr:last-child td:first-child{border-bottom-right-radius:10px}table tbody tr:last-child td:last-child{border-bottom-left-radius:10px}'
     +'thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}'
-    +'.agenda-table td{border:none !important}'
-    +'.agenda-table thead th{border-top-right-radius:10px;border-top-left-radius:10px}'
+    +'.agenda-table td:first-child{width:78% !important;white-space:normal !important;text-align:right !important;padding:11px 16px !important}'
+    +'.agenda-table td:last-child{width:22% !important;text-align:left !important;white-space:nowrap !important;padding:11px 16px !important}'
+    +'.agenda-table thead th{border-radius:10px}'
     +__PRINT_CSS_BASE  /* [STEP-4] CSS طباعة موحّد */
     +'</style></head><body>'
 
@@ -29832,18 +29833,18 @@ function printPrepSummary(overrideDi,overrideMi,_includePending){
     /* جدول الأعمال — [AGENDA-TABLE-2026-06-13] جدول حقيقي بنفس المظهر،
        مع رأس يتكرر تلقائياً عبر صفحات الطباعة (thead = table-header-group). */
     +(items.length
-      ?'<table class="agenda-table" style="margin-bottom:18px">'
-        +'<thead><tr><th colspan="2" style="background:linear-gradient(135deg,#1f4c3a,#382972,#208caa);color:#fff;font-size:13.5pt;font-weight:700;padding:9px 16px;text-align:right">جدول الأعمال</th></tr></thead>'
+      ?'<table class="agenda-table" style="margin-bottom:18px;width:100%;border-collapse:separate;border-spacing:0 7px">'
+        +'<colgroup><col style="width:78%"><col style="width:22%"></colgroup>'
+        +'<thead><tr><th colspan="2" style="background:linear-gradient(135deg,#1f4c3a,#382972,#208caa);color:#fff;font-size:13.5pt;font-weight:700;padding:10px 16px;text-align:right;border-radius:10px">جدول الأعمال</th></tr></thead>'
         +'<tbody>'
         +items.map(function(a,ii){
   /* لون نصّي رفيع للتصنيف حسب نوع البند (بلا خلفية، بلا إطار) */
   var typeColors={'افتتاحية':'#5b2c87','عرض':'#1673a4','تقرير':'#1f4c3a','مناقشة':'#208caa','قرار':'#7b241c','متابعة':'#9a6406','توصية':'#208caa','إحاطة':'#003944','ما يستجد من أعمال':'#382972','للاطلاع':'#382972'};
   var aType=a.type&&a.type.trim()?a.type:null;
   var _aFg=typeColors[aType]||'#5b6472';
-  var _last=(ii===items.length-1);
   return'<tr style="break-inside:avoid;page-break-inside:avoid">'
-    +'<td style="font-size:13pt;padding:9px 16px;line-height:1.6;'+(_last?'':'border-bottom:1px solid #eef0f5;')+'"><span style="color:#382972;font-weight:700;margin-left:4px">'+(ii+1)+'.</span> '+e(a.text||a)+'</td>'
-    +'<td style="width:1%;white-space:nowrap;vertical-align:top;padding:9px 16px;'+(_last?'':'border-bottom:1px solid #eef0f5;')+'">'+(aType?'<span style="font-size:10pt;font-weight:700;color:'+_aFg+';border-right:2px solid '+_aFg+';padding-right:7px">'+aType+'</span>':'')+'</td>'
+    +'<td style="width:78%;font-size:13pt;padding:11px 16px;line-height:1.6;text-align:right;background:#fbfcfd;border:1px solid #d1d5db;border-left:none;border-radius:0 9px 9px 0"><span style="color:#382972;font-weight:700;margin-left:4px">'+(ii+1)+'.</span> '+e(a.text||a)+'</td>'
+    +'<td style="width:22%;font-size:10.5pt;padding:11px 16px;text-align:left;vertical-align:middle;background:#fbfcfd;border:1px solid #d1d5db;border-right:none;border-radius:9px 0 0 9px">'+(aType?'<span style="font-weight:700;color:'+_aFg+';border-right:2px solid '+_aFg+';padding-right:7px;white-space:nowrap">'+aType+'</span>':'')+'</td>'
     +'</tr>';
 }).join('')
         +'</tbody></table>'
