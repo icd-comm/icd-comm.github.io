@@ -5942,6 +5942,8 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
       <span class="sync-txt" id="syncTxt">جاهز</span>
       <span style="font-size:11px;color:rgba(255,255,255,.7)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
     </div>
+    <!-- [CMDK-TOPBAR] زر شريط الأوامر الذكي في الشريط العلوي -->
+    <button id="cmdkTopBtn" title="بحث ذكي وأوامر سريعة (Ctrl+K)" aria-label="شريط الأوامر الذكي" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/></svg> أوامر سريعة</button>
     <!-- زر تسجيل الخروج -->
     <button id="btnLogout" onclick="showLogoutModal()" style="background:rgba(231,76,60,.15);color:#e74c3c;border:1px solid rgba(231,76,60,.35);border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;transition:background .2s" onmouseover="this.style.background='rgba(231,76,60,.3)'" onmouseout="this.style.background='rgba(231,76,60,.15)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> خروج</button>
   </div>
@@ -40166,8 +40168,12 @@ window.themeReportCSS=function(){
     if(activeIdx<0) setActiveDescendant('');
   }
 
-  /* الزر العائم */
-  document.getElementById('cmdkFab').addEventListener('click',open);
+  /* الزر العائم (احتياطي — مخفي، استُبدل بزر الشريط العلوي) */
+  var _fab=document.getElementById('cmdkFab');
+  if(_fab){ _fab.addEventListener('click',open); _fab.style.display='none'; }
+  /* زر الشريط العلوي [CMDK-TOPBAR] */
+  var _topBtn=document.getElementById('cmdkTopBtn');
+  if(_topBtn){ _topBtn.addEventListener('click',open); }
   /* النقر على الخلفية يغلق */
   document.getElementById('cmdkOverlay').addEventListener('click',function(e){ if(e.target.id==='cmdkOverlay')close(); });
   /* اختصار عام Ctrl+K / Cmd+K (إضافة مجانية لا تضر) */
@@ -40175,13 +40181,16 @@ window.themeReportCSS=function(){
     if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){ e.preventDefault(); isOpen()?close():open(); }
   });
 
-  /* إظهار الزر فقط بعد تسجيل الدخول (عندما تكون شاشة التطبيق ظاهرة) */
+  /* إظهار زر الشريط العلوي فقط بعد تسجيل الدخول */
   function maybeShowFab(){
     try{
       var app=document.getElementById('appScreen');
       var login=document.getElementById('loginScreen');
       var loggedIn = app && getComputedStyle(app).display!=='none' && (!login||getComputedStyle(login).display==='none');
-      document.getElementById('cmdkFab').style.display = loggedIn ? 'flex' : 'none';
+      var btn=document.getElementById('cmdkTopBtn');
+      if(btn) btn.style.display = loggedIn ? 'flex' : 'none';
+      var fab=document.getElementById('cmdkFab');
+      if(fab) fab.style.display='none'; /* الزر العائم يبقى مخفياً دائماً */
     }catch(e){}
   }
   setInterval(maybeShowFab,1200);
