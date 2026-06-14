@@ -21232,13 +21232,13 @@ function showLateTasksAlert(lateTasks){
       +'border-radius:8px;padding:12px 14px;margin-bottom:10px;'
       +'border:1px solid rgba(183,28,28,0.15)">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">'
-      +'<span style="font-size:11pt;font-weight:700;color:'+C1+';flex:1;line-height:1.4">'+(i+1)+'. '+( t.task||'')+'</span>'
+      +'<span style="font-size:11pt;font-weight:700;color:'+C1+';flex:1;line-height:1.4">'+(i+1)+'. '+e(t.task||'')+'</span>'
       +'<span style="background:'+RED+';color:#fff;padding:2px 8px;border-radius:12px;font-size:9pt;white-space:nowrap;font-weight:700;flex-shrink:0">متأخر</span>'
       +'</div>'
       +'<div style="display:flex;gap:14px;font-size:9.5pt;color:#666;flex-wrap:wrap">'
-      +(comm?'<span>☰ '+comm+'</span>':'')
-      +'<span>◔ '+resp+'</span>'
-      +'<span style="color:'+RED+'">◷ '+dateTo+'</span>'
+      +(comm?'<span>☰ '+e(comm)+'</span>':'')
+      +'<span>◔ '+e(resp)+'</span>'
+      +'<span style="color:'+RED+'">◷ '+e(dateTo)+'</span>'
       +'</div>'
       +'</div>';
   });
@@ -25846,8 +25846,8 @@ async function s4MergeAllReports(){
       var co=sco[t.status]||'#333';
       tasksHtml+='<tr>'
         +'<td style="text-align:center;color:#999;font-size:9pt">'+(ti+1)+'</td>'
-        +'<td style="line-height:1.5">'+( t.task||'')+'</td>'
-        +'<td>'+resp+'</td>'
+        +'<td style="line-height:1.5">'+e(t.task||'')+'</td>'
+        +'<td>'+e(resp)+'</td>'
         +'<td style="text-align:center"><span class="badge" style="background:'+bg+';color:'+co+'">'+t.status+'</span></td>'
         +'<td style="text-align:center;font-size:9pt">'+(t.dateTo||'—')+'</td>'
         +'<td style="text-align:center;font-size:9pt">'+(t.priority||'—')+'</td>'
@@ -34618,45 +34618,58 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
   var now = new Date().toLocaleDateString('ar-SA-u-ca-gregory-nu-latn', {year:'numeric',month:'long',day:'numeric'});
   var html = '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>محضر اجتماع - '+gmEsc(m.name||'')+'</title>';
   html += '<style>@page{size:13.333in 7.5in;margin:12mm}';
-  html += 'body{font-family:"Sakkal Majalla","Arial",sans-serif;direction:rtl;color:#003944;margin:0;padding:0;font-size:12pt}';
-  html += '.cover{text-align:center;padding:40px 20px;border-bottom:4px double #208caa;margin-bottom:30px}';
-  html += '.cover h1{color:#1673a4;font-size:22pt;margin:8px 0}';
-  html += '.cover .sub{color:#7358a5;font-size:13pt;margin-top:8px}';
-  html += '.cover .date{color:#1673a4;font-size:11pt;margin-top:6px;background:#e3f2fd;padding:6px 16px;border-radius:20px;display:inline-block}';
-  html += '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#f5f8fb;padding:16px;border-radius:10px;margin-bottom:20px;border:1px solid #e2eaf2}';
-  html += '.info-item{display:flex;gap:6px;font-size:11pt}';
-  html += '.info-item b{color:#1673a4}';
-  html += 'h2{color:#1673a4;background:linear-gradient(90deg,#e3f2fd,transparent);padding:8px 14px;border-right:4px solid #208caa;margin:24px 0 10px;font-size:14pt;page-break-after:avoid}';
-  html += '.notes-box{background:#f0e8ff;border:1px solid #b0a2e8;padding:12px;border-radius:8px;font-size:11pt;color:#382972;line-height:1.7}';
-  html += 'table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:10.5pt}';
-  html += 'th{background:#208caa;color:#fff;padding:7px 9px;text-align:right;font-size:10pt}';
-  html += 'td{border:1px solid #e2eaf2;padding:6px 9px}';
-  html += 'tr:nth-child(even) td{background:#fafbfc}';
+  html += 'body{font-family:"Sakkal Majalla","Arial",sans-serif;direction:rtl;color:#1f2d3d;margin:0;padding:0;font-size:12pt;background:#fff}';
+  /* هيدر بتدرّج هوية الوزارة (مطابق للملخص التحضيري) */
+  html += '.cover{background:linear-gradient(135deg,#208caa,#48a883);border-radius:14px;padding:22px 26px;margin-bottom:18px;color:#fff}';
+  html += '.cover .top{font-size:11pt;opacity:.9;margin-bottom:2px}';
+  html += '.cover h1{font-size:21pt;margin:2px 0;font-weight:700}';
+  html += '.cover .sub{font-size:12pt;opacity:.92}';
+  /* لافتة اسم الاجتماع + بطاقات البيانات (مطابقة INFO-CARDS) */
+  html += '.mname{background:linear-gradient(135deg,#208caa,#48a883);border-radius:12px 12px 0 0;padding:14px 20px;color:#fff;display:flex;align-items:center;gap:11px}';
+  html += '.mname .lbl{font-size:10.5pt;opacity:.82;margin-bottom:1px}.mname .val{font-size:15pt;font-weight:700}';
+  html += '.info-grid{border:1px solid #d1d5db;border-top:none;border-radius:0 0 12px 12px;padding:16px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}';
+  html += '.info-card{background:#f8fafb;border:1px solid #e8ebf0;border-radius:9px;padding:11px 14px;display:flex;align-items:center;gap:11px}';
+  html += '.info-card .ic{flex-shrink:0;width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#208caa,#48a883);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15pt}';
+  html += '.info-card .lbl{font-size:10pt;color:#7a8694;font-weight:600;margin-bottom:1px}.info-card .val{font-size:12.5pt;color:#1f2d3d;font-weight:700}';
+  html += '.info-card.wide{grid-column:1/-1}';
+  /* عناوين الأقسام بشريط جانبي بهوية الوزارة */
+  html += 'h2{color:#1f4c3a;border-right:5px solid #382972;padding-right:10px;margin:22px 0 9px;font-size:14pt;font-weight:700;page-break-after:avoid}';
+  html += '.notes-box{background:#fff8e6;border-right:4px solid #e0a800;padding:12px 16px;border-radius:8px;font-size:11pt;color:#5b4a00;line-height:1.7}';
+  /* الجداول: رؤوس متدرّجة + حدود رمادية + تقويس (مطابق للملخص) */
+  html += 'table{width:100%;border-collapse:separate;border-spacing:0;border-radius:10px;overflow:hidden;border:1px solid #d1d5db;margin:8px 0 16px;font-size:11pt}';
+  html += 'th{background:linear-gradient(135deg,#208caa,#48a883);color:#fff;padding:8px 10px;text-align:right;font-size:11pt;font-weight:700}';
+  html += 'td{border-bottom:1px solid #d1d5db;border-left:1px solid #d1d5db;padding:9px 12px;line-height:1.6}';
+  html += 'td:last-child,th:last-child{border-left:none}';
+  html += 'tr:last-child td{border-bottom:none}';
   html += '.status-منجز{color:#155724;font-weight:700}.status-متأخر{color:#922b21;font-weight:700}';
   html += '.status-جارٍ{color:#382972;font-weight:700}.status-معلق{color:#6c757d}';
-  html += '.status-قيد-الانتظار{color:#208caa;font-weight:600}';
-  html += '.prio{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9pt;font-weight:700}';
-  html += '.prio-low{background:#e8f5e9;color:#1b5e20}.prio-med{background:#f0e8ff;color:#7030A0}';
-  html += '.prio-high{background:#ffebee;color:#b71c1c}.prio-crit{background:#b71c1c;color:#fff}';
-  html += '.progress-td{position:relative}';
-  html += '.sign-area{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:60px;padding:20px 0;border-top:1px dashed #95a5a6}';
-  html += '.sign-box{text-align:center;font-size:11pt}';
-  html += '.sign-line{border-top:1px solid #000;margin-bottom:4px;padding-top:30px}';
-  html += '.attach-links{background:#e3f2fd;padding:10px;border-radius:8px;margin-bottom:10px}';
-  html += '.attach-links a{color:#1673a4;text-decoration:none;display:inline-block;margin:3px 5px;padding:3px 8px;background:#fff;border-radius:5px;font-size:10pt;border:1px solid #757bbb}';
-  html += '@media print{h2{page-break-after:avoid}table{page-break-inside:auto}}';
+  html += '.status-على-المسار{color:#1f5fa8;font-weight:700}.status-قيد-الانتظار{color:#208caa;font-weight:600}';
+  /* أيقونة آخر تحديث (مطابقة للملخص التحضيري) */
+  html += '.last-update{margin-top:8px;background:#f3f7f5;border-right:3px solid #48a883;border-radius:5px;padding:6px 10px;font-size:10.5pt;color:#1f4c3a;line-height:1.6}';
+  html += '.last-update .lu-ttl{font-weight:700;color:#382972}';
+  html += '.sign-area{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:50px;padding:20px 0;border-top:1px dashed #95a5a6}';
+  html += '.sign-box{text-align:center;font-size:11pt}.sign-line{border-top:1px solid #000;margin-bottom:4px;padding-top:30px}';
+  html += '.attach-links{background:#f3f7f5;padding:10px;border-radius:8px;margin-bottom:10px}';
+  html += '.attach-links a{color:#1673a4;text-decoration:none;display:inline-block;margin:3px 5px;padding:3px 8px;background:#fff;border-radius:5px;font-size:10pt;border:1px solid #d1d5db}';
+  html += '@media print{h2{page-break-after:avoid}table{page-break-inside:auto}thead{display:table-header-group}tr{break-inside:avoid}}';
   html += '</style></head><body>';
-  // الغلاف
-  html += '<div class="cover">';
-  html += '<h1>'+gmEsc(m.name||'(بدون اسم)')+'</h1>';
-  html += '<div class="date">تاريخ المحضر: '+now+'</div>';
+  // الهيدر (بتدرّج هوية الوزارة + شعار الوزارة، مطابق للملخص التحضيري)
+  html += '<div class="cover" style="display:flex;align-items:center;gap:16px">';
+  html += '<img src="'+LOGO2_SRC+'" style="height:54px;object-fit:contain;filter:brightness(0) invert(1)" alt="شعار وزارة التعليم" loading="lazy">';
+  html += '<div>';
+  html += '<div class="top">وزارة التعليم — وكالة التعاون الدولي</div>';
+  html += '<h1>محضر اجتماع</h1>';
+  html += '<div class="sub">'+gmEsc(m.name||'(بدون اسم)')+'</div>';
   html += '</div>';
-  // معلومات الاجتماع
+  html += '</div>';
+  // لافتة اسم الاجتماع + بطاقات البيانات (مطابقة للملخص التحضيري)
+  html += '<div class="mname"><span style="font-size:18pt">⛉</span><div><div class="lbl">اسم الاجتماع</div><div class="val">'+gmEsc(m.name||'(بدون اسم)')+'</div></div></div>';
   html += '<div class="info-grid">';
-  if(m.date) html += '<div class="info-item"><b>◷ التاريخ:</b> '+gmFormatDate(m.date)+'</div>';
-  if(m.time) html += '<div class="info-item"><b>◷ الوقت:</b> '+gmEsc(m.time)+'</div>';
-  if(m.place) html += '<div class="info-item"><b>◉ المكان:</b> '+gmEsc(m.place)+'</div>';
-  if(m.chair) html += '<div class="info-item"><b>◔ رئيس الاجتماع:</b> '+gmEsc(m.chair)+'</div>';
+  if(m.meetNum) html += '<div class="info-card"><span class="ic">▦</span><div><div class="lbl">رقم الاجتماع</div><div class="val">'+gmEsc(String(m.meetNum))+'</div></div></div>';
+  if(m.date) html += '<div class="info-card"><span class="ic">▤</span><div><div class="lbl">تاريخ الاجتماع</div><div class="val">'+gmFormatDate(m.date)+'</div></div></div>';
+  if(m.time) html += '<div class="info-card"><span class="ic">◷</span><div><div class="lbl">وقت الاجتماع</div><div class="val">'+gmEsc(m.time)+'</div></div></div>';
+  if(m.place) html += '<div class="info-card wide"><span class="ic">◉</span><div><div class="lbl">مكان الاجتماع</div><div class="val">'+gmEsc(m.place)+'</div></div></div>';
+  if(m.chair) html += '<div class="info-card wide"><span class="ic">◔</span><div><div class="lbl">رئيس الاجتماع</div><div class="val">'+gmEsc(m.chair)+'</div></div></div>';
   html += '</div>';
   // جدول الأعمال
   if(m.notes){
@@ -34687,19 +34700,19 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
   // التكليفات
   if((m.tasks||[]).length > 0){
     html += '<h2>◆ التكليفات الصادرة</h2>';
-    html += '<table><thead><tr><th style="width:30px">#</th><th>التكليف</th><th style="width:110px">المسؤول</th><th style="width:90px">التاريخ</th><th style="width:70px">الأولوية</th><th style="width:80px">الحالة</th><th style="width:60px">الإنجاز</th></tr></thead><tbody>';
+    html += '<table><thead><tr><th style="width:30px">#</th><th>التكليف</th><th style="width:150px">المسؤول</th><th style="width:110px">تاريخ الاستحقاق</th><th style="width:90px">الحالة</th></tr></thead><tbody>';
     m.tasks.forEach(function(t,i){
-      var prio = gmPrioInfo(t.priority||'med');
-      var progress = typeof t.progress==='number' ? t.progress : 0;
       var statusCls = (t.status||'').replace(/\s/g,'-');
+      var upd = t.update || t.lastUpdate || '';
       html += '<tr>'+
-        '<td>'+(i+1)+'</td>'+
-        '<td>'+gmEsc(t.task||'')+(t.notes?'<br><small style="color:#757bbb">'+gmEsc(t.notes)+'</small>':'')+'</td>'+
-        '<td>'+gmEsc(t.responsible||'—')+'</td>'+
-        '<td>'+(t.dueDate?gmFormatDate(t.dueDate):'—')+'</td>'+
-        '<td><span class="prio prio-'+(t.priority||'med')+'">'+prio.lbl+'</span></td>'+
-        '<td class="status-'+statusCls+'">'+gmEsc(t.status||'—')+'</td>'+
-        '<td>'+progress+'%</td>'+
+        '<td style="text-align:center;color:#888">'+(i+1)+'</td>'+
+        '<td>'+gmEsc(t.task||'')+
+          (t.notes?'<div style="margin-top:6px;font-size:10pt;color:#5b6472">'+gmEsc(t.notes)+'</div>':'')+
+          (upd?'<div class="last-update"><span class="lu-ttl">↻ آخر تحديث:</span> '+gmEsc(upd)+'</div>':'')+
+        '</td>'+
+        '<td style="font-weight:700">'+gmEsc(t.responsible||'—')+'</td>'+
+        '<td style="text-align:center">'+(t.dueDate?gmFormatDate(t.dueDate):'—')+'</td>'+
+        '<td class="status-'+statusCls+'" style="text-align:center">'+gmEsc(t.status||'—')+'</td>'+
       '</tr>';
     });
     html += '</tbody></table>';
@@ -39854,6 +39867,327 @@ window.themeReportCSS=function(){
 };
 </script>
 
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     [SMART-COMMAND-PALETTE-2026-06-13] شريط الأوامر الذكي
+     ميزة محلية بالكامل (بلا أي خدمة خارجية). تنقّل + إجابات فورية + تصفية.
+     يعتمد فقط على دوال/متغيرات النظام الموجودة: D, M, GM, goTo, getTaskStats,
+     getAllPendingTasks, govInScope, openView, _norm, activeSystem.
+     ═══════════════════════════════════════════════════════════════ -->
+<style>
+#cmdkFab{position:fixed;bottom:16px;left:62px;z-index:1000050;width:46px;height:46px;border-radius:50%;
+  background:linear-gradient(135deg,#208caa,#48a883);border:none;cursor:pointer;box-shadow:0 4px 16px rgba(31,76,58,.32);
+  display:none;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s}
+#cmdkFab:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 8px 24px rgba(31,76,58,.42)}
+#cmdkFab svg{width:22px;height:22px}
+#cmdkOverlay{position:fixed;inset:0;z-index:1000051;background:rgba(15,30,40,.45);backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;padding-top:11vh}
+#cmdkBox{width:min(640px,92vw);background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.34);
+  overflow:hidden;font-family:inherit;animation:cmdkIn .18s ease}
+@keyframes cmdkIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+#cmdkHead{display:flex;align-items:center;gap:11px;padding:15px 18px;border-bottom:1px solid #eef0f4}
+#cmdkHead svg{width:20px;height:20px;color:#208caa;flex-shrink:0}
+#cmdkInput{flex:1;border:none;outline:none;font-size:16px;font-family:inherit;color:#1f2d3d;background:transparent}
+#cmdkInput::placeholder{color:#9aa5b1}
+#cmdkKbd{font-size:11px;color:#9aa5b1;border:1px solid #e3e6ee;border-radius:6px;padding:2px 7px;white-space:nowrap}
+#cmdkResults{max-height:54vh;overflow-y:auto;padding:6px}
+.cmdk-sec{font-size:11px;font-weight:700;color:#9aa5b1;padding:9px 14px 5px;letter-spacing:.02em}
+.cmdk-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;cursor:pointer;transition:background .12s}
+.cmdk-item:hover,.cmdk-item.cmdk-active{background:#f0f7f5}
+.cmdk-ic{flex-shrink:0;width:34px;height:34px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#208caa,#48a883)}
+.cmdk-ic svg{width:17px;height:17px;color:#fff}
+.cmdk-tx{flex:1;min-width:0}
+.cmdk-ti{font-size:14px;font-weight:600;color:#1f2d3d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdk-su{font-size:12px;color:#7a8694;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.cmdk-badge{flex-shrink:0;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px}
+.cmdk-answer{padding:16px 18px;margin:6px;background:linear-gradient(135deg,#f3f9f8,#eef6f4);border:1px solid #d9ece7;border-radius:12px}
+.cmdk-answer-num{font-size:30px;font-weight:800;color:#1f4c3a;line-height:1}
+.cmdk-answer-lbl{font-size:13px;color:#5b6472;margin-top:5px}
+.cmdk-empty{text-align:center;padding:34px 18px;color:#9aa5b1;font-size:14px}
+</style>
+
+<button id="cmdkFab" title="بحث ذكي وأوامر سريعة" aria-label="شريط الأوامر الذكي">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/></svg>
+</button>
+
+<div id="cmdkOverlay" role="dialog" aria-modal="true">
+  <div id="cmdkBox">
+    <div id="cmdkHead">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="cmdkInput" type="text" placeholder="ابحث أو اسأل… (لجنة، تكليفات متأخرة، كم اجتماع، انتقل إلى…)" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="cmdkResults" aria-autocomplete="list" aria-activedescendant="" aria-label="بحث ذكي وأوامر سريعة">
+      <span id="cmdkKbd">Esc للإغلاق</span>
+    </div>
+    <div id="cmdkResults" role="listbox" aria-label="نتائج البحث"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  /* أدوات مساعدة آمنة — تتحقق من وجود دوال النظام قبل استخدامها */
+  function _has(fn){return typeof window[fn]==='function';}
+  function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function _normT(s){ if(_has('_norm'))return window._norm(s); return String(s==null?'':s).toLowerCase().replace(/[أإآ]/g,'ا').replace(/[ةه]/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim(); }
+  function _scope(i){ if(_has('govInScope'))return window.govInScope(i); return true; }
+  function _meets(i){ if(_has('GM'))return window.GM(i)||[]; return (window.M&&window.M[i])||[]; }
+
+  /* تسميات الأقسام — تُكتشف ديناميكياً من أزرار التنقّل، مع احتياطي ثابت */
+  var SECTION_FALLBACK={s1:'اللجان',s2:'الإحصاءات',s3:'الاجتماعات',s4:'التكليفات',s5:'الجدول الزمني',sExec:'اللوحة التنفيذية',sdocs:'الوثائق',sgm:'الاجتماعات العامة',sgov:'الحوكمة'};
+  function sectionLabel(sec){
+    try{
+      var el=document.querySelector('[data-sec="'+sec+'"],[data-go="'+sec+'"],[onclick*="goTo(\''+sec+'\')"]');
+      if(el){var t=(el.textContent||'').replace(/\s+/g,' ').trim();if(t&&t.length<=24)return t;}
+    }catch(e){}
+    return SECTION_FALLBACK[sec]||sec;
+  }
+
+  var ICONS={
+    nav:'<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 0 0 1 1h3m10-11l2 2m-2-2v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6"/>',
+    committee:'<path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>',
+    task:'<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+    late:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+    meeting:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    answer:'<path d="M9 11l3 3L22 4"/>',
+    person:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
+  };
+  function svg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';}
+
+  var statusColors={'متأخر':['#fde8e8','#c0392b'],'منجز':['#e8f6ee','#1e7e45'],'مكتمل':['#e8f6ee','#1e7e45'],'على المسار':['#e8f1fb','#1f5fa8'],'قيد التنفيذ':['#fff3e0','#9a6406'],'جارٍ':['#fff3e0','#9a6406'],'لم يبدأ':['#eef0f4','#5b6472']};
+
+  /* ═══ مولّد النتائج حسب الاستعلام ═══ */
+  function buildResults(q){
+    var qn=_normT(q);
+    var out=[];
+    var D=window.D||[];
+    var entity=(window.activeSystem==='intl')?'مجلس/لجنة':'لجنة';
+
+    /* ── 1) إجابات فورية (أسئلة كمية) ── */
+    var wantLate=/متاخر|متأخر|متعثر|تاخير/.test(qn);
+    var wantMeetingCount=/كم.*اجتماع|عدد.*اجتماع/.test(qn);
+    var wantTaskCount=/كم.*تكليف|عدد.*تكليف/.test(qn);
+    var wantCommCount=/كم.*لجن|عدد.*لجن|كم.*مجلس|عدد.*مجلس/.test(qn);
+    var wantDone=/منجز|مكتمل|اكتمل|انجاز/.test(qn);
+
+    if(wantTaskCount||wantLate||wantDone){
+      var stats=_has('getTaskStats')?window.getTaskStats():null;
+      if(stats){
+        if(wantLate) out.push({kind:'answer',num:stats.late,lbl:'تكليف متأخر عبر كل '+(window.activeSystem==='intl'?'المجالس واللجان':'اللجان')});
+        else if(wantDone) out.push({kind:'answer',num:stats.done,lbl:'تكليف منجز من إجمالي '+stats.total});
+        else out.push({kind:'answer',num:stats.total,lbl:'إجمالي التكليفات ('+stats.late+' متأخر، '+stats.done+' منجز)'});
+      }
+    }
+    if(wantCommCount){
+      var cc=0; for(var i=0;i<D.length;i++){ if(_scope(i))cc++; }
+      out.push({kind:'answer',num:cc,lbl:'عدد '+(window.activeSystem==='intl'?'المجالس واللجان':'اللجان')+' ضمن نطاقك'});
+    }
+    if(wantMeetingCount){
+      var mc=0; for(var j=0;j<D.length;j++){ if(_scope(j))mc+=_meets(j).length; }
+      out.push({kind:'answer',num:mc,lbl:'إجمالي الاجتماعات المسجّلة'});
+    }
+
+    /* ── 2) تصفية ذكية: التكليفات المتأخرة (قائمة فعلية) ── */
+    if(wantLate && _has('getAllPendingTasks')){
+      var lateList=[];
+      for(var k=0;k<D.length;k++){
+        if(!_scope(k))continue;
+        var d=D[k]; var meets=_meets(k);
+        meets.forEach(function(m){
+          (m.tasks||[]).forEach(function(t){
+            if(t.status==='متأخر') lateList.push({d:d,di:k,t:t});
+          });
+        });
+      }
+      lateList.slice(0,8).forEach(function(x){
+        out.push({kind:'task',di:x.di,title:x.t.task||'—',sub:(x.d.n||'')+' • '+(x.t.responsible||'بلا مسؤول'),status:'متأخر'});
+      });
+    }
+
+    /* ── 3) بحث اللجان بالاسم/الممثل/الجهة ── */
+    if(qn.length>=1){
+      var matched=0;
+      for(var c=0;c<D.length && matched<8;c++){
+        if(!_scope(c))continue;
+        var dd=D[c];
+        var hay=_normT((dd.n||'')+' '+(dd.r||'')+' '+(dd.ch||'')+' '+(dd.go||''));
+        if(hay.indexOf(qn)>-1){
+          out.push({kind:'committee',di:c,title:dd.n||'—',sub:'الممثل: '+(dd.r||'—')+' • '+(dd.st||''),status:dd.st});
+          matched++;
+        }
+      }
+    }
+
+    /* ── 4) تصفية بالجهة المسؤولة عن التكليفات ── */
+    var byOwner=qn.replace(/^(تكليفات|مهام)\s+/,'');
+    if(/تكليفات\s+|مهام\s+/.test(qn) && byOwner.length>=2 && _has('getAllPendingTasks')){
+      /* مطابقة مرنة: تجزئة لكلمات وتجاهل أدوات التعريف/الجر في البداية (ال/لل/وال) */
+      function _stripAr(w){return w.replace(/^(وال|فال|بال|لل|ال)/,'');}
+      var qWords=byOwner.split(/\s+/).map(_stripAr).filter(function(w){return w.length>=2;});
+      var ownerHits=[];
+      for(var o=0;o<D.length;o++){
+        if(!_scope(o))continue;
+        var od=D[o];
+        _meets(o).forEach(function(m){
+          (m.tasks||[]).forEach(function(t){
+            var resp=_normT(t.responsible||'');
+            var respWords=resp.split(/\s+/).map(_stripAr);
+            /* تطابق إن وُجدت أي كلمة استعلام كجذع داخل أي كلمة من المسؤول */
+            var hit=qWords.some(function(qw){return respWords.some(function(rw){return rw.indexOf(qw)>-1||qw.indexOf(rw)>-1;});});
+            if(hit) ownerHits.push({d:od,di:o,t:t});
+          });
+        });
+      }
+      ownerHits.slice(0,8).forEach(function(x){
+        out.push({kind:'task',di:x.di,title:x.t.task||'—',sub:(x.d.n||'')+' • '+(x.t.responsible||'')+' • '+(x.t.status||''),status:x.t.status});
+      });
+    }
+
+    /* ── 5) التنقّل بين الأقسام ── */
+    var secs=['s1','s2','s3','s4','s5','sExec','sdocs','sgm','sgov'];
+    secs.forEach(function(sec){
+      var lbl=sectionLabel(sec);
+      if(qn.length===0 || _normT(lbl).indexOf(qn)>-1 || _normT('انتقل '+lbl).indexOf(qn)>-1){
+        out.push({kind:'nav',sec:sec,title:'الانتقال إلى: '+lbl,sub:'قسم في النظام'});
+      }
+    });
+
+    return out;
+  }
+
+  /* ═══ العرض ═══ */
+  var activeIdx=-1, currentItems=[], lastQuery='';
+  /* تمييز نص المطابقة بأمان (يهرّب النص ثم يبرز الجزء المطابق) */
+  function _highlight(text,q){
+    var safe=_esc(text);
+    var qn=_normT(q);
+    if(!qn||qn.length<1) return safe;
+    /* ابحث عن موضع المطابقة في النص المطبّع، ثم أبرزه في الأصل المهرّب */
+    var norm=_normT(text);
+    var pos=norm.indexOf(qn);
+    if(pos<0) return safe;
+    /* مطابقة تقريبية على النص المهرّب: نبرز نفس عدد الأحرف من الموضع */
+    var safeNorm=_normT(safe);
+    var p2=safeNorm.indexOf(qn);
+    if(p2<0) return safe;
+    return safe.slice(0,p2)+'<mark style="background:#fde68a;color:inherit;border-radius:3px;padding:0 1px">'+safe.slice(p2,p2+qn.length)+'</mark>'+safe.slice(p2+qn.length);
+  }
+  function render(items){
+    currentItems=items.filter(function(x){return x.kind!=='answer';}); /* العناصر القابلة للنقر */
+    var box=document.getElementById('cmdkResults');
+    if(!items.length){ box.innerHTML='<div class="cmdk-empty">لا نتائج. جرّب: «متأخر»، «كم اجتماع»، اسم لجنة، أو «انتقل».</div>'; setActiveDescendant(''); return; }
+    var html=''; var clickIdx=0;
+    /* الإجابات أولاً */
+    items.filter(function(x){return x.kind==='answer';}).forEach(function(a){
+      html+='<div class="cmdk-answer" role="status"><div class="cmdk-answer-num">'+_esc(a.num)+'</div><div class="cmdk-answer-lbl">'+_esc(a.lbl)+'</div></div>';
+    });
+    var groups=[['committee','اللجان'],['task','التكليفات'],['nav','التنقّل']];
+    groups.forEach(function(g){
+      var gi=items.filter(function(x){return x.kind===g[0];});
+      if(!gi.length)return;
+      html+='<div class="cmdk-sec" role="presentation">'+g[1]+'</div>';
+      gi.forEach(function(it){
+        var icon=it.kind==='nav'?ICONS.nav:(it.kind==='committee'?ICONS.committee:(it.status==='متأخر'?ICONS.late:ICONS.task));
+        var badge='';
+        if(it.status&&statusColors[it.status]){var sc=statusColors[it.status];badge='<span class="cmdk-badge" style="background:'+sc[0]+';color:'+sc[1]+'">'+_esc(it.status)+'</span>';}
+        html+='<div class="cmdk-item" role="option" id="cmdk-opt-'+clickIdx+'" aria-selected="false" data-ci="'+clickIdx+'">'
+          +'<span class="cmdk-ic">'+svg(icon)+'</span>'
+          +'<span class="cmdk-tx"><span class="cmdk-ti">'+_highlight(it.title,lastQuery)+'</span>'+(it.sub?'<span class="cmdk-su">'+_esc(it.sub)+'</span>':'')+'</span>'
+          +badge+'</div>';
+        clickIdx++;
+      });
+    });
+    box.innerHTML=html;
+    Array.prototype.forEach.call(box.querySelectorAll('.cmdk-item'),function(el){
+      el.addEventListener('click',function(){ execItem(currentItems[parseInt(el.getAttribute('data-ci'),10)]); });
+    });
+    activeIdx=-1; setActiveDescendant('');
+  }
+  function setActiveDescendant(id){ try{ document.getElementById('cmdkInput').setAttribute('aria-activedescendant',id||''); }catch(e){} }
+
+  function execItem(it){
+    if(!it)return;
+    close();
+    try{
+      if(it.kind==='nav'){ if(_has('goTo'))window.goTo(it.sec); }
+      else if(it.kind==='committee'){ if(_has('openView'))window.openView(it.di); else if(_has('goTo'))window.goTo('s1'); }
+      else if(it.kind==='task'){ if(_has('selectS3')){window.goTo&&window.goTo('s3');window.selectS3(it.di);} else if(_has('goTo'))window.goTo('s4'); }
+    }catch(e){ if(_has('showToast'))window.showToast('تعذّر التنفيذ',true); }
+  }
+
+  /* ═══ فتح/إغلاق مع إدارة تركيز كاملة ═══ */
+  var _lastFocus=null;
+  function open(){
+    _lastFocus=document.activeElement; /* احفظ مكان التركيز للاستعادة */
+    var ov=document.getElementById('cmdkOverlay');
+    ov.style.display='flex';
+    var inp=document.getElementById('cmdkInput');
+    inp.setAttribute('aria-expanded','true');
+    inp.value=''; lastQuery=''; render(buildResults('')); 
+    setTimeout(function(){inp.focus();},30);
+  }
+  function close(){
+    var ov=document.getElementById('cmdkOverlay');
+    ov.style.display='none';
+    document.getElementById('cmdkInput').setAttribute('aria-expanded','false');
+    setActiveDescendant('');
+    /* استعد التركيز لمكانه السابق (معيار وصولية) */
+    try{ if(_lastFocus&&typeof _lastFocus.focus==='function')_lastFocus.focus(); }catch(e){}
+  }
+  function isOpen(){ return document.getElementById('cmdkOverlay').style.display==='flex'; }
+
+  /* تحديث النتائج عند الكتابة — مع debounce (120ms) لتفادي إعادة الحساب لكل حرف */
+  var _debTimer=null;
+  document.getElementById('cmdkInput').addEventListener('input',function(e){
+    lastQuery=e.target.value;
+    if(_debTimer)clearTimeout(_debTimer);
+    _debTimer=setTimeout(function(){ render(buildResults(lastQuery)); },120);
+  });
+
+  /* لوحة المفاتيح: أسهم + Enter + Esc + حصر التركيز (Tab) */
+  document.getElementById('cmdkInput').addEventListener('keydown',function(e){
+    var items=document.querySelectorAll('#cmdkResults .cmdk-item');
+    if(e.key==='ArrowDown'){ e.preventDefault(); activeIdx=Math.min(activeIdx+1,items.length-1); paintActive(items); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); activeIdx=Math.max(activeIdx-1,0); paintActive(items); }
+    else if(e.key==='Enter'){ e.preventDefault(); if(activeIdx>=0&&items[activeIdx]){items[activeIdx].click();} else if(items[0]){items[0].click();} }
+    else if(e.key==='Escape'){ e.preventDefault(); close(); }
+    else if(e.key==='Tab'){ e.preventDefault(); /* حصر التركيز: لا مخرج بـTab، نتنقّل بالأسهم بدلاً منه */
+      if(e.shiftKey){ activeIdx=Math.max(activeIdx-1,0); } else { activeIdx=Math.min(activeIdx+1,items.length-1); }
+      paintActive(items);
+    }
+  });
+  function paintActive(items){
+    Array.prototype.forEach.call(items,function(el,i){
+      var on=(i===activeIdx);
+      el.classList.toggle('cmdk-active',on);
+      el.setAttribute('aria-selected',on?'true':'false');
+      if(on){ el.scrollIntoView({block:'nearest'}); setActiveDescendant(el.id); }
+    });
+    if(activeIdx<0) setActiveDescendant('');
+  }
+
+  /* الزر العائم */
+  document.getElementById('cmdkFab').addEventListener('click',open);
+  /* النقر على الخلفية يغلق */
+  document.getElementById('cmdkOverlay').addEventListener('click',function(e){ if(e.target.id==='cmdkOverlay')close(); });
+  /* اختصار عام Ctrl+K / Cmd+K (إضافة مجانية لا تضر) */
+  document.addEventListener('keydown',function(e){
+    if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){ e.preventDefault(); isOpen()?close():open(); }
+  });
+
+  /* إظهار الزر فقط بعد تسجيل الدخول (عندما تكون شاشة التطبيق ظاهرة) */
+  function maybeShowFab(){
+    try{
+      var app=document.getElementById('appScreen');
+      var login=document.getElementById('loginScreen');
+      var loggedIn = app && getComputedStyle(app).display!=='none' && (!login||getComputedStyle(login).display==='none');
+      document.getElementById('cmdkFab').style.display = loggedIn ? 'flex' : 'none';
+    }catch(e){}
+  }
+  setInterval(maybeShowFab,1200);
+  maybeShowFab();
+})();
+</script>
 
 </body>
 </html>
