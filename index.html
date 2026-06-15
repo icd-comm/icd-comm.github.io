@@ -5942,6 +5942,8 @@ body.gm-resizing, body.gm-resizing *{ user-select:none !important; cursor:inheri
       <span class="sync-txt" id="syncTxt">جاهز</span>
       <span style="font-size:11px;color:rgba(255,255,255,.7)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-i2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
     </div>
+    <!-- [MASTER-REPORT-BTN] زر التقرير الشامل -->
+    <button id="masterReportBtn" onclick="buildMasterReport()" title="تقرير أعمال المجالس واللجان الشامل" aria-label="التقرير الشامل" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg> التقرير الشامل</button>
     <!-- [CMDK-TOPBAR] زر شريط الأوامر الذكي في الشريط العلوي -->
     <button id="cmdkTopBtn" title="بحث ذكي وأوامر سريعة (Ctrl+K)" aria-label="شريط الأوامر الذكي" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6M8 11h6"/></svg> أوامر سريعة</button>
     <!-- زر تسجيل الخروج -->
@@ -8520,6 +8522,22 @@ function __escapeHtml(s){
 function e(s){return __escapeHtml(s);}
 /* alias الأكمل (كان متطابقاً وظيفياً مع __escapeHtml) */
 function eX(s){return __escapeHtml(s);}
+/* ═══════════════════════════════════════════════════════════════════
+   [STATUS-UNIFY-2026-06-14] توحيد حالات التكليفات في ثلاث فقط:
+   منجز / متأخر / على المسار.
+   طبقة ترجمة تلقائية: تحوّل أي قيمة قديمة مخزّنة (Supabase) عند العرض
+   دون تعديل قاعدة البيانات. الدمج الذكي:
+     مكتمل/مغلق/done/completed → منجز
+     قيد التنفيذ/جارٍ/جاري/قيد الانتظار/لم يبدأ/لم تبدأ/معلق/معلّق/موقوف/متوقف → على المسار
+     متأخر/overdue/late → متأخر
+   ═══════════════════════════════════════════════════════════════════ */
+function normalizeTaskStatus(s){
+  /* مصدر واحد للحقيقة: يفوّض إلى migrateTaskStatus (دالة الترحيل الرسمية).
+     لا يُطبّق منطق التأخّر الزمني (ذاك في markTaskOverdue على الأصل). */
+  try{ return migrateTaskStatus(s); }catch(e){ return 'على المسار'; }
+}
+/* الحالات الرسمية الثلاث (مرجع موحّد) */
+var TASK_STATUSES = ['منجز','على المسار','متأخر'];
 function GM(i){if(!M[i])M[i]=[];return M[i];}
 /* [ARABIC-NORM-V1] تطبيع عربي مركزي للبحث والفرز:
    - تحويل لحروف صغيرة (إنجليزي)
@@ -17294,10 +17312,10 @@ try{ window.TASK_STATUSES = TASK_STATUSES; }catch(e){}
 /* ترحيل أي مسمى قديم/مرادف إلى أحد الحالات الثلاث. لا يلمس "متأخر" و"منجز". */
 function migrateTaskStatus(s){
   s = (s==null?'':String(s)).trim();
-  if(s==='منجز' || s==='منجزة') return 'منجز';
-  if(s==='متأخر' || s==='متأخرة') return 'متأخر';
+  if(s==='منجز' || s==='منجزة' || s==='مكتمل' || s==='مكتملة' || s==='مغلق' || /^(done|complete|completed|closed)$/i.test(s)) return 'منجز';
+  if(s==='متأخر' || s==='متأخرة' || s==='متعثر' || /^(late|overdue|delayed)$/i.test(s)) return 'متأخر';
   if(s==='على المسار') return 'على المسار';
-  /* كل ما تبقّى (معلق/قيد الانتظار/جارٍ/جاري/جارٍ التنفيذ/قيد التنفيذ/فارغ/غير معروف)
+  /* كل ما تبقّى (معلق/قيد الانتظار/جارٍ/جاري/جارٍ التنفيذ/قيد التنفيذ/لم يبدأ/فارغ/غير معروف)
      → على المسار. التأخّر الفعلي يُحسب لاحقاً من تاريخ الاستحقاق في markTaskOverdue. */
   return 'على المسار';
 }
@@ -21079,7 +21097,7 @@ function s4GetAllTasks(){
         tasks.push({
           task:t.task||'',
           responsible:t.responsible||'',
-          status:t.status||'على المسار',
+          status:normalizeTaskStatus(t.status),
           dateFrom:t.dateFrom||'',
           dateTo:t.dateTo||'',
           completedDate:t.completedDate||'',
@@ -27635,10 +27653,9 @@ function showAddDecision(ri, btn){if(isViewerBlocked('الإضافة'))return;
     +'<select id="newDecMeeting_'+ri+'" class="init-finp" style="font-size:11px">'+meetOpts+'</select></div>'
     +'<div><label style="font-size:10px;color:#555;display:block;margin-bottom:3px">الحالة</label>'
     +'<select id="newDecStatus_'+ri+'" class="init-finp" style="font-size:11px">'
-    +'<option value="لم يبدأ">لم يبدأ</option>'
-    +'<option value="جارٍ">جارٍ التنفيذ</option>'
-    +'<option value="مكتمل">مكتمل</option>'
-    +'<option value="غير مكتمل">غير مكتمل</option>'
+    +'<option value="على المسار">على المسار</option>'
+    +'<option value="منجز">منجز</option>'
+    +'<option value="متأخر">متأخر</option>'
     +'</select></div>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">'
@@ -34647,8 +34664,8 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
   html += '.status-جارٍ{color:#382972;font-weight:700}.status-معلق{color:#6c757d}';
   html += '.status-على-المسار{color:#1f5fa8;font-weight:700}.status-قيد-الانتظار{color:#208caa;font-weight:600}';
   /* أيقونة آخر تحديث (مطابقة للملخص التحضيري) */
-  html += '.last-update{margin-top:8px;background:#f3f7f5;border-right:3px solid #48a883;border-radius:5px;padding:6px 10px;font-size:10.5pt;color:#1f4c3a;line-height:1.6}';
-  html += '.last-update .lu-ttl{font-weight:700;color:#382972}';
+  html += '.last-update{margin-top:9px;background:#f3f7f5;border-right:3px solid #48a883;border-radius:5px;padding:6px 10px;font-size:11pt;color:#1f4c3a;line-height:1.6}';
+  html += '.last-update .lu-ttl{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#1f4c3a}';
   html += '.sign-area{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:50px;padding:20px 0;border-top:1px dashed #95a5a6}';
   html += '.sign-box{text-align:center;font-size:11pt}.sign-line{border-top:1px solid #000;margin-bottom:4px;padding-top:30px}';
   html += '.attach-links{background:#f3f7f5;padding:10px;border-radius:8px;margin-bottom:10px}';
@@ -34710,7 +34727,7 @@ function gmPrintMeetingPDF(mid){if(isViewerBlocked('الطباعة'))return;
         '<td style="text-align:center;color:#888">'+(i+1)+'</td>'+
         '<td>'+gmEsc(t.task||'')+
           (t.notes?'<div style="margin-top:6px;font-size:10pt;color:#5b6472">'+gmEsc(t.notes)+'</div>':'')+
-          (upd?'<div class="last-update"><span class="lu-ttl">↻ آخر تحديث:</span> '+gmEsc(upd)+'</div>':'')+
+          (upd?'<div class="last-update"><span class="lu-ttl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#48a883" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> آخر تحديث:</span> '+gmEsc(upd)+'</div>':'')+
         '</td>'+
         '<td style="font-weight:700">'+gmEsc(t.responsible||'—')+'</td>'+
         '<td style="text-align:center">'+(t.dueDate?gmFormatDate(t.dueDate):'—')+'</td>'+
@@ -40196,6 +40213,366 @@ window.themeReportCSS=function(){
   setInterval(maybeShowFab,1200);
   maybeShowFab();
 })();
+</script>
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   [MASTER-REPORT-2026-06-14] تقرير أعمال المجالس واللجان
+   تقرير تنفيذي شامل يجمع كل بيانات النظام بهوية الوزارة، للعرض على الإدارة العليا.
+   يعتمد على دوال النظام: D, GM, getTaskStats, getAllPendingTasks, govInScope,
+   getUnitName, LOGO2_SRC, e/__escapeHtml, gmFormatDate, GM_DATA, Chart.
+   ═══════════════════════════════════════════════════════════════════ */
+function buildMasterReport(){
+  try{ if(typeof isViewerBlocked==='function' && isViewerBlocked('الطباعة')) return; }catch(e){}
+
+  /* ---- أدوات مساعدة آمنة ---- */
+  function _e(s){ try{ return (typeof __escapeHtml==='function')?__escapeHtml(s):String(s==null?'':s); }catch(e){ return String(s==null?'':s); } }
+  function _has(fn){ return typeof window[fn]==='function'; }
+  function _num(n){ try{ return Number(n||0).toLocaleString('en-US'); }catch(e){ return String(n||0); } }
+  function _scope(i){ return _has('govInScope')? window.govInScope(i) : true; }
+  function _meets(i){ try{ return _has('GM')? (window.GM(i)||[]) : ((window.M&&window.M[i])||[]); }catch(e){ return []; } }
+  function _fdate(d){ if(!d) return '—'; try{ return _has('gmFormatDate')? window.gmFormatDate(d) : String(d); }catch(e){ return String(d); } }
+  var LOGO = (typeof LOGO2_SRC!=='undefined'&&LOGO2_SRC) ? LOGO2_SRC : ((typeof LOGO_SITE_SRC!=='undefined')?LOGO_SITE_SRC:'');
+  var unitName = _has('getUnitName')? window.getUnitName() : 'وحدة المجالس واللجان — وكالة التعاون الدولي';
+  var isIntl = (typeof activeSystem!=='undefined' && activeSystem==='intl');
+  var entityWord = isIntl ? 'المجالس واللجان' : 'اللجان';
+
+  /* ألوان هوية الوزارة */
+  var C={green:'#1f4c3a',purple:'#382972',teal:'#208caa',blue:'#1673a4',navy:'#003944',lightgreen:'#48a883'};
+  /* [CALM-PALETTE-2026-06-14] ألوان حالات هادئة بأسلوب التقارير الاستشارية (مكتومة، غير صارخة) */
+  var SC={
+    done:'#5b8c7b',      doneBg:'#eef3f1',    doneText:'#3d6354',   /* منجز — أخضر مريمي هادئ */
+    track:'#5b7fa6',     trackBg:'#eef1f5',   trackText:'#3f5a78',  /* على المسار — أزرق رمادي هادئ */
+    late:'#a86b6b',      lateBg:'#f5eded',    lateText:'#7d4a4a',   /* متأخر — طوبي مكتوم بدل الأحمر الفاقع */
+    neutral:'#5a6470',   neutralBg:'#f4f6f8'  /* محايد — مقروء (WCAG AA) */
+  };
+
+  var now = new Date();
+  var nowStr = now.toLocaleDateString('ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'long',day:'numeric'});
+
+  /* ═══ 1) جمع البيانات من كل المصادر ═══ */
+  var D = window.D||[];
+  var committees=[]; // اللجان ضمن النطاق
+  for(var i=0;i<D.length;i++){ if(_scope(i)){ committees.push({di:i,d:D[i]}); } }
+
+  // إحصاء اللجان حسب الحالة/النوع/النطاق
+  var byStatus={},byType={},byScope={};
+  committees.forEach(function(c){
+    var st=c.d.st||'غير محدد', ty=c.d.ty||'غير محدد', sc=c.d.sc||'غير محدد';
+    byStatus[st]=(byStatus[st]||0)+1;
+    byType[ty]=(byType[ty]||0)+1;
+    byScope[sc]=(byScope[sc]||0)+1;
+  });
+
+  // الاجتماعات والتكليفات
+  var totalMeetings=0, allTasks=[], meetingsList=[];
+  committees.forEach(function(c){
+    var meets=_meets(c.di);
+    totalMeetings += meets.length;
+    meets.forEach(function(m){
+      meetingsList.push({committee:c.d.n, di:c.di, date:m.date, meetNum:m.meetNum, tasksCount:(m.tasks||[]).length});
+      (m.tasks||[]).forEach(function(t){
+        allTasks.push({committee:c.d.n, di:c.di, task:t.task, responsible:t.responsible, status:t.status, dateTo:t.dateTo, update:t.update});
+      });
+    });
+  });
+
+  // إحصاء التكليفات
+  var taskStats = _has('getTaskStats')? window.getTaskStats() : null;
+  var tByStatus={};
+  allTasks.forEach(function(t){ var s=normalizeTaskStatus(t.status); tByStatus[s]=(tByStatus[s]||0)+1; });
+  var tTotal=allTasks.length;
+  var tLate=tByStatus['متأخر']||0;
+  var tDone=tByStatus['منجز']||0;
+  var tOnTrack=tByStatus['على المسار']||0;
+  var tWip=0; /* لم يعد هناك تصنيف منفصل — كله ضمن على المسار */
+  var tOther=0; /* لا توجد حالات أخرى بعد التوحيد */
+
+  // الاجتماعات العامة GM
+  var gmMeetings = (window.GM_DATA&&window.GM_DATA.meetings)||[];
+  var gmTasks=[];
+  gmMeetings.forEach(function(g){ (g.tasks||[]).forEach(function(t){ gmTasks.push({meeting:g.name,task:t.task,responsible:t.responsible,status:t.status,dueDate:t.dueDate}); }); });
+
+  /* نِسب مئوية آمنة */
+  function pct(part,whole){ return whole>0? Math.round(part/whole*100) : 0; }
+  var completionRate = pct(tDone,tTotal);
+  var avgMeetingsPerCommittee = committees.length>0? (totalMeetings/committees.length).toFixed(1) : '0';
+
+  /* ═══ 2) بناء HTML التقرير ═══ */
+  var H='';
+  H += '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">';
+  H += '<title>تقرير أعمال المجالس واللجان — '+nowStr+'</title>';
+  H += '<scr'+'ipt src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></scr'+'ipt>';
+  H += '<style>';
+  H += '@page{size:A4;margin:14mm}';
+  H += 'body{font-family:"Sakkal Majalla","Segoe UI","Arial",sans-serif;direction:rtl;color:#1f2d3d;margin:0;padding:0;background:#fff;font-size:12pt;line-height:1.6}';
+  H += '.tb{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#003944,#208caa);padding:10px 18px;display:flex;gap:10px;z-index:99;box-shadow:0 2px 8px rgba(0,0,0,.2)}';
+  H += '.tb button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:8px 18px;font-size:12pt;font-family:inherit;cursor:pointer;font-weight:700}';
+  H += '.tb button.print{background:linear-gradient(135deg,#3d6354,#5b8c7b);border:none}';
+  H += '.wrap{max-width:1000px;margin:64px auto 30px;padding:0 16px}';
+  /* الغلاف */
+  H += '.cover{background:linear-gradient(135deg,#003944,#1f4c3a,#208caa);border-radius:18px;padding:46px 38px;color:#fff;margin-bottom:26px;position:relative;overflow:hidden}';
+  H += '.cover .logo{height:64px;filter:brightness(0) invert(1);margin-bottom:20px}';
+  H += '.cover h1{font-size:30pt;font-weight:800;margin:6px 0}';
+  H += '.cover .sub{font-size:14pt;opacity:.9;margin-top:6px}';
+  H += '.cover .meta{margin-top:22px;font-size:11pt;opacity:.82;border-top:1px solid rgba(255,255,255,.25);padding-top:14px}';
+  /* عناوين الأقسام */
+  H += 'h2.sec{color:#fff;background:linear-gradient(135deg,#1f4c3a,#382972,#208caa);border-radius:10px;padding:11px 18px;font-size:15pt;font-weight:700;margin:22px 0 14px;page-break-after:avoid}';
+  H += 'h3{color:#1f4c3a;font-size:13pt;font-weight:700;border-right:4px solid #48a883;padding-right:10px;margin:14px 0 9px}';
+  /* بطاقات KPI */
+  H += '.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}';
+  H += '.kpi{border:1px solid #d1d5db;border-radius:12px;padding:16px;text-align:center;background:#f8fafb}';
+  H += '.kpi .v{font-size:26pt;font-weight:800;line-height:1}';
+  H += '.kpi .l{font-size:10.5pt;color:#5b6472;margin-top:6px}';
+  /* جداول */
+  H += 'table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #d1d5db;border-radius:10px;overflow:hidden;margin:10px 0 18px;font-size:11pt}';
+  H += 'thead th{background:linear-gradient(135deg,#208caa,#48a883);color:#fff;padding:9px 12px;text-align:right;font-weight:700;font-size:11pt}';
+  H += 'tbody td{border-bottom:1px solid #e8ebf0;border-left:1px solid #e8ebf0;padding:10px 14px;word-wrap:break-word;overflow-wrap:break-word;vertical-align:top}';
+  /* ترقيم الصفحات عند الطباعة */
+  H += '@media print{.wrap{counter-reset:none}body{counter-reset:pg}}';
+  /* قسم المتأخرات — إبراز قراري */
+  H += 'h2.sec.alert{background:linear-gradient(135deg,#7d4a4a,#a86b6b)}';
+  H += '.alert-note{background:'+SC.lateBg+';border:1px solid #e0cccc;border-right:4px solid '+SC.late+';border-radius:8px;padding:11px 16px;font-size:11pt;color:'+SC.lateText+';margin-bottom:10px;font-weight:600}';
+  H += 'tbody td:last-child,thead th:last-child{border-left:none}';
+  H += 'tbody tr:last-child td{border-bottom:none}';
+  H += 'tbody tr:nth-child(even) td{background:#fafbfc}';
+  H += '.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:9.5pt;font-weight:700}';
+  H += '.b-late{background:'+SC.lateBg+';color:'+SC.lateText+'}.b-done{background:'+SC.doneBg+';color:'+SC.doneText+'}.b-track{background:'+SC.trackBg+';color:'+SC.trackText+'}.b-wip{background:'+SC.neutralBg+';color:'+SC.neutral+'}';
+  /* رسوم بيانية */
+  H += '.charts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:14px 0}';
+  H += '.chart-box{border:1px solid #d1d5db;border-radius:12px;padding:16px;background:#fff;min-height:300px;display:flex;flex-direction:column}';
+  H += '.chart-box h4{margin:0 0 10px;font-size:12pt;color:#1f4c3a;text-align:center;flex-shrink:0}';
+  H += '.chart-box .chart-body{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}';
+  H += '.chart-box canvas{max-height:240px}';
+  H += '.chart-box table{margin:0;width:100%}';
+  /* صندوق ملخص */
+  H += '.exec-box{background:#f3f7f5;border-right:4px solid #48a883;border-radius:8px;padding:16px 18px;font-size:11.5pt;line-height:1.8;margin:12px 0}';
+  /* خلاصة قائمة على البصيرة (أسلوب استشاري) */
+  H += '.insights{margin:16px 0;display:flex;flex-direction:column;gap:9px}';
+  H += '.ins{display:flex;align-items:flex-start;gap:11px;background:#fbfcfd;border:1px solid #eceff3;border-radius:9px;padding:12px 16px;font-size:12pt;line-height:1.6}';
+  H += '.ins-ic{font-size:13pt;flex-shrink:0;line-height:1.4;font-weight:700}';
+  /* مؤشر اتجاه KPI */
+  H += '.kpi .hint{font-size:8.5pt;margin-top:5px;font-weight:700;letter-spacing:.2px}';
+  /* الذيل */
+  H += '.foot{display:none}'; /* مخفي في تدفّق المستند */
+  /* تذييل مطبوع حقيقي: مثبّت أسفل كل صفحة عبر position:fixed (لا يتدفّق فلا يولّد صفحات فارغة) */
+  H += '@media print{';
+  H += '.foot{display:flex !important;position:fixed;bottom:6mm;left:14mm;right:14mm;justify-content:space-between;font-size:9pt;color:#5a6470;border-top:1.5px solid #208caa;padding-top:6px;background:#fff}';
+  H += '.wrap{padding-bottom:14mm}'; /* مساحة للتذييل المثبّت */
+  H += '}';
+  H += '@media screen{.foot{display:flex;margin-top:18px;border-top:2px solid #208caa;padding-top:10px;justify-content:space-between;font-size:10pt;color:#5a6470}}';
+  H += '.page-break{page-break-before:always}';
+  H += '@media print{';
+  H += '.tb{display:none}';
+  H += '.wrap{margin:0 auto;max-width:100%}';
+  H += '.chart-box{break-inside:avoid;page-break-inside:avoid}';
+  H += '.charts{break-inside:avoid;page-break-inside:avoid}';
+  H += 'table{page-break-inside:auto}';
+  H += 'thead{display:table-header-group}';      /* رأس الجدول يتكرر في كل صفحة */
+  H += 'tfoot{display:table-footer-group}';
+  H += 'tr{break-inside:avoid;page-break-inside:avoid}';   /* الصف لا ينكسر */
+  H += 'thead th{white-space:nowrap}';            /* رأس العمود لا يتكسّر لسطرين */
+  H += 'h2.sec,h3{page-break-after:avoid;break-after:avoid}';  /* العنوان لا ينفصل عن محتواه */
+  H += '.kpis{break-inside:avoid;page-break-inside:avoid}';     /* صف البطاقات لا ينكسر */
+  H += '.exec-summary-block{break-inside:avoid;page-break-inside:avoid}'; /* الملخص كتلة واحدة */
+  H += '.insights{break-inside:avoid;page-break-inside:avoid}';
+  H += '.alert-note{break-inside:avoid}';
+  H += '.cover{break-inside:avoid;page-break-inside:avoid}';
+  H += '}';
+  H += '</style></head><body>';
+
+  /* شريط الأدوات */
+  H += '<div class="tb"><button class="print" onclick="window.print()">🖨 طباعة / حفظ PDF</button><button onclick="window.close()">إغلاق</button></div>';
+  H += '<div class="wrap">';
+
+  /* ───── الغلاف ───── */
+  H += '<div class="cover">';
+  if(LOGO) H += '<img src="'+LOGO+'" class="logo" alt="شعار وزارة التعليم">';
+  H += '<h1>تقرير أعمال المجالس واللجان</h1>';
+  H += '<div class="sub">وزارة التعليم — وكالة التعاون الدولي</div>';
+  H += '<div class="meta">'+_e(unitName)+' &nbsp;•&nbsp; تاريخ التقرير: '+nowStr+'</div>';
+  H += '</div>';
+
+  /* ───── الملخص التنفيذي ───── */
+  H += '<h2 class="sec">◆ الملخص التنفيذي</h2>';
+  H += '<div class="exec-summary-block">';
+  H += '<div class="kpis">';
+  H += '<div class="kpi"><div class="v" style="color:'+C.teal+'">'+_num(committees.length)+'</div><div class="l">إجمالي '+entityWord+'</div></div>';
+  H += '<div class="kpi"><div class="v" style="color:'+C.blue+'">'+_num(totalMeetings)+'</div><div class="l">إجمالي الاجتماعات</div></div>';
+  H += '<div class="kpi"><div class="v" style="color:'+C.purple+'">'+_num(tTotal)+'</div><div class="l">إجمالي التكليفات</div></div>';
+  var _rateColor, _rateHintColor, _rateHint;
+  if(tTotal===0){ _rateColor='#5a6470'; _rateHintColor='#5a6470'; _rateHint='— لا تكليفات'; }
+  else if(completionRate>=70){ _rateColor=SC.done; _rateHintColor=SC.doneText; _rateHint='▲ ضمن المستهدف'; }
+  else if(completionRate>=50){ _rateColor='#b09a6b'; _rateHintColor='#76633c'; _rateHint='■ متوسط'; }
+  else if(tLate>0){ _rateColor=SC.late; _rateHintColor=SC.lateText; _rateHint='▼ دون المستهدف'; }
+  else { _rateColor='#b09a6b'; _rateHintColor='#76633c'; _rateHint='◔ قيد التنفيذ'; }
+  H += '<div class="kpi"><div class="v" style="color:'+_rateColor+'">'+completionRate+'%</div><div class="l">نسبة الإنجاز</div><div class="hint" style="color:'+_rateHintColor+'">'+_rateHint+'</div></div>';
+  H += '</div>';
+  H += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">';
+  H += '<div class="kpi"><div class="v" style="color:'+SC.done+'">'+_num(tDone)+'</div><div class="l">منجز</div><div class="hint" style="color:'+SC.neutral+'">'+pct(tDone,tTotal)+'% من الإجمالي</div></div>';
+  H += '<div class="kpi"><div class="v" style="color:'+SC.track+'">'+_num(tOnTrack)+'</div><div class="l">على المسار</div><div class="hint" style="color:'+SC.neutral+'">'+pct(tOnTrack,tTotal)+'% من الإجمالي</div></div>';
+  H += '<div class="kpi"'+(tLate>0?' style="border-color:#e0cccc;background:'+SC.lateBg+'"':'')+'><div class="v" style="color:'+SC.late+'">'+_num(tLate)+'</div><div class="l">متأخر</div><div class="hint" style="color:'+(tLate>0?SC.lateText:SC.neutral)+'">'+(tLate>0?'▼ '+pct(tLate,tTotal)+'% تحتاج متابعة':'✓ لا متأخرات')+'</div></div>';
+  H += '</div>';
+  if(tOther>0){
+    H += '<div class="kpis"><div class="kpi"><div class="v" style="color:#6c757d">'+_num(tOther)+'</div><div class="l">لم تبدأ / أخرى</div><div class="hint" style="color:#7a8694">'+pct(tOther,tTotal)+'% من الإجمالي</div></div></div>';
+  }
+  // خلاصة تنفيذية قائمة على البصيرة (نقاط حادة لا سرد إنشائي)
+  var insights=[];
+  function _cnt(n,one,two,plFew,plMany){ n=Number(n)||0; if(n===1)return one; if(n===2)return two; if(n<=10)return _num(n)+' '+plFew; return _num(n)+' '+plMany; }
+  if(tTotal===0){
+    // حالة لا توجد بيانات — لا يوصف بأنه "أداء سيئ"
+    if(committees.length===0){
+      insights.push({ic:'●',c:'#5a6470',t:'لا توجد '+(isIntl?'مجالس أو لجان':'لجان')+' مسجّلة ضمن النطاق الحالي.'});
+    } else {
+      insights.push({ic:'●',c:'#5a6470',t:'تضم المنظومة '+_cnt(committees.length,'لجنة واحدة','لجنتين','لجان','لجنة')+' دون تكليفات مسجّلة حتى الآن.'});
+    }
+  } else {
+    // بصيرة 1: حالة الإنجاز
+    if(completionRate>=70) insights.push({ic:'▲',c:'#5b8c7b',t:'أداء قوي: '+completionRate+'% من التكليفات منجزة، ضمن المستهدف أو أعلى.'});
+    else if(completionRate>=50) insights.push({ic:'■',c:'#b09a6b',t:'أداء متوسط: '+completionRate+'% إنجاز، يتطلب تسريع وتيرة المتابعة.'});
+    else if(tLate>0) insights.push({ic:'▼',c:'#a86b6b',t:'أداء دون المستهدف: '+completionRate+'% إنجاز مع وجود تكليفات متأخرة، يستلزم تدخلاً عاجلاً.'});
+    else insights.push({ic:'■',c:'#b09a6b',t:'نسبة الإنجاز '+completionRate+'% — معظم التكليفات قيد التنفيذ ضمن المسار الزمني ولم تُنجز بعد.'});
+    // بصيرة 2: المتأخرات (الأهم للقرار)
+    if(tLate>0) insights.push({ic:'▼',c:'#a86b6b',t:_cnt(tLate,'تكليف واحد متأخر','تكليفان متأخران',' تكليفات متأخرة',' تكليفاً متأخراً')+' ('+pct(tLate,tTotal)+'% من الإجمالي) بحاجة لمتابعة فورية.'});
+    else insights.push({ic:'▲',c:'#5b8c7b',t:'لا توجد تكليفات متأخرة — جميعها ضمن المسار الزمني.'});
+  }
+  // بصيرة 3: التغطية
+  var cw=_cnt(committees.length,'لجنة واحدة','لجنتين','لجان','لجنة');
+  var mw=_cnt(totalMeetings,'اجتماعاً واحداً','اجتماعين','اجتماعات','اجتماعاً');
+  var twd=_cnt(tTotal,'تكليف واحد','تكليفان','تكليفات','تكليفاً');
+  if(committees.length>0 && tTotal>0){
+    insights.push({ic:'●',c:'#5b7fa6',t:'تضم المنظومة '+cw+' عقدت '+mw+'، وصدر عنها '+twd+'.'});
+  } else if(committees.length>0 && totalMeetings>0){
+    insights.push({ic:'●',c:'#5b7fa6',t:'تضم المنظومة '+cw+' عقدت '+mw+'.'});
+  }
+  // بصيرة 4: الاجتماعات العامة
+  if(gmMeetings.length>0){
+    var gw=_cnt(gmMeetings.length,'اجتماع عام واحد','اجتماعان عامان','اجتماعات عامة','اجتماعاً عاماً');
+    var gtw=_cnt(gmTasks.length,'تكليف واحد','تكليفان','تكليفات','تكليفاً');
+    insights.push({ic:'●',c:'#208caa',t:'عُقد '+gw+(gmTasks.length>0?' وصدر عنه '+gtw:'')+'.'});
+  }
+
+  H += '<div class="insights">';
+  insights.forEach(function(it){
+    H += '<div class="ins"><span class="ins-ic" style="color:'+it.c+'">'+it.ic+'</span><span>'+_e(it.t)+'</span></div>';
+  });
+  H += '</div>';
+  H += '</div>'; /* إغلاق exec-summary-block */
+
+  /* ───── الرسوم البيانية ───── */
+  H += '<h2 class="sec">◆ المؤشرات البيانية</h2>';
+  H += '<div class="charts">';
+  H += '<div class="chart-box"><h4>توزيع التكليفات حسب الحالة</h4><div class="chart-body"><canvas id="chTaskStatus"></canvas></div></div>';
+  H += '<div class="chart-box"><h4>'+_e(entityWord)+' حسب الحالة</h4><div class="chart-body"><canvas id="chCommStatus"></canvas></div></div>';
+  H += '</div>';
+  H += '<div class="charts">';
+  H += '<div class="chart-box"><h4>'+_e(entityWord)+' حسب النوع</h4><div class="chart-body"><canvas id="chCommType"></canvas></div></div>';
+  H += '<div class="chart-box"><h4>'+_e(entityWord)+' حسب النطاق</h4><div class="chart-body"><canvas id="chCommScope"></canvas></div></div>';
+  H += '</div>';
+
+  /* ───── تفصيل اللجان ───── */
+  H += '<h2 class="sec">◆ '+_e(entityWord)+' (تفصيلي)</h2>';
+  if(committees.length>0){
+    H += '<table style="table-layout:fixed"><thead><tr><th style="width:28px">#</th><th style="width:34%">الاسم</th><th style="width:30%">الممثل</th><th style="width:70px">النوع</th><th style="width:74px">الحالة</th><th style="width:84px">الاجتماعات</th></tr></thead><tbody>';
+    committees.forEach(function(c,idx){
+      var meets=_meets(c.di);
+      H += '<tr><td style="text-align:center">'+(idx+1)+'</td><td>'+_e(c.d.n||'—')+'</td><td>'+_e(c.d.r||'—')+'</td><td style="text-align:center">'+_e(c.d.ty||'—')+'</td><td style="text-align:center">'+_e(c.d.st||'—')+'</td><td style="text-align:center">'+_num(meets.length)+'</td></tr>';
+    });
+    H += '</tbody></table>';
+  } else { H += '<div class="exec-box">لا توجد '+_e(entityWord)+' ضمن النطاق.</div>'; }
+
+  /* ───── التكليفات المتأخرة (الأهم للإدارة) ───── */
+  var lateTasks=allTasks.filter(function(t){ return normalizeTaskStatus(t.status)==='متأخر'; });
+  H += '<h2 class="sec'+(lateTasks.length>0?' alert':'')+'">◆ التكليفات المتأخرة</h2>';
+  if(lateTasks.length>0){
+    H += '<div class="alert-note">▼ '+_num(lateTasks.length)+' '+(lateTasks.length===1?'تكليف يتطلب':'تكليفاً تتطلب')+' متابعة عاجلة من الإدارة.</div>';
+    H += '<table style="table-layout:fixed"><thead><tr><th style="width:28px">#</th><th style="width:40%">التكليف</th><th style="width:26%">اللجنة</th><th style="width:22%">المسؤول</th><th style="width:80px">الاستحقاق</th></tr></thead><tbody>';
+    lateTasks.forEach(function(t,idx){
+      H += '<tr><td style="text-align:center">'+(idx+1)+'</td><td>'+_e(t.task||'—')+'</td><td>'+_e(t.committee||'—')+'</td><td>'+_e(t.responsible||'—')+'</td><td style="text-align:center;color:'+SC.late+'">'+_fdate(t.dateTo)+'</td></tr>';
+    });
+    H += '</tbody></table>';
+  } else { H += '<div class="exec-box">✓ لا توجد تكليفات متأخرة — جميع التكليفات ضمن المسار الزمني.</div>'; }
+
+  /* ───── جميع التكليفات ───── */
+  H += '<h2 class="sec">◆ جميع التكليفات</h2>';
+  if(allTasks.length>0){
+    H += '<table style="table-layout:fixed"><thead><tr><th style="width:28px">#</th><th style="width:34%">التكليف</th><th style="width:22%">اللجنة</th><th style="width:18%">المسؤول</th><th style="width:74px">الاستحقاق</th><th style="width:64px">الحالة</th></tr></thead><tbody>';
+    allTasks.forEach(function(t,idx){
+      var ns=normalizeTaskStatus(t.status);
+      var cls = ns==='متأخر'?'b-late':(ns==='منجز'?'b-done':'b-track');
+      H += '<tr><td style="text-align:center">'+(idx+1)+'</td><td>'+_e(t.task||'—')+'</td><td>'+_e(t.committee||'—')+'</td><td>'+_e(t.responsible||'—')+'</td><td style="text-align:center">'+_fdate(t.dateTo)+'</td><td style="text-align:center"><span class="badge '+cls+'">'+_e(ns)+'</span></td></tr>';
+    });
+    H += '</tbody></table>';
+  } else { H += '<div class="exec-box">لا توجد تكليفات مسجّلة.</div>'; }
+
+  /* ───── الاجتماعات العامة ───── */
+  if(gmMeetings.length>0){
+    H += '<div class="gm-section" style="break-inside:avoid;page-break-inside:avoid">';
+    H += '<h2 class="sec">◆ الاجتماعات العامة</h2>';
+    H += '<table style="table-layout:fixed"><thead><tr><th style="width:28px">#</th><th style="width:42%">الاجتماع</th><th style="width:90px">التاريخ</th><th style="width:28%">المكان</th><th style="width:78px">التكليفات</th></tr></thead><tbody>';
+    gmMeetings.forEach(function(g,idx){
+      H += '<tr><td style="text-align:center">'+(idx+1)+'</td><td>'+_e(g.name||'—')+'</td><td style="text-align:center">'+_fdate(g.date)+'</td><td>'+_e(g.place||'—')+'</td><td style="text-align:center">'+_num((g.tasks||[]).length)+'</td></tr>';
+    });
+    H += '</tbody></table>';
+    if(gmTasks.length>0){
+      H += '<h3 style="break-after:avoid;page-break-after:avoid">تكليفات الاجتماعات العامة</h3>';
+      H += '<table style="table-layout:fixed"><thead><tr><th style="width:28px">#</th><th style="width:55%">التكليف</th><th style="width:30%">المسؤول</th><th style="width:72px">الحالة</th></tr></thead><tbody>';
+      gmTasks.forEach(function(t,idx){
+        var ns=normalizeTaskStatus(t.status);
+        var cls = ns==='متأخر'?'b-late':(ns==='منجز'?'b-done':'b-track');
+        H += '<tr><td style="text-align:center">'+(idx+1)+'</td><td>'+_e(t.task||'—')+'</td><td>'+_e(t.responsible||'—')+'</td><td style="text-align:center"><span class="badge '+cls+'">'+_e(ns)+'</span></td></tr>';
+      });
+      H += '</tbody></table>';
+    }
+    H += '</div>'; /* إغلاق gm-section */
+  }
+
+  /* الذيل */
+  H += '<div class="foot"><div>'+_e(unitName)+'</div><div>'+now.toLocaleDateString('en-GB')+'</div></div>';
+  H += '</div>'; // wrap
+
+  /* سكربت الرسوم البيانية */
+  var chartData={
+    taskStatus:{labels:['منجز','على المسار','متأخر'],data:[tDone,tOnTrack,tLate],colors:[SC.done,SC.track,SC.late]},
+    commStatus:{labels:Object.keys(byStatus),data:Object.values(byStatus)},
+    commType:{labels:Object.keys(byType),data:Object.values(byType)},
+    commScope:{labels:Object.keys(byScope),data:Object.values(byScope)}
+  };
+  var palette=['#5b7fa6','#5b8c7b','#7d6ba0','#6b8ca8','#3d6354','#b09a6b','#a86b6b','#8a7da0'];
+  H += '<scr'+'ipt>';
+  H += 'var CD='+JSON.stringify(chartData)+';var PAL='+JSON.stringify(palette)+';';
+  H += 'function mkChart(id,type,labels,data,colors){var el=document.getElementById(id);if(!el||typeof Chart==="undefined")return;';
+  H += 'new Chart(el,{type:type,data:{labels:labels,datasets:[{data:data,backgroundColor:colors||PAL,borderWidth:1,borderColor:"#fff"}]},';
+  H += 'options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:"bottom",labels:{font:{family:"Sakkal Majalla",size:13}}}},animation:false}});}';
+  H += 'window.addEventListener("load",function(){setTimeout(function(){';
+  H += 'if(typeof Chart==="undefined"){';
+  /* بديل احتياطي: إن فُشل تحميل Chart.js (شبكة تحجب CDN)، اعرض النِسب كجداول */
+  H += 'var boxes=document.querySelectorAll(".chart-box");';
+  H += 'function fallbackTable(box,labels,data){var tot=data.reduce(function(a,b){return a+b;},0)||1;var h="<table style=\\"margin:0\\"><tbody>";for(var i=0;i<labels.length;i++){var p=Math.round(data[i]/tot*100);h+="<tr><td>"+labels[i]+"</td><td style=\\"text-align:left;font-weight:700\\">"+data[i]+" ("+p+"%)</td></tr>";}h+="</tbody></table>";var c=box.querySelector("canvas");if(c)c.outerHTML=h;}';
+  H += 'if(boxes[0])fallbackTable(boxes[0],CD.taskStatus.labels,CD.taskStatus.data);';
+  H += 'if(boxes[1])fallbackTable(boxes[1],CD.commStatus.labels,CD.commStatus.data);';
+  H += 'if(boxes[2])fallbackTable(boxes[2],CD.commType.labels,CD.commType.data);';
+  H += 'if(boxes[3])fallbackTable(boxes[3],CD.commScope.labels,CD.commScope.data);';
+  H += 'return;}';
+  H += 'mkChart("chTaskStatus","doughnut",CD.taskStatus.labels,CD.taskStatus.data,CD.taskStatus.colors);';
+  H += 'mkChart("chCommStatus","doughnut",CD.commStatus.labels,CD.commStatus.data,null);';
+  H += 'mkChart("chCommType","bar",CD.commType.labels,CD.commType.data,null);';
+  H += 'mkChart("chCommScope","bar",CD.commScope.labels,CD.commScope.data,null);';
+  H += '},400);});';
+  H += '</scr'+'ipt>';
+  H += '</body></html>';
+
+  /* فتح نافذة الطباعة */
+  var w = window.open('', '_blank', 'width=1100,height=800');
+  if(w){
+    /* [MASTER-REPORT] لا نحقن الإطار الموحّد — التقرير له غلافه وتصميمه الكامل الخاص */
+    w.document.open(); w.document.write(H); w.document.close();
+  } else {
+    if(_has('showToast')) window.showToast('يرجى السماح بفتح النوافذ المنبثقة',true);
+    else alert('يرجى السماح بفتح النوافذ المنبثقة للطباعة');
+  }
+}
 </script>
 
 </body>
