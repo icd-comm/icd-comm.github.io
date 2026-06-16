@@ -12,9 +12,13 @@
 
 (function(){
   try{
-    /* قراءة DT لكلا النظامين (لا نعرف الفعّال قبل تسجيل الدخول) */
+    /* [FOUC-GATE-V2] كشف وجود أي تخصيص (نصوص أو ثيم أو حقول) لكلا النظامين.
+       الإخفاء يُفعّل إن وُجد أيّ منها — لا النصوص فقط (إصلاح: الثيم/الحقول
+       قد يكون لهما تخصيص دون تعديل نصوص، فكان الوميض يظهر فيهما). */
     var hasEdits = false;
-    var keys = ['lajan_dtext_store_v1','intl_dtext_store_v1'];
+    var keys = ['lajan_dtext_store_v1','intl_dtext_store_v1',
+                'main_theme_v4','intl_theme_v4','lajan_theme_v4',
+                'lajan_fieldmgr_v1','intl_fieldmgr_v1'];
     for(var i=0;i<keys.length;i++){
       try{
         var raw = localStorage.getItem(keys[i]);
@@ -24,45 +28,70 @@
         }
       }catch(e){}
     }
-    if(!hasEdits) return; /* لا تعديلات → لا حاجة لإخفاء */
+    /* لا نخرج مبكراً حتى لو لا تخصيصات — نعرّف البوّابة دائماً (لتجنّب أخطاء
+       null في الأنظمة التي تستدعي _foucMark)، لكن نُظهر فوراً إن لا تخصيص. */
 
     /* احقن CSS مؤقت يخفي محتوى body فقط (لا الإطار كله):
        opacity:0 + transition قصير → ظهور سلس بعد تطبيق التعديلات.
        لا نستخدم visibility/display لتفادي قفز التخطيط (layout shift). */
-    var style = document.createElement('style');
-    style.id = '_dtextHideStyle';
-    style.textContent =
-      'body.dtext-loading{opacity:0!important;transition:none!important}' +
-      'body.dtext-loaded{opacity:1!important;transition:opacity .12s ease-out!important}';
-    (document.head||document.documentElement).appendChild(style);
+    if(hasEdits){
+      var style = document.createElement('style');
+      style.id = '_dtextHideStyle';
+      style.textContent =
+        'body.dtext-loading{opacity:0!important;transition:none!important}' +
+        'body.dtext-loaded{opacity:1!important;transition:opacity .12s ease-out!important}';
+      (document.head||document.documentElement).appendChild(style);
 
-    /* أضف class الإخفاء فور توفر body (DOMContentLoaded أو polling قصير) */
-    function _markLoading(){
-      if(document.body){ document.body.classList.add('dtext-loading'); return true; }
-      return false;
-    }
-    if(!_markLoading()){
-      var _waitBody = setInterval(function(){ if(_markLoading()) clearInterval(_waitBody); }, 10);
-      setTimeout(function(){ clearInterval(_waitBody); }, 500);
+      /* أضف class الإخفاء فور توفر body (DOMContentLoaded أو polling قصير) */
+      var _markLoading=function(){
+        if(document.body){ document.body.classList.add('dtext-loading'); return true; }
+        return false;
+      };
+      if(!_markLoading()){
+        var _waitBody = setInterval(function(){ if(_markLoading()) clearInterval(_waitBody); }, 10);
+        setTimeout(function(){ clearInterval(_waitBody); }, 500);
+      }
     }
 
     /* علم عالمي تستخدمه dtextRescan لاحقاً لرفع الإخفاء */
-    window._dtextHasEdits = true;
-    window._dtextReveal = function(){
+    window._dtextHasEdits = hasEdits;
+
+    /* ════════════════════════════════════════════════════════════
+       [FOUC-GATE-V2] بوّابة إظهار موحّدة — الحل الجذري للوميض.
+       المبدأ: لا نُظهر المحتوى إلا بعد اكتمال كل التخصيصات الثلاث:
+         (1) النصوص (dtext)  (2) الثيم (theme)  (3) الحقول (fieldmgr)
+       كل نظام يعلّم بوّابته عند الجاهزية عبر window._foucMark(name).
+       عند اكتمال الثلاث (أو نجاح الشبكة الأخيرة) نُظهر دفعة واحدة.
+       هذا يلغي ظهور أي حالة وسيطة/قديمة بنيوياً، لا بالتسريع. */
+    window._foucGates = { dtext:false, theme:false, fieldmgr:false };
+    window._foucRevealed = false;
+    window._foucDoReveal = function(){
+      if(window._foucRevealed) return;          /* idempotent */
+      window._foucRevealed = true;
       try{
         if(document.body){
           document.body.classList.remove('dtext-loading');
           document.body.classList.add('dtext-loaded');
         }
         var s=document.getElementById('_dtextHideStyle');
-        /* أبقِ على الـ style لإتمام transition، ثم أزله */
         setTimeout(function(){ try{ if(s&&s.parentNode) s.parentNode.removeChild(s); }catch(e){} }, 300);
       }catch(e){}
     };
+    /* علّم بوّابة نظام معيّن؛ إذا اكتملت الثلاث → أظهِر فوراً */
+    window._foucMark = function(name){
+      try{
+        if(window._foucGates && name in window._foucGates){ window._foucGates[name]=true; }
+        var g=window._foucGates;
+        if(g && g.dtext && g.theme && g.fieldmgr){ window._foucDoReveal(); }
+      }catch(e){}
+    };
+    /* توافق عكسي: _dtextReveal الآن يعلّم بوّابة النصوص فقط (لا يُظهر وحده) */
+    window._dtextReveal = function(){ try{ window._foucMark('dtext'); }catch(e){} };
 
-    /* شبكة أمان: بعد 1500ms أزل الإخفاء حتى لو فشل JS */
-    setTimeout(function(){ try{ window._dtextReveal&&window._dtextReveal(); }catch(e){} }, 1500);
-  }catch(e){ /* لا نوقف أي شيء في حال الفشل */ }
+    /* شبكة أمان قصوى: مهما حدث (فشل JS، انقطاع، نظام غائب)، أظهِر بعد 2500ms
+       حتى لا يبقى المحتوى مخفياً للأبد. تُلغى تلقائياً إن اكتملت البوّابات أبكر. */
+    setTimeout(function(){ try{ window._foucDoReveal(); }catch(e){} }, 2500);
+  }catch(e){ /* لا نوقف أي شيء في حال الفشل */ try{ if(document&&document.body){document.body.classList.remove('dtext-loading');} }catch(_){} }
 })();
 </script>
 <!-- ════════════════════════════════════════════════════════════
@@ -14089,7 +14118,12 @@ async function doSave(skipSafetyCheck){
         var cmp = LZString.compressToBase64(JSON.stringify(obj));
         if(cmp && cmp.length > 10){
           p.data_compressed = cmp;
-          if(isPost) p.data = null;
+          /* [SYNC-COLUMNS-FIX 2026-06-16] نكتب data (jsonb) دائماً مع
+             data_compressed — لا نتركها قديمة عند PATCH. السبب الجذري:
+             القراءة تسقط على data عند فشل فك ضغط data_compressed، فإن كانت
+             data قديمة تظهر بيانات قديمة بصمت. بكتابة العمودين متزامنين
+             يبقى الـfallback حديثاً دائماً (نسخة احتياطية مدمجة في الصف). */
+          p.data = obj;
           return p;
         }
       }catch(e){}
@@ -37361,9 +37395,23 @@ window.FieldMgr={
 window.FieldMgrLayer=window.FieldMgr;
 
 /* ──────── التهيئة ──────── */
+/* [FOUC-FIELDMGR-V1] تطبيق فوري للإعدادات المحلية (مخفية/مُعاد تسميتها) قبل
+   تأخير الـ5 ثوانٍ — يلغي وميض الحقول بحالتها القديمة. القيمة المحلية متاحة فوراً. */
+function _fmgrApplyLocalNow(){
+  try{
+    var ls=JSON.parse(localStorage.getItem(_fmgrLS())||'{}');
+    if(ls&&Object.keys(ls).length>0){
+      FS=ls;
+      if(typeof fmgrApplySettings==='function') fmgrApplySettings();
+    }
+  }catch(e){}
+  /* [FOUC-GATE-V2] علّم بوّابة الحقول — طُبّقت المحلية (أو لا إعدادات) فالعرض جاهز */
+  try{ if(window._foucMark) window._foucMark('fieldmgr'); }catch(e){}
+}
 /* [FIELDMGR-FIX-F5] التأخير 5 ثوانٍ بدل 2.5 لإعطاء init() الوقت لإكمال رسم القسم الأولي */
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',function(){
+    _fmgrApplyLocalNow();
     setTimeout(function(){
       fmgrLoadSettings();
       _fmgrStartObserver();
@@ -37373,6 +37421,7 @@ if(document.readyState==='loading'){
     },5000);
   });
 }else{
+  _fmgrApplyLocalNow();
   setTimeout(function(){
     fmgrLoadSettings();
     _fmgrStartObserver();
@@ -39894,7 +39943,25 @@ function themeShowBtnLoginAware(){
 
 /* تهيئة عند تحميل DOM */
 document.addEventListener('DOMContentLoaded',function(){
-  setTimeout(function(){thmBuildPanel();themeLoadAndApply();themeShowBtnLoginAware();},1500);
+  /* [FOUC-FIX-V1] تطبيق فوري للثيم المحفوظ محلياً قبل أي تأخير — يلغي وميض
+     التنسيق القديم لمدة ~ثانيتين. القيمة المحلية متاحة فوراً (لا تحتاج Supabase).
+     ثم themeLoadAndApply تحدّث من Supabase في الخلفية إن وُجد أحدث. */
+  try{
+    var _tk=(typeof activeSystem!=='undefined'?activeSystem:'lajan')+'_theme_v4';
+    var _tls=localStorage.getItem(_tk);
+    if(_tls){
+      var _t=JSON.parse(_tls);
+      if(_t&&typeof _t==='object'){
+        window._thmState={};window._thmDirty={};
+        Object.keys(_t).forEach(function(k){window._thmState[k]=_t[k];window._thmDirty[k]=true;});
+        if(typeof thmApplyAll==='function') thmApplyAll();
+      }
+    }
+  }catch(e){}
+  /* [FOUC-GATE-V2] علّم بوّابة الثيم — طُبّق المحلي (أو لا ثيم مخصّص) فالعرض جاهز */
+  try{ if(window._foucMark) window._foucMark('theme'); }catch(e){}
+  /* تحديث من Supabase (وبناء اللوحة) — تأخير بسيط لاكتمال تهيئة بقية الأنظمة */
+  setTimeout(function(){thmBuildPanel();themeLoadAndApply();themeShowBtnLoginAware();},300);
   /* راقب ظهور/اختفاء شاشة الدخول لإظهار الأيقونة */
   setInterval(themeShowBtnLoginAware,2000);
 });
