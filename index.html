@@ -18968,6 +18968,9 @@ async function init(){
 async function _initCore(){
   window.appState.loading = true;
   window.appState.initialized = false;
+  /* [BOOTSTRAP-AUTH-GATE-V1] صفّر علم نجاح Supabase في بداية كل تهيئة — لا
+     يُعتبر ناجحاً حتى يثبت ذلك بالوصول لنهاية try. يمنع تسريب نجاح قديم. */
+  window._supabaseLoadOk = false;
   /* ⚠️ حماية: إذا كانت هناك تغييرات معلقة لم تُحفظ بعد،
      لا نمسح D حتى لا نفقدها. ننتظر أن تُحفظ أولاً. */
   if(_pendingSave && _pendingChangesCount > 0 && D.length > 0){
@@ -19080,7 +19083,11 @@ async function _initCore(){
         if(rmN&&rmN.length>0)SB_ROW_M=rmN[0].id;
       }catch(e2){}
     }
+    /* [BOOTSTRAP-AUTH-GATE-V1] وصلنا لنهاية try بنجاح = جلب Supabase نجح فعلاً.
+       البوابة تعتمد هذا العلم للسماح بتجاوز الدخول وعرض اللوحة. */
+    window._supabaseLoadOk = true;
   }catch(err){
+    window._supabaseLoadOk = false;
     var isNetErr=err.message&&(err.message.includes('fetch')||err.message.includes('network')||err.message.includes('Failed')||err.message.includes('timeout'));
     window._supabaseHealthy = false;
 
@@ -19102,28 +19109,10 @@ async function _initCore(){
         }
       } catch(e2){ console.error('[Init] فشل استعادة النسخة المحلية:', e2); }
     }
-    /* [v5.6 CACHE-FALLBACK] إصلاح ثغرة: لو لم توجد local_backup لكن يوجد
-       D_cache_v1 صالح (من جلسة سابقة على نفس المتصفح) — نستعيد منه بدل
-       ترك D فارغاً. هذا يعالج حالة "جهاز فيه cache فقط على شبكة محجوبة".
-       الـ cache صالح كبيانات عرض (سيُزامَن مع Supabase عند عودة الاتصال). */
-    if(D.length === 0 && !_restoredFromLocal){
-      try {
-        var _cbKey=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
-        var _cbRaw=localStorage.getItem(_cbKey);
-        if(_cbRaw){
-          var _cbData=JSON.parse(_cbRaw);
-          if(_cbData && Array.isArray(_cbData.data) && _cbData.data.length>0){
-            D.length=0;
-            _cbData.data.forEach(function(x){ D.push(x); });
-            if(_cbData.meetings && typeof _cbData.meetings==='object'){
-              Object.keys(_cbData.meetings).forEach(function(k){ M[k]=_cbData.meetings[k]; });
-            }
-            _restoredFromLocal = true;
-            console.log('[Init] استعيدت البيانات من D_cache_v1 ('+D.length+' سجل) — لا local_backup');
-          }
-        }
-      } catch(e3){ console.error('[Init] فشل استعادة cache fallback:', e3); }
-    }
+    /* [BOOTSTRAP-AUTH-GATE-V1 2026-06-23] أُزيلت استعادة _D_cache_v1 نهائياً.
+       لا نعرض بيانات cache قديمة عند فشل Supabase — البوابة ستُبقي المستخدم
+       على شاشة الدخول مع رسالة خطأ بدل عرض عداد/لوحة قديمة مضللة.
+       (local_backup يبقى للحالات المشروعة الأخرى لكنه لا يتجاوز بوابة المصادقة). */
 
     if(D.length > 0 && _restoredFromLocal){
       /* البيانات موجودة من النسخة المحلية — لا نقفل الحفظ */
@@ -19177,15 +19166,9 @@ async function _initCore(){
   if(typeof window._redrawCurrentSection==='function'){
     setTimeout(window._redrawCurrentSection, 50);
   }
-  /* حفظ D في localStorage كـ cache للتحميل السريع عند التحديث */
-  try{
-    var _cacheKey=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
-    var _cacheData=JSON.stringify({ts:Date.now(),data:D,meetings:M});
-    /* حفظ فقط إذا الحجم معقول (<500KB) */
-    if(_cacheData.length<500000){
-      localStorage.setItem(_cacheKey,_cacheData);
-    }
-  }catch(ex){ console.warn('[cache] فشل حفظ D:',ex.message); }
+  /* [BOOTSTRAP-AUTH-GATE-V1 2026-06-23] أُلغيت كتابة _D_cache_v1.
+     المسار المعتمد: لا cache بيانات إطلاقاً — العداد واللوحة من Supabase فقط.
+     (كانت تكتب نسخة تُستعاد لاحقاً فتسبّب عرض عداد قديم عند انقطاع الاتصال). */
   /* [v5.5 STALE-FIX] تحميل تعديلات النصوص من Supabase فوراً (كان 500ms)
      لتقليل نافذة ظهور النصوص القديمة من localStorage cache */
   if(typeof _loadFromSupabase==='function'){
@@ -29459,6 +29442,13 @@ document.addEventListener('input', function(ev){
   if(ll&&typeof LOGO_SITE_SRC!=='undefined')ll.src=LOGO_SITE_SRC;
   document.getElementById('homeScreen').style.display='none';
 
+  /* [BOOTSTRAP-AUTH-GATE-V1 2026-06-23] تنظيف ترحيلي: احذف أي cache بيانات
+     قديم (legacy) فور الإقلاع — لم يعد مُستخدماً ولا يجب أن يبقى مصدراً محتملاً
+     لعداد قديم. آمن: البيانات الفعلية مصدرها Supabase. */
+  try{
+    localStorage.removeItem('lajan_D_cache_v1');
+    localStorage.removeItem('intl_D_cache_v1');
+  }catch(_e){}
   /* Restore session after page refresh */
   try{
     var _sessKey=activeSystem==='intl'?'intl_session':'lajan_session';
@@ -29522,76 +29512,18 @@ document.addEventListener('input', function(ev){
             if(window._loaderGateMark) window._loaderGateMark('field_settings');
           }
         }catch(_){ try{ if(window._loaderGateMark) window._loaderGateMark('field_settings'); }catch(_){} }
-        /* إخفاء loginScreen فوراً — الدخول لا يحتاج انتظار Supabase */
-        var lsEl=document.getElementById('loginScreen');
-        if(lsEl){lsEl.style.display='none';lsEl.style.visibility='hidden';lsEl.style.opacity='0';}
+        /* [BOOTSTRAP-AUTH-GATE-V1 2026-06-23] اصلاح جذري لدورة الاقلاع:
+           لا نتجاوز شاشة الدخول ولا نعرض اللوحة الا بعد نجاح تحميل البيانات
+           الفعلي من Supabase. ازيل حقن الـ cache المؤقت (_D_cache_v1) نهائيا.
+           التسلسل الجديد: تحقق الجلسة -> مؤشر تحميل -> init() ->
+             نجاح: اخفِ الدخول واعرض اللوحة بالبيانات الفعلية.
+             فشل: ابقِ الدخول واعرض رسالة خطا اتصال. لا cache, لا عداد مضلل. */
         var _lb=document.getElementById('loginBtn');
-        if(_lb){_lb.disabled=false;_lb.textContent='دخول ←';}
+        if(_lb){_lb.disabled=true;_lb.textContent='جارٍ التحقّق…';}
         updateSystemUI();
-        /* [v5.7 NO-STALE-FLASH] لا نُحمّل cache في D فوراً (كان يسبب وميض
-           161 لمدة 5 ثوانٍ حتى وصول Supabase). بدلاً من ذلك:
-           - نحتفظ بالـ cache مؤقتاً دون رسمه
-           - timer 1500ms: إن تأخّر Supabase نطبّق الـ cache كحل مؤقت
-           - عند نجاح init(): يُلغى الـ timer وتُرسم البيانات الصحيحة مباشرة
-           النتيجة: لا وميض في الحالة الطبيعية (Supabase < 1.5s) */
-        window._pendingCacheRestore = null;
-        window._cacheRestoreApplied = false;
-        try{
-          var _ck=(activeSystem==='intl'?'intl':'lajan')+'_D_cache_v1';
-          var _cd=localStorage.getItem(_ck);
-          if(_cd){
-            var _cp=JSON.parse(_cd);
-            var _age=Date.now()-(_cp.ts||0);
-            if(_age<4*60*60*1000&&Array.isArray(_cp.data)&&_cp.data.length>0){
-              /* نخزّن الـ cache دون وضعه في D — للاستخدام كحل مؤقت فقط */
-              window._pendingCacheRestore = _cp;
-              console.log('[cache] cache متاح ('+_cp.data.length+' سجل، عمر '+Math.round(_age/60000)+' دقيقة) — مؤجَّل حتى تأكُّد تعذُّر Supabase');
-            }
-          }
-        }catch(ex){ console.warn('[cache] فشل قراءة cache'); }
         try{ if(typeof setSyncUI==='function') setSyncUI('syncing','جارٍ تحميل البيانات...'); }catch(_e){}
-        /* timer: إن لم تصل بيانات Supabase خلال 1.5s، نطبّق الـ cache مؤقتاً
-           (يحدث فقط على شبكة بطيئة/محجوبة — على شبكة عادية init أسرع) */
-        window._cacheRestoreTimer = setTimeout(function(){
-          try{
-            if(window._cacheRestoreApplied) return; /* init() سبق ونجح */
-            if(window.appState && window.appState.initialized) return;
-            var _pc = window._pendingCacheRestore;
-            if(_pc && Array.isArray(_pc.data) && _pc.data.length>0 && D.length===0){
-              D.length=0;
-              _pc.data.forEach(function(x){D.push(x);});
-              if(_pc.meetings&&typeof _pc.meetings==='object'){
-                Object.keys(_pc.meetings).forEach(function(k){M[k]=_pc.meetings[k];});
-              }
-              window._cacheRestoreApplied = true;
-              console.log('[cache] طُبّق cache مؤقت ('+D.length+' سجل) — Supabase تأخّر، جارٍ المحاولة');
-              try{ if(typeof setSyncUI==='function') setSyncUI('syncing','عرض مؤقت من نسخة محلية — جارٍ التحديث...'); }catch(_e){}
-              try{ refRep(); }catch(_e){}
-              try{ applyF(); }catch(_e){}
-              try{ updateHomeStats(); }catch(_e){}
-              if(typeof window._redrawCurrentSection==='function'){
-                try{ window._redrawCurrentSection(); }catch(_e){}
-              }
-              /* [v5.8 PRO-LOADER] أخفِ المؤشر — على شبكة بطيئة نعرض الـ cache
-                 المؤقت بدل إبقاء المستخدم أمام مؤشر التحميل للأبد. مؤشر
-                 setSyncUI يوضح أنها بيانات مؤقتة قيد التحديث. */
-              try{ if(typeof window.hideProLoader==='function') window.hideProLoader(); }catch(_){}
-            }
-          }catch(e){ console.warn('[cache] فشل تطبيق cache المؤجَّل:',e&&e.message); }
-        }, 1500);
         var _lastSec='s1';
         try{var _ls2=localStorage.getItem((activeSystem==='intl'?'intl':'lajan')+'_lastSec');if(_ls2)_lastSec=_ls2;}catch(e){}
-        try{ goTo(_lastSec); }catch(e){ try{goTo('s1');}catch(e2){} }
-        /* [STEP-14 FIX-WHITESCREEN] — تأكيد بصري أن appScreen ظاهر بعد goTo */
-        try{
-          var _appS = document.getElementById('appScreen');
-          if(_appS && (_appS.style.display==='none' || !_appS.style.display)){
-            _appS.style.display='flex';
-            console.warn('[restoreSession] قسر إظهار appScreen — كان مخفياً بعد goTo');
-          }
-          var _homeS = document.getElementById('homeScreen');
-          if(_homeS) _homeS.style.display='none';
-        }catch(_e){}
         /* [EXEC-DASH-DEFAULT-V1] فتح اللوحة التنفيذية تلقائياً عند restore session إذا كانت مفعّلة */
         setTimeout(function(){
           try{
@@ -29603,72 +29535,89 @@ document.addEventListener('input', function(ev){
         try{ updateHomeStats(); }catch(e){}
         /* حل: timeout احتياطي — لو تعلق init لأكثر من 8 ثوانٍ، ننهيه قسراً */
         var _restoreTimeout = setTimeout(function(){
-          /* timeout احتياطي فقط — الدخول تم فعلاً */
-          console.warn('[restoreSession] init() timeout — البيانات المحلية فقط');
-          try{ if(typeof setSyncUI==='function') setSyncUI('err','تعذّر الاتصال بـ Supabase — البيانات المحلية فقط'); }catch(e){}
+          /* [BOOTSTRAP-AUTH-GATE-V1] timeout: init تأخّر جداً → عامله كفشل اتصال.
+             لا نعرض اللوحة ببيانات قديمة — نُبقي الدخول ونُظهر خطأ. */
+          try{ if(typeof window._authGateFail==='function') window._authGateFail('انتهت مهلة الاتصال بالخادم — تحقّق من الشبكة وحاول مجدداً'); }catch(e){}
         }, 8000);
-        /* دالة موحدة لإنهاء الاستعادة — تُستخدم في كل من then و catch */
-        var _finishRestore = function(isError, err){
+        /* [BOOTSTRAP-AUTH-GATE-V1] دالتا النجاح/الفشل — تحكمان تجاوز الدخول. */
+        window._authGatePass = function(){
           try{ clearTimeout(_restoreTimeout); }catch(e){}
-          /* [v5.8 PRO-LOADER] أخفِ مؤشر التحميل — البيانات الصحيحة جاهزة الآن
-             (نجاح init = بيانات Supabase / فشل = fallback محلي مطبَّق أدناه) */
-          /* [v5.7 NO-STALE-FLASH] ألغِ timer الـ cache المؤجَّل — init() انتهى
-             (نجاحاً أو فشلاً). إن نجح init() ستكون البيانات الصحيحة في D. */
-          try{ clearTimeout(window._cacheRestoreTimer); }catch(e){}
-          window._cacheRestoreApplied = true;
-          /* إن فشل init() و D فارغ → طبّق الـ cache الآن كحل أخير */
-          if(isError && D.length===0 && window._pendingCacheRestore){
-            try{
-              var _pcf=window._pendingCacheRestore;
-              if(_pcf && Array.isArray(_pcf.data) && _pcf.data.length>0){
-                D.length=0;
-                _pcf.data.forEach(function(x){D.push(x);});
-                if(_pcf.meetings&&typeof _pcf.meetings==='object'){
-                  Object.keys(_pcf.meetings).forEach(function(k){M[k]=_pcf.meetings[k];});
-                }
-                console.log('[cache] طُبّق cache كحل أخير بعد فشل init ('+D.length+' سجل)');
-              }
-            }catch(_e){}
-          }
-          if(isError){ console.error('خطأ في استعادة الجلسة:', err); }
-          /* تحديث البيانات والواجهة بعد اكتمال init() */
+          /* أخفِ شاشة الدخول الآن فقط — بعد نجاح تحميل البيانات الفعلي */
+          var lsEl=document.getElementById('loginScreen');
+          if(lsEl){lsEl.style.display='none';lsEl.style.visibility='hidden';lsEl.style.opacity='0';}
+          var _lb2=document.getElementById('loginBtn');
+          if(_lb2){_lb2.disabled=false;_lb2.textContent='دخول ←';}
+          var _homeS=document.getElementById('homeScreen'); if(_homeS) _homeS.style.display='none';
+          /* انتقل للقسم المحفوظ الآن وقد توفّرت البيانات الفعلية */
+          try{ goTo(_lastSec); }catch(e){ try{goTo('s1');}catch(e2){} }
+          try{
+            var _appS=document.getElementById('appScreen');
+            if(_appS && (_appS.style.display==='none' || !_appS.style.display)){ _appS.style.display='flex'; }
+          }catch(_e){}
           try{ refRep(); }catch(e){}
           try{ applyF(); }catch(e){}
           try{ updateHomeStats(); }catch(e){}
-          try{ if(typeof buildFilters==='function') buildFilters(); }catch(e){}
+          try{ if(typeof buildS1Filters==='function') buildS1Filters(); }catch(e){}
           try{ if(typeof buildS2Filters==='function') buildS2Filters(); }catch(e){}
-          /* [SECTION-REDRAW-2026-05-V2] إعادة رسم القسم النشط بعد إنهاء restoreSession
-             ضمان نهائي: مهما كان مسار init() (نجاح/خطأ/timeout)، يُعاد رسم القسم
-             بالبيانات المُحدَّثة في D و M. تأخير 100ms لضمان اكتمال refRep/applyF أولاً. */
           setTimeout(function(){
-            try{
-              if(typeof window._redrawCurrentSection === 'function'){
-                window._redrawCurrentSection();
-              }
-            }catch(e){console.warn('[restoreSession] redraw failed:',e);}
-            /* [LOADER-GATE-V1] init و redraw اكتملا */
+            try{ if(typeof window._redrawCurrentSection==='function') window._redrawCurrentSection(); }catch(e){}
             try{ if(window._loaderGateMark){ window._loaderGateMark('init_data'); window._loaderGateMark('redrawn'); } }catch(_){}
-            /* [v5.8 PRO-LOADER] طلب إخفاء — لكنه ينتظر اكتمال كل البوّابات */
             try{ if(typeof window.hideProLoader==='function') window.hideProLoader(); }catch(_){}
           }, 120);
-          if(isError){
-            try{ if(typeof setSyncUI==='function') setSyncUI('err','تعذّر الاتصال بـ Supabase — البيانات المحلية فقط'); }catch(e){}
+          try{ if(typeof setSyncUI==='function') setSyncUI('ok','تم تحميل البيانات'); }catch(e){}
+          /* استدعاءات الواجهة الخاصة بالدخول الناجح (نُقلت هنا من خارج البوابة) */
+          try{ addUserBadge(); }catch(e){}
+          try{
+            var hl=document.getElementById('homeUserLbl');
+            if(hl && currentUser){var rl={'admin':'مدير','editor':'محرر','viewer':'مشاهد'};hl.textContent=currentUser.name+' ('+rl[currentUser.role]+')';}
+          }catch(e){}
+          try{ setTimeout(wrapRenCards,100); }catch(e){}
+        };
+        window._authGateFail = function(msg){
+          try{ clearTimeout(_restoreTimeout); }catch(e){}
+          if(window._authGateDone) return; /* لا نكرّر */
+          /* [BOOTSTRAP-AUTH-GATE-V1] فشل تحميل البيانات → لا نتجاوز الدخول.
+             لا cache، لا لوحة فارغة، لا عداد مضلّل. نُبقي الدخول ونُظهر الخطأ. */
+          currentUser=null;
+          try{ if(typeof window.hideProLoader==='function') window.hideProLoader(true); }catch(_){}
+          var lsEl=document.getElementById('loginScreen');
+          if(lsEl){lsEl.style.cssText='display:flex!important;visibility:visible!important;opacity:1!important;z-index:10001!important';}
+          var _as=document.getElementById('appScreen'); if(_as) _as.style.display='none';
+          var _hs=document.getElementById('homeScreen'); if(_hs) _hs.style.display='none';
+          var _lb3=document.getElementById('loginBtn');
+          if(_lb3){_lb3.disabled=false;_lb3.textContent='دخول ←';}
+          var _er=document.getElementById('loginErr');
+          if(_er){_er.textContent=msg||'تعذّر الاتصال بالخادم — تحقّق من الشبكة وحاول مجدداً';_er.style.display='block';}
+          try{ if(typeof setSyncUI==='function') setSyncUI('err', msg||'تعذّر الاتصال بالخادم'); }catch(e){}
+        };
+        /* دالة موحدة لإنهاء الاستعادة — تُستخدم في then و catch */
+        var _finishRestore = function(isError, err){
+          if(window._authGateDone) return;
+          /* [BOOTSTRAP-AUTH-GATE-V1] التجاوز مشروط بنجاح جلب Supabase الفعلي
+             (window._supabaseLoadOk). إن فشل الاتصال — حتى لو لم يرمِ init خطأً
+             لأنه استعاد محلياً — نُبقي الدخول ونُظهر خطأ. لا بيانات قديمة. */
+          if(isError || window._supabaseLoadOk!==true){
+            console.error('[restoreSession] تعذّر تحميل البيانات من الخادم:', err||'(لا اتصال Supabase)');
+            window._authGateFail('تعذّر الاتصال بالخادم — تحقّق من الشبكة وحاول مجدداً');
+            return;
           }
+          window._authGateDone = true;
+          window._authGatePass();
         };
         try{
           init().then(function(){ _finishRestore(false); })
                 .catch(function(err){ _finishRestore(true, err); });
         }catch(initErr){ _finishRestore(true, initErr); }
         /* updateHomeStats تُستدعى داخل _finishRestore ← عبر init() → refRep/applyF/updateHomeStats */
-        addUserBadge();
+        /* [BOOTSTRAP-AUTH-GATE-V1] مؤقتات الجلسة آمنة هنا (لا تعرض بيانات).
+           استدعاءات الواجهة التي تفترض دخولاً ناجحاً (شارة المستخدم، اسم
+           المستخدم، رسم البطاقات) نُقلت داخل _authGatePass — لا تُنفَّذ إلا
+           بعد نجاح تحميل البيانات الفعلي. */
         clearSessionTimers();
         if(remaining>SESSION_WARN_BEFORE){
           SESSION_WARN_TIMER=setTimeout(showSessionWarning,remaining-SESSION_WARN_BEFORE);
         } else {showSessionWarning();}
         SESSION_TIMER=setTimeout(doAutoLogout,remaining);
-        var hl=document.getElementById('homeUserLbl');
-        if(hl){var rl={'admin':'مدير','editor':'محرر','viewer':'مشاهد'};hl.textContent=currentUser.name+' ('+rl[currentUser.role]+')';}
-        setTimeout(wrapRenCards,100);
         return;
       }
       try{ localStorage.removeItem(_sessKey); }catch(e){}
