@@ -28,6 +28,10 @@
         }
       }catch(e){}
     }
+    /* [UI-INTERNALIZED-V1 2026-06-23] التخصيصات المعتمدة مُجمّدة في الكود (DTEXT_*_BAKED)
+       وتُطبَّق على كل إقلاع حتى على جهاز نظيف بلا localStorage. لذا نُفعّل الإخفاء
+       دائماً لمنع وميض النص الأصلي قبل تطبيق القيم المُجمّدة (FOOC). */
+    hasEdits = true;
     /* لا نخرج مبكراً حتى لو لا تخصيصات — نعرّف البوّابة دائماً (لتجنّب أخطاء
        null في الأنظمة التي تستدعي _foucMark)، لكن نُظهر فوراً إن لا تخصيص. */
 
@@ -12789,6 +12793,18 @@ function switchSystem(sys){
   INIT_ACTIVE_COUNCIL='';
   /* تعيين النظام الجديد */
   activeSystem=sys;
+  /* [UI-INTERNALIZED-V1 2026-06-23] إعادة زرع تخصيصات الواجهة المُجمّدة للنظام
+     الجديد من الكود مباشرة (لا Supabase)، ثم دمج أي تعديل محلي، ثم إعادة التطبيق. */
+  try{
+    if(typeof DT==='object'){
+      for(var _k in DT){ if(Object.prototype.hasOwnProperty.call(DT,_k)) delete DT[_k]; }
+      var _baked=(sys==='intl')?(window.DTEXT_INTL_BAKED||{}):(window.DTEXT_LAJAN_BAKED||{});
+      Object.keys(_baked).forEach(function(k){DT[k]=_baked[k];});
+      try{ var _ls=JSON.parse(localStorage.getItem((sys==='intl'?'intl':'lajan')+'_dtext_store_v1')||'{}');
+        Object.keys(_ls).forEach(function(k){DT[k]=_ls[k];}); }catch(_e){}
+      try{ window.dtextRescan && window.dtextRescan(); }catch(_e){}
+    }
+  }catch(_e){}
   /* تحديث واجهة اللوجين */
   updateLoginUI();
   updateSystemUI();
@@ -14555,7 +14571,11 @@ function goTo(sec){if(sec==='s5'&&activeSystem!=='intl'){sec='s1';} if((sec==='s
   activePanel.classList.add('active');
   activePanel.style.visibility='visible';
   activePanel.style.pointerEvents='auto';
-  activePanel.style.opacity='1';
+  /* [NO-NAV-FLASH-V1 2026-06-23] أبقِ القسم مخفياً بصرياً (opacity:0) أثناء بنائه
+     وتطبيق تخصيصات النصوص/الحقول، ثم نرفع الإخفاء فوراً بعد التطبيق المتزامن.
+     الجذر: كان القسم يظهر فوراً بنصوصه الأصلية ثم يُصحَّح بعد setTimeout(100/150)
+     → وميض نصوص أصلية وعناصر محذوفة عند كل تنقل. */
+  activePanel.style.opacity='0';
   /* display — القيمة الصحيحة حسب القسم */
   if(sec==='s5' || sec==='s4' || sec==='s3' || sec==='sgm'){
     activePanel.style.display='flex';
@@ -14607,9 +14627,40 @@ function goTo(sec){if(sec==='s5'&&activeSystem!=='intl'){sec='s1';} if((sec==='s
   if(typeof window.__enforcePanelIsolation === 'function'){
     window.__enforcePanelIsolation();
   }
-  /* [DTEXT-FIX-2026-05-PERSIST] تطبيق تعديلات النصوص بعد التنقل
-     السبب: عند الانتقال لقسم آخر، يُعاد رسم محتواه فتُفقد سمات data-dtext-id
-     يجب إعادة تطبيق التعديلات على العناصر الجديدة */
+  /* [NO-NAV-FLASH-V1 2026-06-23] تطبيق متزامن فوري لتخصيصات النصوص والحقول
+     قبل رفع إخفاء القسم — يلغي وميض النصوص الأصلية والعناصر المحذوفة بنيوياً.
+     السبب الجذري: الإصدار السابق طبّق dtextRescan بعد setTimeout(100) و
+     fmgrApplySettings بعد setTimeout(150)، فظهر المحتوى الأصلي في الفجوة. */
+  (function _applyCustomizationsSync(){
+    try{
+      if(typeof window.dtextRescan === 'function') window.dtextRescan();
+    }catch(e){}
+    try{
+      var ap = document.querySelector('.spanel.active');
+      if(ap && typeof window.fmgrAutoTag === 'function'){ window.fmgrAutoTag(ap); }
+      if(typeof fmgrApplySettings === 'function' && typeof FS !== 'undefined' && Object.keys(FS).length > 0){
+        fmgrApplySettings();
+      }
+      if(typeof _fmgrActive !== 'undefined' && _fmgrActive && typeof fmgrInjectControls === 'function'){
+        fmgrInjectControls();
+      }
+    }catch(e){ console.warn('[NavFlash] sync apply:',e); }
+    /* ارفع الإخفاء بعد التطبيق المتزامن — في نفس الإطار إن أمكن */
+    try{
+      if(activePanel){
+        if(window.requestAnimationFrame){
+          requestAnimationFrame(function(){
+            try{ if(typeof window.dtextRescan==='function') window.dtextRescan(); }catch(_e){}
+            activePanel.style.opacity='1';
+          });
+        } else {
+          activePanel.style.opacity='1';
+        }
+      }
+    }catch(e){ if(activePanel) activePanel.style.opacity='1'; }
+  })();
+  /* شبكة أمان: إعادة تطبيق متأخرة لالتقاط أي عنصر تأخّر بناؤه (لا تُسبّب وميضاً
+     لأن القسم ظاهر أصلاً والقيم مطابقة → idempotent) */
   setTimeout(function(){
     try{
       if(typeof window.dtextRescan === 'function') window.dtextRescan();
@@ -19119,7 +19170,7 @@ async function _initCore(){
   /* ✓ علّم النظام كمُهيَّأ بالكامل */
   window.appState.initialized = true;
   window.appState.loading = false;
-  refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
+  refRep();applyF();updateHomeStats();(window.requestAnimationFrame?requestAnimationFrame:function(f){setTimeout(f,16);})(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();});
   /* [SECTION-REDRAW-2026-05] إعادة رسم القسم الحالي بعد تحميل البيانات
      السبب: عند F5 يُستدعى goTo قبل اكتمال _initCore، فيُرسم القسم بدون بيانات.
      بعد اكتمال التحميل، نُعيد رسم القسم النشط ليعرض البيانات الفعلية. */
@@ -19155,12 +19206,12 @@ async function forceReloadEmbedded(){
       }
       /* لا نمسح الاجتماعات — نحتفظ بها كما هي */
       setSyncUI('ok','تم التحديث ✓');
-      refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
+      refRep();applyF();updateHomeStats();(window.requestAnimationFrame?requestAnimationFrame:function(f){setTimeout(f,16);})(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();});
   /* تحميل تعديلات النصوص من Supabase */
   if(typeof _loadFromSupabase==='function')setTimeout(_loadFromSupabase,500);
       showToast('تم رفع البيانات ('+D.length+(activeSystem==='intl'?' مجلس/لجنة':' لجنة')+') — الاجتماعات محفوظة.');
     }catch(e){
-      M={};refRep();applyF();updateHomeStats();setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},300);
+      M={};refRep();applyF();updateHomeStats();(window.requestAnimationFrame?requestAnimationFrame:function(f){setTimeout(f,16);})(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();});
       showToast('خطأ:'+e.message,true);
     }
   });
@@ -21223,7 +21274,7 @@ function s4InitFilters(){
   /* استعادة القيم السابقة */
   if(prevComm) commSel.value=prevComm;
   if(prevResp) respSel.value=prevResp;
-  setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},200);
+  (window.requestAnimationFrame?requestAnimationFrame:function(f){setTimeout(f,16);})(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();});
 }
 
 /* [V15-RESET] دالة إعادة تعيين فلاتر قسم المبادرات s5 */
@@ -30262,7 +30313,7 @@ function buildS1Filters(){
       bar.appendChild(dfWrap.firstChild);
     }
   }
-  setTimeout(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();},200);
+  (window.requestAnimationFrame?requestAnimationFrame:function(f){setTimeout(f,16);})(function(){if(typeof window.dtextRescan==='function')window.dtextRescan();});
 }
 
 /* ── Build S2 filters ── */
@@ -35241,6 +35292,12 @@ body.dtext-edit-mode [data-dtext-ttl]:not([data-dtext-id]):hover{
 <script id="dtext-script">
 (function(){
 'use strict';
+/* [UI-INTERNALIZED-V1 2026-06-23] تخصيصات محرر النصوص المعتمدة — مدمجة كقيم ثابتة.
+   المصدر: Supabase (lajan_gm/intl_gm, key=dtext_v1) — مُجمّدة داخل الكود.
+   لا تُحمّل الواجهة من Supabase بعد الآن. التطبيق حسب activeSystem. */
+window.DTEXT_LAJAN_BAKED={"span__وكالة_التعاون_الدولي": "منصة إدارة المجالس واللجان", "span__وحدة_المجالس_واللجان": "______________________________", "span__النوع": "التصنيف", "span__النوع__1": "التصنيف", "span__الممثل__1": "أسم الممثل", "span__الممثل": "أسم الممثل", "span__جاري_التحميل_من_Supabase": "متزامن ✓", "span__بيانات_المجالس_واللجان": "بيانات المجالس واللجان", "span__بيانات_اللجان": "بطاقات المجالس واللجان", "div__لوحة_القيادة_التنفيذية__1": "لوحة بيانات المجالس واللجان", "span__لوحة_القيادة_التنفيذية": "لوحة بيانات المجالس واللجان", "div__Executive_Command_Center__المجال": "• 8 مايو 2026", "button__كانبان_التكليفات": "بطاقات كانبان", "span__فلتر_تاريخي__3": "بحث متقدم", "span__فلتر_تاريخي__4": "بحث متقدم", "span__فلتر_تاريخي__2": "بحث متقدم", "div__لجنة__54": "لجنة / مجلس", "button__لوحة_الرقمات": "لوحة المؤشرات التنفيذية", "div__لوحة_الرقمات_التنفيذية": "لوحة المؤشرات التنفيذية", "button__كانبان": "بطاقات كانبان", "div__لوحة_القيادة_التنفيذية": "لوحة بيانات المجالس واللجان", "span__فلتر_تاريخي__1": "بحث متقدم", "div__النفوذ_القراري": "الرئاسة", "span__11_مفرطو_التحميل": "-", "div__إجمالي_اللجان": "إجمالي المجالس / اللجان", "div__الصحة_المؤسسية": "الاستمرارية", "div__رؤى_الذكاء_التنفيذي": "التصور", "div__التحليلات_الجوهرية": "التحليل", "div__توزيع_الحالات_التشغيلية": "التوزيع حسب الحالة", "div__توزيع_النطاقات": "التوزيع حسب النطاق", "div__مقارنة_الأنواع": "مقارنة التصنيف", "div__ذكاء_الأداء": "إحصاءات التمثيل", "div__مفرط_التحميل": "العدد - تمثيل عالي", "div__مفرط_التحميل__1": "العدد - تمثيل عالي", "div__مفرط_التحميل__2": "العدد - تمثيل عالي", "div__مفرط_التحميل__3": "العدد - تمثيل عالي", "div__مفرط_التحميل__4": "العدد - تمثيل عالي", "div__مفرط_التحميل__5": "العدد", "div__مفرط_التحميل__6": "العدد", "div__مفرط_التحميل__7": "العدد", "div__11_من_الممثلين_يحملون_5_لجان_أو___1": "11 من الممثلين يحملون 5 لجان أو أكثر", "div__5_لجنة_بحالة_غير_معروفة__تحتاج_ت": "5 لجنة بحالة غير معروفة", "div__2_لجنة_في_حالة_تعثر__تحتاج_خطة_إ": "2 لجنة في حالة تعثر", "span__4_مفرطو_التحميل": "-", "span__النوع__w7kp8u": "التصنيف", "span__الممثل__u839ij": "أسم الممثل", "span__فلتر_تاريخي__wnokir": "بحث متقدم", "span__بيانات_اللجان__rxv4ih": "بطاقات بيانات المجالس واللجان", "span__لوحة_القيادة_التنفيذية__2c2hkx": "لوحة إحصاءات المجالس واللجان", "div__لوحة_القيادة_التنفيذية__pdzob0": "لوحة إحصاءات المجالس واللجان", "div__النفوذ_القراري__o5csux": "الرئاسة", "div__Leadership_Influence__o5csux": "__DELETED__", "div__Representation_Diversity__o5csux": "__DELETED__", "div__Critical_Alerts__o5csux": "__DELETED__", "div__Institutional_Health__o5csux": "__DELETED__", "div__Total_Portfolio__o5csux": "__DELETED__", "div__إجمالي_اللجان__o5csux": "إجمالي المجالس / اللجان", "div__الصحة_المؤسسية__o5csux": "الاستمرارية", "span__11_مفرطو_التحميل__o5csux": "__DELETED__", "div__Executive_Intelligence_Insights__o5csux": "__DELETED__", "div__رؤى_الذكاء_التنفيذي__o5csux": "التصور العام", "div__Core_Analytics__o5csux": "__DELETED__", "div__التحليلات_الجوهرية__o5csux": "التحليل", "div__توزيع_الحالات_التشغيلية__o5csux": "التوزيع حسب الحالة", "div__توزيع_النطاقات__o5csux": "التوزيع حسب النطاق", "div__Status_Distribution__o5csux": "__DELETED__", "div__Scope_Distribution__o5csux": "__DELETED__", "div__Type_Comparison__o5csux": "__DELETED__", "div__مقارنة_الأنواع__o5csux": "العدد حسب التصنيف", "div__Role_Distribution__o5csux": "__DELETED__", "div__مفرط_التحميل__o5csux": "__DELETED__", "div__Alerts__Risk_Panel__o5csux": "__DELETED__", "div___تتطلب_قرار_قيادي__o5csux": "__DELETED__", "div___لتحسين_دقة_المؤشرات__o5csux": "__DELETED__", "span__الممثل__ju2zb2": "أسم الممثل", "span__النوع__b8mw3b": "التصنيف", "div__بيانات_المجالس_واللجان_وفرق_العم__rb7aaf": "__DELETED__", "div__بيانات_اللجان__rb7aaf": "__DELETED__", "button___إعادة_تعيين__tajt2b": "__DELETED__", "span__فلتر_تاريخي__ns0jbg": "بحث متقدم", "button__انتظار__23qnm6": "__DELETED__", "button__جارٍ__23qnm6": "__DELETED__", "button__منجز__23qnm6": "__DELETED__", "button__متأخر__23qnm6": "__DELETED__", "span__التكليفات__23qnm6": "__DELETED__", "span___التقويم_والقادم__3e9ged": "__DELETED__", "span__التحضير_للاجتماعات__dmhyjz": "اجتماعات المجالس واللجان", "div__التحضير_للاجتماعات__rb7aaf": "__DELETED__", "div__إدارة_الاجتماعات_والتكليفات_والم__rb7aaf": "__DELETED__", "span__وحدة_المجالس_واللجان__uj2gh6": "__DELETED__", "span__وكالة_التعاون_الدولي__uj2gh6": "منصة إدارة المجالس واللجان", "h1__نظام_إدارة_المجالس_واللجان__optua3": "__DELETED__", "p__وزارة_التعليم__وكالة_التعاون_الد__optua3": "وزارة التعليم — وكالة التعاون الدولي - وحدة المجالس واللجان", "div__لوحة_متابعة_التكليفات__rb7aaf": "__DELETED__", "div__كانبان_وجانت_وتتبع_التقدم_والتوا__rb7aaf": "__DELETED__", "button__كانبان__tn6712": "بطاقات كانبان", "span__فلتر_تاريخي__9xe2z9": "بحث متقدم", "div__الاجتماعات_والتكليفات_العامة__rb7aaf": "__DELETED__", "div__إدارة_اجتماعات_مستقلة_وتكليفاتها__rb7aaf": "__DELETED__", "button__كانبان_التكليفات__gblyi9": "بطاقات كانبان", "span__فلتر_تاريخي__nrqu9y": "بحث متقدم", "div__لوحة_القيادة_التنفيذية__rb7aaf": "__DELETED__", "div__لوحة_المؤشرات_التنفيذية__o5csux": "لوحة المؤشرات التنفيذية", "button__لوحة_المؤشرات__tn6712": "لوحة المؤشرات التنفيذية", "div___لجان_لها_اجتماعات__2eof1": "⛁ لجنة لها اجتماعات", "div__ممثل__11_محمّل_بكثرة__pdzob0": "__DELETED__", "span__فرصة_للتعزيز__o5csux": "__DELETED__", "div__2_لجنة_في_حالة_تعثر_تشغيلي__تستو__o5csux": "2 لجنة في حالة تعثر تشغيلي — تستوجب مراجعة فورية وخطة معالجة.", "div__عمق_الشراكات__o5csux": "المشاركات والتمثيل", "div__Performance_Intelligence__o5csux": "__DELETED__", "div__ذكاء_الأداء__o5csux": "إحصاءات", "div__استكشاف_الممثلين_الأكثر_تأثيراً___o5csux": "الممثلين الأكثر تمثيلا ومشاركة من الوكالة", "div__Top_Representatives_by_Committee__o5csux": "__DELETED__", "div__أعلى_الممثلين_تمثيلاً__o5csux": "__DELETED__", "div__إجمالي_28_ممثل__o5csux": "من إجمالي 28 ممثل", "div__11_من_الممثلين_يحملون_5_لجان_أو___o5csux": "11 من الممثلين يحملون 5 لجان أو أكثر", "div__رصد_فوري_للمخاطر_التي_تستدعي_تدخ__o5csux": "رصد فوري للمخاطر التي تستدعي تدخلاً قيادياً", "div__Active_Tasks__o5csux": "__DELETED__", "div__Completion_in_Period__o5csux": "__DELETED__", "div__Overdue_Tasks__o5csux": "__DELETED__", "div__OnTime_Delivery__o5csux": "__DELETED__", "div__Meetings_Held__o5csux": "__DELETED__", "div__AutoGenerated_Insights__jayrsn": "__DELETED__", "div__رؤى_تنفيذية_ذكية__jayrsn": "التصور العام", "div__Task_Distribution__o5csux": "__DELETED__", "div__Performance_Trend__o5csux": "__DELETED__", "div__Meetings_Activity__o5csux": "__DELETED__", "div__Entities_Performance__o5csux": "__DELETED__", "div__Performance_Analysis__o5csux": "__DELETED__", "div__Alerts__Risks__o5csux": "__DELETED__", "div__METHODOLOGY__o5csux": "__DELETED__", "button__التقرير_الموحد__lf6vge": "التقرير التنفيذي", "button__تصدير_ملخص_تنفيذي__jayrsn": "لوحة المؤشرات", "span__الفلاتر__pdzob0": "__DELETED__", "div__Executive_Command_Center__المجال__pdzob0": "__DELETED__", "button__PowerPoint__pdzob0": "__DELETED__", "span__جاري_التحميل_من_Supabase__8izjmd": "✓", "div__لجنة__eqetnk": "لجنة / مجلس", "button__تقرير_تنفيذي_PDF__pdzob0": "تقرير تنفيذي", "span__9_مفرطو_التحميل__o5csux": "__DELETED__", "div__ممثل__9_محمّل_بكثرة__pdzob0": "__DELETED__", "div__8_لجنة_برئاسة_الوكالة__pdzob0": "8 لجان برئاسة الوكالة", "div__2_متعثرة__0_لم_تبدأ__pdzob0": "2 متعثرة", "div__وكيل_التعاون_الدولي_يمثل_الوكالة__o5csux": "وكيل التعاون الدولي - أعلى مستويات التمثيل.", "strong__وكيل_التعاون_الدولي__o5csux": "__DELETED__", "span__Executive_Performance_Dashboard__o5csux": "__DELETED__", "div__تصفية__w5i3fn": "__DELETED__", "div__لوحة_التكليفات__tn6712": "لوحة متابعة التكليفات", "div__1_رؤية__jayrsn": "__DELETED__", "span__إجمالي__sa1qyk": "إجمالي التكليفات", "span__د_عبدالمحسن_المحسن__usfqel": "__DELETED__", "span__إضافة_لجنة__7nlsmf": "إضافة لجنة / مجلس", "div__عرض_وإدارة_بيانات_جميع_اللجان__rb7aaf": "__DELETED__", "span__دليل_الألوان__afimpv": "__DELETED__", "span__مشارك__6j9p9u": "__DELETED__", "span__قسم_إدارة_المحاضر_والمذكرات__tffqu": "إدارة المحاضر والمذكرات", "span__قسم_الوثائق__f46j7v": "مكتبة الوثائق و المستندات", "div__قسم_الوثائق__مكتبة_وثائق_اللجان___rb7aaf": "__DELETED__", "div__الأدوار_والصلاحيات_ومحرك_سير_الع__rb7aaf": "__DELETED__", "div__قسم_إدارة_المحاضر_والمذكرات_وإدا__rb7aaf": "__DELETED__", "div__قرارات_التشكيل_والمحاضر_والعروض___rb7aaf": "__DELETED__", "span__متزامن_مع_الخادم___8izjmd": "✓", "div__طازج_7_أيام__o5csux": "جديد (≤7 أيام)", "div__تقرير_حساسية_الوقت_SLA__o5csux": "__DELETED__", "button__تقرير_حساسية_الوقت__uotb1a": "النطاق الزمني", "div__E5B61PDF__o5csux": "محضر الاجتماع 1", "h1__نظام_إدارة_المجالس_التنسيقية_وال__optua3": "__DELETED__", "div__تصفية__gblyi9": "__DELETED__", "span__عرضي__uxehxa": "موجز", "div__عرضي__اجتماعاتي_وتكليفاتي__rb7aaf": "__DELETED__", "div__عرضي__yidn29": "موجــز", "div__عرض_شامل_لكل_اللجان__yidn29": "__DELETED__", "ttl__إشعارات_الحوكمة": "الإشعارات", "ttl__الإشعارات": "__DELETED__", "button___إغلاق__ppwbco": "× إغلاق", "div__على_المسار__hu60mq": "تكليفات على المسار", "div__منجزة__hu60mq": "تكليفات منجزة", "div__اجتماعاتي_القادمة__hu60mq": "الاجتماعات القادمة", "div__مرحباً،_turki__yidn29": "__DELETED__", "span__تكليفات_تحتاج_انتباهك__o5csux": "تكليفات تحتاج إجراء", "div__بحاجة_تدخل_عاجل__o5csux": "__DELETED__", "div__3_رؤى__jayrsn": "__DELETED__", "div__الترتيب_التنازلي_بنسبة_الإنجاز____rn24xu": "__DELETED__", "div__9_من_الممثلين_يحملون_5_لجان_أو_أ__o5csux": "9 من الممثلين يحملون 5 لجان أو أكثر", "div__1_لجنة_في_حالة_تعثر__تحتاج_خطة_إ__o5csux": "1 لجنة في حالة تعثر", "div__1_لجنة_مشكَّلة_ولم_تبدأ_أعمالها___o5csux": "1 لجنة مشكَّلة ولم تبدأ أعمالها", "div__4_لجنة_بحالة_غير_معروفة__تحتاج_ت__o5csux": "4 لجنة بحالة غير معروفة"};
+window.DTEXT_INTL_BAKED={"span__بيانات_اللجان__rxv4ih": "بطاقات بيانات المجالس واللجان", "span__لوحة_القيادة_التنفيذية__2c2hkx": "لوحة إحصاءات المجالس واللجان", "span__التحضير_للاجتماعات__dmhyjz": "اجتماعات المجالس واللجان", "span__قسم_إدارة_المحاضر_والمذكرات__tffqu": "المحاضر والمذكرات", "span__قسم_الوثائق__f46j7v": "مكتبة الوثائق والمستندات", "span__النوع__w7kp8u": "التصنيف", "span__الممثل__u839ij": "أسم الممثل", "span__فلتر_تاريخي__wnokir": "بحث متقدم", "div__بيانات_المجالس_التنسيقية_واللجان__rb7aaf": "__DELETED__", "div__بيانات_اللجان__rb7aaf": "__DELETED__", "div__Total_Portfolio__o5csux": "__DELETED__", "div__Institutional_Health__o5csux": "__DELETED__", "div__الصحة_المؤسسية__o5csux": "الاستمرارية", "div__النفوذ_القراري__o5csux": "الرئاسة", "div__Leadership_Influence__o5csux": "__DELETED__", "div__Representation_Diversity__o5csux": "__DELETED__", "div__ممثل__6_محمّل_بكثرة__pdzob0": "__DELETED__", "span__6_مفرطو_التحميل__o5csux": "__DELETED__", "span__فرصة_للتعزيز__o5csux": "__DELETED__", "div__رؤى_الذكاء_التنفيذي__o5csux": "التصور العام", "div__Executive_Intelligence_Insights__o5csux": "__DELETED__", "div__عمق_الشراكات__o5csux": "المشاركات والتمثيل", "div__التحليلات_الجوهرية__o5csux": "التحليل", "div__Core_Analytics__o5csux": "__DELETED__", "div__Status_Distribution__o5csux": "__DELETED__", "div__توزيع_الحالات_التشغيلية__o5csux": "التوزيع حسب الحالة", "div__Scope_Distribution__o5csux": "__DELETED__", "div__توزيع_النطاقات__o5csux": "التوزيع حسب النطاق", "div__مقارنة_الأنواع__o5csux": "العدد حسب التصنيف", "div__Type_Comparison__o5csux": "__DELETED__", "div__Role_Distribution__o5csux": "__DELETED__", "div__ذكاء_الأداء__o5csux": "إحصاءات", "div__Performance_Intelligence__o5csux": "__DELETED__", "div__استكشاف_الممثلين_الأكثر_تأثيراً___o5csux": "الممثلين الأكثر تمثيلا ومشاركة من الوكالة", "div__أعلى_الممثلين_تمثيلاً__o5csux": "__DELETED__", "div__Top_Representatives_by_Committee__o5csux": "__DELETED__", "div__مفرط_التحميل__o5csux": "__DELETED__", "div__تمثيل_عالٍ__o5csux": "__DELETED__", "div__Alerts__Risk_Panel__o5csux": "__DELETED__", "div___تتطلب_قرار_قيادي__o5csux": "__DELETED__", "div___لتحسين_دقة_المؤشرات__o5csux": "__DELETED__", "span__النوع__b8mw3b": "التصنيف", "span__الممثل__ju2zb2": "أسم الممثل", "span__الفلاتر__pdzob0": "__DELETED__", "button__PowerPoint__pdzob0": "__DELETED__", "span__جاري_التحميل_من_Supabase__8izjmd": "✓", "button__تقرير_تنفيذي_PDF__pdzob0": "تقرير تنفيذي", "div__لوحة_القيادة_التنفيذية__pdzob0": "لوحة إحصاءات المجالس واللجان", "div__Executive_Command_Center__المجال__pdzob0": "__DELETED__", "div__لوحة_القيادة_التنفيذية__rb7aaf": "__DELETED__", "div__Critical_Alerts__o5csux": "__DELETED__", "div__التحضير_للاجتماعات__rb7aaf": "__DELETED__", "div__إدارة_الاجتماعات_والتكليفات_والم__rb7aaf": "__DELETED__", "h1__نظام_إدارة_المجالس_التنسيقية_وال__optua3": "__DELETED__", "div__المبادرات_والمشاريع_الدولية__rb7aaf": "__DELETED__", "div__إدارة_المبادرات_والمشاريع_والاتف__rb7aaf": "__DELETED__", "p__وزارة_التعليم__وكالة_التعاون_الد__optua3": "وزارة التعليم — وكالة التعاون الدولي - الإدارة العامة للعلاقات الدولية", "span__وكالة_التعاون_الدولي__uj2gh6": "منصة إدارة المجالس واللجان الدولية", "span__وحدة_المجالس_واللجان__uj2gh6": "__DELETED__", "button__انتظار__23qnm6": "__DELETED__", "button__جارٍ__23qnm6": "__DELETED__", "button__متأخر__23qnm6": "__DELETED__", "button__منجز__23qnm6": "__DELETED__", "span__التكليفات__23qnm6": "__DELETED__", "span___التقويم_والقادم__3e9ged": "__DELETED__", "span__فلتر_تاريخي__ns0jbg": "بحث متقدم", "span__فلتر_تاريخي__9xe2z9": "بحث متقدم", "div__لوحة_متابعة_التكليفات__rb7aaf": "__DELETED__", "div__كانبان_وجانت_وتتبع_التقدم_والتوا__rb7aaf": "__DELETED__", "button__كانبان__tn6712": "بطاقات كانبان", "button__لوحة_المؤشرات__tn6712": "لوحة المؤشرات التنفيذية", "button__كانبان_التكليفات__gblyi9": "بطاقات كانبان", "span__فلتر_تاريخي__nrqu9y": "بحث متقدم", "div__تصفية__gblyi9": "__DELETED__", "button__تقرير_حساسية_الوقت__uotb1a": "النطاق الزمني", "div__قسم_الوثائق__مكتبة_وثائق_اللجان___rb7aaf": "__DELETED__", "div__قرارات_التشكيل_والمحاضر_والعروض___rb7aaf": "__DELETED__", "div__قسم_إدارة_المحاضر_والمذكرات_وإدا__rb7aaf": "__DELETED__", "div__الأدوار_والصلاحيات_ومحرك_سير_الع__rb7aaf": "__DELETED__", "div__الاجتماعات_والتكليفات_العامة__rb7aaf": "__DELETED__", "div__إدارة_اجتماعات_مستقلة_وتكليفاتها__rb7aaf": "__DELETED__", "span__فلتر_تاريخي__rebcp6": "بحث متقدم", "label__مالك_المبادرة_Accountable__o5csux": "مالك المبادرة", "label__ضابط_الاتصال_Focal_Point__o5csux": "ضابط الاتصال (المنسق)", "span__معالم_الأنشطة__Milestones__ydofjs": "معالم الأنشطة", "button___قائمة_المبادرات__t916vi": "☰ قائمة المبادرات/المشاريع", "label__عنوان_المبادرة__المشروع___ydofjs": "العنوان", "div__أمين_المجلساللجنة__oit0mz": "__DELETED__", "div__عرضي__yidn29": "موجز", "div__عرض_شامل_لكل_اللجان__yidn29": "__DELETED__", "span__عرضي__uxehxa": "موجز", "ttl__إشعارات_الحوكمة": "__DELETED__", "div__اجتماعاتي_القادمة__hu60mq": "الاجتماعات القادمة", "span__تكليفات_تحتاج_انتباهك__o5csux": "تكليفات تحتاج إجراء", "div__على_المسار__hu60mq": "تكليفات على المسار", "div__منجزة__hu60mq": "تكليفات منجزة", "div__مرحباً،_turki__yidn29": "__DELETED__", "label__وصف_المخطر__o5csux": "وصف الخطر", "span__الحوكمة_ومالك_المبادرة__RACI__ydofjs": "الحوكمة ومالك المبادرة", "div__عرضي__اجتماعاتي_وتكليفاتي__rb7aaf": "__DELETED__"};
+
 var DT={},DD={},_active=false,_el=null,_key=null,_scanned=false,_isOpt=false,_isPh=false,_isTtl=false,LS='dtext_store_v1';
 /* ── مفتاح ديناميكي حسب النظام الفعال ── */
 function _getLS(){
@@ -35424,8 +35481,14 @@ function _scheduleSyncToSupabase(){
 }
 
 async function _syncToSupabase(){
+  /* [UI-INTERNALIZED-V1 2026-06-23] لم تعد الواجهة تُخزَّن في Supabase.
+     تعديلات المدير المحلية تُحفظ في localStorage فقط، وتُعتمد لاحقاً بإعادة
+     تجميدها في DTEXT_*_BAKED عبر إجراء التحديث. لا كتابة شبكية للواجهة. */
+  try{ _setSyncStatus && _setSyncStatus('ok'); }catch(e){}
+  return;
+  /* eslint-disable no-unreachable */
   if(!window.currentUser||!window.sbFetch||!window.SB_TABLES||!window.activeSystem){
-    return; /* لا يوجد مستخدم أو اتصال */
+    return;
   }
   var tbl=(window.SB_TABLES&&window.SB_TABLES[window.activeSystem||'main']&&window.SB_TABLES[window.activeSystem||'main'].gm)||(window.activeSystem==='intl'?'intl_gm':'lajan_gm');
   var payload={key:'dtext_v1',value:JSON.stringify(DT),updated_at:new Date().toISOString(),
@@ -35455,6 +35518,11 @@ async function _syncToSupabase(){
 }
 
 async function _loadFromSupabase(){
+  /* [UI-INTERNALIZED-V1 2026-06-23] الواجهة لم تعد تُحمّل من Supabase.
+     التخصيصات المعتمدة مُجمّدة في DTEXT_*_BAKED وتُطبَّق محلياً. هذه الدالة
+     أصبحت بلا أثر للحفاظ على توافق نقاط الاستدعاء القائمة. */
+  return;
+  /* eslint-disable no-unreachable */
   if(!window.sbFetch||!window.SB_TABLES||!window.activeSystem)return;
   var tbl=(window.SB_TABLES&&window.SB_TABLES[window.activeSystem||'main']&&window.SB_TABLES[window.activeSystem||'main'].gm)||(window.activeSystem==='intl'?'intl_gm':'lajan_gm');
   try{
@@ -36191,6 +36259,14 @@ window.DTextLayer={
    بحيث تكون التعديلات متاحة في الذاكرة قبل أي rescan لاحق
    هذا يضمن أن أول mutation observer أو passive apply يجد التعديلات جاهزة */
 (function _loadDTEarly(){
+  /* [UI-INTERNALIZED-V1 2026-06-23] حمّل التخصيصات المعتمدة المُجمّدة أولاً
+     حسب النظام الفعّال — مصدرها الكود نفسه (لا Supabase، لا وميض).
+     ثم ادمج أي تعديل محلي أحدث من localStorage فوقها (للمدير أثناء التحرير). */
+  try{
+    var baked=(typeof window.activeSystem!=='undefined'&&window.activeSystem==='intl')
+      ? (window.DTEXT_INTL_BAKED||{}) : (window.DTEXT_LAJAN_BAKED||{});
+    Object.keys(baked).forEach(function(k){DT[k]=baked[k];});
+  }catch(_){}
   try{
     var s=JSON.parse(localStorage.getItem(_getLS())||'{}');
     Object.keys(s).forEach(function(k){DT[k]=s[k];});
@@ -36297,15 +36373,30 @@ setInterval(function(){
    [DTEXT-FIX-F5] رفعنا الـ debounce من 150ms إلى 500ms لتجنب التداخل مع init()
    وأضفنا _busy guard وتأخير البدء حتى ينتهي init() */
 var _mutTimer=null;
+var _mutRAF=null;
 function _onDOMMutation(){
   if(_dtextBusy)return;
-  clearTimeout(_mutTimer);
-  _mutTimer=setTimeout(function(){
-    if(_dtextBusy)return;
-    _dtextBusy=true;
-    try{window.dtextRescan();_passiveApply();}catch(e){}
-    _dtextBusy=false;
-  },500); /* delay أكبر لتجنّب التداخل مع رسم النظام */
+  /* [NO-NAV-FLASH-V1 2026-06-23] تطبيق فوري عبر requestAnimationFrame بدل
+     تأخير 500ms — يطبّق التخصيص قبل إطار الرسم التالي مباشرة، فلا يرى
+     المستخدم النص الأصلي. الحارس _dtextBusy يمنع التداخل مع رسم النظام. */
+  if(window.requestAnimationFrame){
+    if(_mutRAF)return; /* طلب واحد معلّق يكفي */
+    _mutRAF=requestAnimationFrame(function(){
+      _mutRAF=null;
+      if(_dtextBusy)return;
+      _dtextBusy=true;
+      try{window.dtextRescan();_passiveApply();}catch(e){}
+      _dtextBusy=false;
+    });
+  }else{
+    clearTimeout(_mutTimer);
+    _mutTimer=setTimeout(function(){
+      if(_dtextBusy)return;
+      _dtextBusy=true;
+      try{window.dtextRescan();_passiveApply();}catch(e){}
+      _dtextBusy=false;
+    },16);
+  }
 }
 function _startObserver(){
   if(!window.MutationObserver)return;
@@ -36320,11 +36411,13 @@ function _startObserver(){
     obs.observe(document.body,{childList:true,subtree:true});
   }catch(e){console.warn('[DText] MutationObserver failed:',e);}
 }
-/* [DTEXT-FIX-F5] تأخير بدء المراقبة 4 ثوانٍ بعد التحميل لإعطاء init() الوقت لإكمال الرسم */
+/* [NO-NAV-FLASH-V1 2026-06-23] بدء المراقبة فوراً (كان 4000ms) لمنع وميض
+   المحتوى المبني ديناميكياً عند التنقّل والتبويبات الفرعية. التطبيق الفوري
+   يقلّص نافذة ظهور النص الأصلي إلى أدنى حد ممكن. */
 if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',function(){setTimeout(_startObserver,4000);});
+  document.addEventListener('DOMContentLoaded',function(){_startObserver();});
 }else{
-  setTimeout(_startObserver,4000);
+  _startObserver();
 }
 /* إعادة مزامنة دورية كل 5 دقائق */
 setInterval(function(){
